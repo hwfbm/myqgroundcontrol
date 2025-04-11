@@ -149,7 +149,7 @@ private:
     uint32_t _mavlinkChannelsUsedBitMask = 1;
     QString _connectionsSuspendedReason;            ///< User visible reason for suspension
 
-    QList<SharedLinkInterfacePtr> _rgLinks;
+    QList<SharedLinkInterfacePtr> _rgLinks;//定义了一个 Qt 容器，用于存储多个 SharedLinkInterfacePtr（即 std::shared_ptr<LinkInterface>）智能指针
     QList<SharedLinkConfigurationPtr> _rgLinkConfigs;
 
     static constexpr const char *_defaultUDPLinkName = "UDP Link (AutoConnect)";

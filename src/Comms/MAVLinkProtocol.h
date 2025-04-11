@@ -38,10 +38,12 @@ public:
 
     /// Gets the singleton instance of MAVLinkProtocol.
     ///     @return The singleton instance.
-    static MAVLinkProtocol *instance();
+    static MAVLinkProtocol *instance();//单例模式（全局只会有一个实例），通过 MAVLinkProtocol::instance() 获取它
 
-    void init();
 
+    void init();//初始化方法，应该在程序启动时调用
+
+    //获取协议名称（"MAVLink protocol"）、系统ID、组件ID、协议版本等
     /// Get the human-friendly name of this protocol
     static QString getName() { return QStringLiteral("MAVLink protocol"); }
 
@@ -57,6 +59,8 @@ public:
     /// Get the currently configured protocol version
     unsigned getCurrentVersion() const { return _currentVersion; }
 
+
+    //管理跟每个“连接”相关的元数据（比如串口、UDP 通信）
     /// Reset the counters for all metadata for this link.
     void resetMetadataForLink(LinkInterface *link);
 
@@ -69,8 +73,11 @@ public:
     /// Checks the temp directory for log files which may have been left there.
     /// This could happen if QGC crashes without the temp log file being saved.
     /// Give the user an option to save these orphaned files.
+    //日志相关处理：暂停日志记录、检测丢失日志等
     void checkForLostLogFiles();
 
+
+    //当心跳包或消息收到时发出信号，其他组件可以监听这些信号
 signals:
     /// Heartbeat received on link
     void vehicleHeartbeatInfo(LinkInterface *link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType);
@@ -83,16 +90,27 @@ signals:
 public slots:
     /// Receive bytes from a communication interface and constructs a MAVLink packet
     ///     @param link The interface to read from
+    //核心函数：从 link 接口读取字节流数据，并解析为 MAVLink 消息
     void receiveBytes(LinkInterface *link, const QByteArray &data);
 
     /// Log bytes sent from a communication interface and logs a MAVLink packet.
     /// It can handle multiple links in parallel, as each link has it's own buffer/parsing state machine.
     ///     @param link The interface to read from
+    //用于记录发送出去的数据
     void logSentBytes(const LinkInterface *link, const QByteArray &data);
 
     /// Deletes any log files which are in the temp directory
+    //删除临时日志文件
     static void deleteTempLogFiles();
 
+
+    //私有槽 / 私有函数
+    //这些函数通常用于：
+    // 日志写入
+    // 消息转发
+    // 统计数据更新
+    // 通信状态检测
+    // 保存日志等
 private slots:
     void _vehicleCountChanged();
 
@@ -118,11 +136,12 @@ private:
     bool _logSuspendReplay = false; ///< true: Logging suspended due to replay
     bool _vehicleWasArmed = false;  ///< true: Vehicle was armed during log sequence
 
-    uint8_t _lastIndex[256][256]{};                             ///< Store the last received sequence ID for each system/component pair
-    uint8_t _firstMessage[256][256]{};                          ///< First message flag
+    uint8_t _lastIndex[256][256]{};   //存储每个系统和组件收到的最后一个消息序号（用于丢包检测）                          ///< Store the last received sequence ID for each system/component pair
+    uint8_t _firstMessage[256][256]{};
+    //总接收/丢失计数器                         ///< First message flag
     uint64_t _totalReceiveCounter[MAVLINK_COMM_NUM_BUFFERS]{};  ///< The total number of successfully received messages
     uint64_t _totalLossCounter[MAVLINK_COMM_NUM_BUFFERS]{};     ///< Total messages lost during transmission.
-    float _runningLossPercent[MAVLINK_COMM_NUM_BUFFERS]{};      ///< Loss rate
+    float _runningLossPercent[MAVLINK_COMM_NUM_BUFFERS]{};  //丢包计数    ///< Loss rate
 
     unsigned _currentVersion = 100;
     bool _initialized = false;
@@ -130,5 +149,5 @@ private:
     static constexpr const char *_tempLogFileTemplate = "FlightDataXXXXXX"; ///< Template for temporary log file
     static constexpr const char *_logFileExtension = "mavlink";             ///< Extension for log files
 
-    static constexpr uint8_t kMaxCompId = MAV_COMPONENT_ENUM_END - 1;
+    static constexpr uint8_t kMaxCompId = MAV_COMPONENT_ENUM_END - 1;//kMaxCompId 是最大组件ID（MAVLink 定义）
 };

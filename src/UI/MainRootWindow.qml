@@ -26,7 +26,7 @@ import QGroundControl.UTMSP
 /// @brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
 ApplicationWindow {
-    id:             mainWindow
+    id:   mainWindow
     minimumWidth:   ScreenTools.isMobile ? ScreenTools.screenWidth  : Math.min(ScreenTools.defaultFontPixelWidth * 100, Screen.width)
     minimumHeight:  ScreenTools.isMobile ? ScreenTools.screenHeight : Math.min(ScreenTools.defaultFontPixelWidth * 50, Screen.height)
     visible:        true
@@ -35,83 +35,98 @@ ApplicationWindow {
     property bool   _utmspStartTelemetry
 
     Component.onCompleted: {
-        //-- Full screen on mobile or tiny screens
+        //-- Full screen on mobile or tiny screens判断设备类型并设置窗口尺寸
+        //--如果是 移动设备 或 屏幕太小的设备（如某些嵌入式系统），就全屏显示
         if (!ScreenTools.isFakeMobile && (ScreenTools.isMobile || Screen.height / ScreenTools.realPixelDensity < 120)) {
             mainWindow.showFullScreen()
-        } else {
+        } else
+        //--否则就设置合理的 width 和 height，保证桌面体验合适
+        {
             width   = ScreenTools.isMobile ? ScreenTools.screenWidth  : Math.min(250 * Screen.pixelDensity, Screen.width)
             height  = ScreenTools.isMobile ? ScreenTools.screenHeight : Math.min(150 * Screen.pixelDensity, Screen.height)
         }
 
-        // Start the sequence of first run prompt(s)
+        // Start the sequence of first run prompt(s)启动“首次运行引导提示”
         firstRunPromptManager.nextPrompt()
     }
-
+        // 匿名的 QtObject，专门用来管理用户初次使用时的提示弹窗
     QtObject {
         id: firstRunPromptManager
 
         property var currentDialog:     null
-        property var rgPromptIds:       QGroundControl.corePlugin.firstRunPromptsToShow()
+        property var rgPromptIds:       QGroundControl.corePlugin.firstRunPromptsToShow() // 从QGroundControl.corePlugin.firstRunPromptsToShow() 获取一个待显示的提示列表
         property int nextPromptIdIndex: 0
 
-        function clearNextPromptSignal() {
+        function clearNextPromptSignal()
+        {
             if (currentDialog) {
                 currentDialog.closed.disconnect(nextPrompt)
             }
         }
 
-        function nextPrompt() {
+        function nextPrompt() //按顺序弹出提示对话框
+        {
             if (nextPromptIdIndex < rgPromptIds.length) {
+                //每个弹窗通过 Qt.createComponent() 动态创建。
                 var component = Qt.createComponent(QGroundControl.corePlugin.firstRunPromptResource(rgPromptIds[nextPromptIdIndex]));
                 currentDialog = component.createObject(mainWindow)
+                //每个弹窗关闭自动触发下一个提示
                 currentDialog.closed.connect(nextPrompt)
                 currentDialog.open()
                 nextPromptIdIndex++
             } else {
+                //所有提示结束后，如果设置中要求启用“飞行前检查清单”，则弹出检查表
                 currentDialog = null
                 showPreFlightChecklistIfNeeded()
             }
         }
     }
 
+    //定义一个只读属性，表示顶部和底部的边距，值为字体高度的一半。这个值通常用于统一界面布局时的 margin
     readonly property real      _topBottomMargins:          ScreenTools.defaultFontPixelHeight * 0.5
 
     //-------------------------------------------------------------------------
     //-- Global Scope Variables
-
+    //这是 QML 中一个常见技巧：把很多常用的状态值或接口放在一个 QtObject 里，方便整个页面或子组件调用
     QtObject {
         id: globals
 
-        readonly property var       activeVehicle:                  QGroundControl.multiVehicleManager.activeVehicle
-        readonly property real      defaultTextHeight:              ScreenTools.defaultFontPixelHeight
-        readonly property real      defaultTextWidth:               ScreenTools.defaultFontPixelWidth
-        readonly property var       planMasterControllerFlyView:    flyView.planController
-        readonly property var       guidedControllerFlyView:        flyView.guidedController
+        readonly property var  activeVehicle: QGroundControl.multiVehicleManager.activeVehicle //当前激活的飞行器对象
+        readonly property real defaultTextHeight: ScreenTools.defaultFontPixelHeight//默认文字高度（按字体大小）
+        readonly property real defaultTextWidth:  ScreenTools.defaultFontPixelWidth//宽度
+        readonly property var planMasterControllerFlyView:  flyView.planController//规划视图的任务控制器
+        readonly property var guidedControllerFlyView:  flyView.guidedController//导航视图的任务控制器
 
-        // Number of QGCTextField's with validation errors. Used to prevent closing panels with validation errors.
-        property int                validationErrorCount:           0 
+        // Number of QGCTextField's with validation errors. Used to prevent closing panels with validation errors.表单验证错误的数量
+        property int   validationErrorCount:           0
 
-        // Property to manage RemoteID quick access to settings page
-        property bool               commingFromRIDIndicator:        false
-    }
+        // Property to manage RemoteID quick access to settings page，是否从 RemoteID 入口跳转而来
+        property bool  commingFromRIDIndicator:        false
+    }//这些变量都可以在其他 QML 页面中通过 globals.xxx 直接使用
 
-    /// Default color palette used throughout the UI
+
+    //Default color palette used throughout the UI 统一的配色方案
+    //QGroundControl 的配色控制器，负责管理界面中各个控件的颜色风格（深色 / 浅色主题等，想统一更改界面风格颜色可以改QGCPalette 的定义或绑定的 colorGroupEnabled。
+    //color: qgcPal.text
+    //background: qgcPal.window
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     //-------------------------------------------------------------------------
     //-- Actions
-
-    signal armVehicleRequest
+    //QML 层声明的信号
+    signal armVehicleRequest //请求解锁飞机（起飞准备）
     signal forceArmVehicleRequest
-    signal disarmVehicleRequest
-    signal vtolTransitionToFwdFlightRequest
+    signal disarmVehicleRequest//请求上锁（停飞）
+    signal vtolTransitionToFwdFlightRequest//VTOL 垂直起降机转换为固定翼飞行
     signal vtolTransitionToMRFlightRequest
-    signal showPreFlightChecklistIfNeeded
-
+    signal showPreFlightChecklistIfNeeded//在需要时显示飞行前检查清单
+    //可以通过 emit signalName() 来触发它们，然后 C++ 那边监听这些信号进行对应动作
     //-------------------------------------------------------------------------
     //-- Global Scope Functions
 
     // This function is used to prevent view switching if there are validation errors
+    //防止切换界面时用户输入未通过验证。
+    //比如飞行参数没填完，就不能跳转页面
     function allowViewSwitch(previousValidationErrorCount = 0) {
         // Run validation on active focus control to ensure it is valid before switching views
         if (mainWindow.activeFocusControl instanceof FactTextField) {
@@ -120,6 +135,9 @@ ApplicationWindow {
         return globals.validationErrorCount <= previousValidationErrorCount
     }
 
+
+    //用于在“任务规划界面”与“飞行监视界面”之间切换。/
+    //控制 flyView 和 planView 的显示状态。
     function showPlanView() {
         flyView.visible = false
         planView.visible = true
@@ -131,6 +149,8 @@ ApplicationWindow {
         planView.visible = false
     }
 
+
+    //封装展示左侧工具抽屉的逻辑，传入标题、QML 页面路径和图标
     function showTool(toolTitle, toolSource, toolIcon) {
         toolDrawer.backIcon     = flyView.visible ? "/qmlimages/PaperPlane.svg" : "/qmlimages/Plan.svg"
         toolDrawer.toolTitle    = toolTitle
@@ -160,6 +180,7 @@ ApplicationWindow {
         }
     }
 
+    //显示应用设置抽屉，支持默认跳转到某个子页（如串口设置）
     function showSettingsTool(settingsPage = "") {
         showTool(qsTr("Application Settings"), "AppSettings.qml", "/res/QGCLogoWhite")
         if (settingsPage !== "") {
@@ -170,6 +191,9 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Global simple message dialog
 
+
+    //弹出一个简易的提示框，比如用于提示错误、信息等
+    //默认按钮是 Dialog.Ok
     function showMessageDialog(dialogTitle, dialogText, buttons = Dialog.Ok, acceptFunction = null, closeFunction = null) {
         simpleMessageDialogComponent.createObject(mainWindow, { title: dialogTitle, text: dialogText, buttons: buttons, acceptFunction: acceptFunction, closeFunction: closeFunction }).open()
     }
@@ -179,6 +203,7 @@ ApplicationWindow {
         showMessageDialog(dialogTitle, dialogText)
     }
 
+    //simpleMessageDialogComponent 是 QML 动态创建用的模板
     Component {
         id: simpleMessageDialogComponent
 

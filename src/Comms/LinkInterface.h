@@ -80,5 +80,5 @@ private:
     bool _signingSignatureFailure = false;
 };
 
-typedef std::shared_ptr<LinkInterface> SharedLinkInterfacePtr;
-typedef std::weak_ptr<LinkInterface> WeakLinkInterfacePtr;
+typedef std::shared_ptr<LinkInterface> SharedLinkInterfacePtr; //强引用智能指针
+typedef std::weak_ptr<LinkInterface> WeakLinkInterfacePtr; //弱引用智能指针

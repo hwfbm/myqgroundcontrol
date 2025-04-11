@@ -38,6 +38,12 @@ endif()
 
 include(Git)
 
+include_directories(
+    /Users/jzpfbm/Qt/6.8.3/macos/include
+    /Users/jzpfbm/Qt/6.8.3/Src
+)
+
+
 project(${QGC_APP_NAME}
     VERSION ${QGC_APP_VERSION}
     DESCRIPTION ${QGC_APP_DESCRIPTION}

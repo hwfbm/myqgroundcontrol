@@ -245,14 +245,19 @@ void LinkManager::_linkDisconnected()
     }
 }
 
+
+//根据传入的 LinkInterface 裸指针 (link)，返回对应的共享智能指针 (SharedLinkInterfacePtr)
 SharedLinkInterfacePtr LinkManager::sharedLinkInterfacePointerForLink(const LinkInterface *link)
 {
+    //如果找到匹配的 LinkInterface 对象，返回其对应的 shared_ptr
+    //遍历 _rgLinks 容器（存储 SharedLinkInterfacePtr 的列表）
     for (SharedLinkInterfacePtr &sharedLink: _rgLinks) {
+        // // 比较裸指针是否指向同一对象
         if (sharedLink.get() == link) {
-            return sharedLink;
+            return sharedLink; // 返回匹配的 shared_ptr
         }
     }
-
+    //如果未找到，返回空的 shared_ptr（即 nullptr）并输出警告日志
     qCWarning(LinkManagerLog) << "returning nullptr";
     return SharedLinkInterfacePtr(nullptr);
 }

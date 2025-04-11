@@ -25,10 +25,16 @@
 #include <QtCore/QSettings>
 #include <QtCore/QStandardPaths>
 
+
+
 QGC_LOGGING_CATEGORY(MAVLinkProtocolLog, "qgc.comms.mavlinkprotocol")
 
+
+//Q_APPLICATION_STATIC 宏定义了一个静态的 _mavlinkProtocolInstance 实例，也就是说全局只会有一个 MAVLinkProtocol 实例（单例模式）
+//调用MAVLinkProtocol::instance() 时，就是返回这个单例
 Q_APPLICATION_STATIC(MAVLinkProtocol, _mavlinkProtocolInstance);
 
+//造函数中初始化了 MAVLink 日志文件，用于记录日志数据
 MAVLinkProtocol::MAVLinkProtocol(QObject *parent)
     : QObject(parent)
     , _tempLogFile(new QGCTemporaryFile(QStringLiteral("%2.%3").arg(_tempLogFileTemplate, _logFileExtension), this))
@@ -48,16 +54,21 @@ MAVLinkProtocol *MAVLinkProtocol::instance()
     return _mavlinkProtocolInstance();
 }
 
+
+//初始化 _firstMessage 数组：表示每个信道的每个系统的第一个包是否已到达
 void MAVLinkProtocol::init()
 {
     if (_initialized) {
         return;
     }
 
-    (void) memset(_firstMessage, 1, sizeof(_firstMessage));
+     //将 _firstMessage 的所有 65536 字节设为 0x01
+    (void) memset(_firstMessage, 1, sizeof(_firstMessage));//memset 是按字节填充，不是按数组元素填充。整个 _firstMessage 数组的 65536 个字节 全部变成 0x01
 
+    //监听 vehicle 被移除时的信号
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleRemoved, this, &MAVLinkProtocol::_vehicleCountChanged);
 
+    //避免重复初始化
     _initialized = true;
 }
 
@@ -107,13 +118,16 @@ void MAVLinkProtocol::logSentBytes(const LinkInterface *link, const QByteArray &
     }
 }
 
+//接收数据入口
 void MAVLinkProtocol::receiveBytes(LinkInterface *link, const QByteArray &data)
 {
-    const SharedLinkInterfacePtr linkPtr = LinkManager::instance()->sharedLinkInterfacePointerForLink(link);
+    //调用成员函数，根据传入的 link，返回一个 SharedLinkInterfacePtr
+    //将返回的共享指针存入常量 linkPtr，避免意外修改
+    const SharedLinkInterfacePtr linkPtr = LinkManager::instance()->sharedLinkInterfacePointerForLink(link);//获取LinkManager 的单例实例
     if (!linkPtr) {
         qCDebug(MAVLinkProtocolLog) << "receiveBytes: link gone!" << data.size() << "bytes arrived too late";
         return;
-    }
+    }//确认这个 link 还有效，否则直接跳过
 
     for (const uint8_t &byte: data) {
         const uint8_t mavlinkChannel = link->mavlinkChannel();
