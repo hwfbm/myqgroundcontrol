@@ -13,6 +13,7 @@ endif()
 
 set(CMAKE_REQUIRED_QUIET ON)
 
+
 #######################################################
 #                Custom Build Configuration
 #######################################################
@@ -169,6 +170,11 @@ if(ANDROID)
     list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QGC_STABLE_BUILD QT_HOST_PATH)
 endif()
 
+set(QML_IMPORT_PATH ${CMAKE_SOURCE_DIR}/src)
+
+set(QT_QML_GENERATE_QMLLS_INI ON)
+
+
 find_package(Qt6
     ${QT_MINIMUM_VERSION}
     REQUIRED
@@ -207,6 +213,7 @@ find_package(Qt6
 if(LINUX)
     find_package(Qt6 ${QT_MINIMUM_VERSION} COMPONENTS WaylandClient)
 endif()
+qt_standard_project_setup()
 
 # Set extra standard project setup options for Qt 6.7.0 and above
 set(EXTRA_STANDARD_PROJECT_SETUP_OPTIONS)

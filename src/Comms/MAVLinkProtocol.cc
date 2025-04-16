@@ -39,7 +39,7 @@ MAVLinkProtocol::MAVLinkProtocol(QObject *parent)
     : QObject(parent)
     , _tempLogFile(new QGCTemporaryFile(QStringLiteral("%2.%3").arg(_tempLogFileTemplate, _logFileExtension), this))
 {
-    // qCDebug(MAVLinkProtocolLog) << Q_FUNC_INFO << this;
+    // qCDebug(MAVLinkProto colLog) << Q_FUNC_INFO << this;
 }
 
 MAVLinkProtocol::~MAVLinkProtocol()

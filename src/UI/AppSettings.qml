@@ -19,7 +19,17 @@ import QGroundControl.ScreenTools
 
 Rectangle {
     id:     settingsView
-    color:  qgcPal.window
+    color:  "#dd25ce"
+    gradient: Gradient {
+        GradientStop {
+            position: 0.15;
+            color: "#000000";
+        }
+        GradientStop {
+            position: 0.45;
+            color: "#ffffff";
+        }
+    }
     z:      QGroundControl.zOrderTopMost
 
     readonly property real _defaultTextHeight:  ScreenTools.defaultFontPixelHeight

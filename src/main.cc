@@ -10,6 +10,7 @@
 #include <QtQuick/QQuickWindow>
 #include <QtWidgets/QApplication>
 
+//通过 Q_OS_* 宏区分不同平台代码，确保各平台特有逻辑互不干扰
 #ifdef Q_OS_MACOS
     #include <QtCore/QProcessEnvironment>
 #endif
@@ -20,7 +21,7 @@
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
     #include <QtWidgets/QMessageBox>
-    #include "RunGuard.h"
+    #include "RunGuard.h"     // 移动端不需要单例检测
 #endif
 
 #ifdef Q_OS_ANDROID
@@ -40,12 +41,13 @@
 
 /// @brief CRT Report Hook installed using _CrtSetReportHook. We install this hook when
 /// we don't want asserts to pop a dialog on windows.
+/// 在 CI/CD 环境中避免断言弹窗阻塞流程
 int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 {
     Q_UNUSED(reportType);
 
-    std::cerr << message << std::endl;  // Output message to stderr
-    *returnValue = 0;                   // Don't break into debugger
+    std::cerr << message << std::endl;  // 重定向到控制台
+    *returnValue = 0;                   // 禁止弹出错误对话框
     return true;                        // We handled this fully ourselves
 }
 
@@ -61,10 +63,11 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 void sigHandler(int s)
 {
     std::signal(s, SIG_DFL);
+   // qgcApp() 全局函数提供应用单例访问入口（工厂模式）
     if(qgcApp()) {
-        qgcApp()->mainRootWindow()->close();
-        QEvent event{QEvent::Quit};
-        qgcApp()->event(&event);
+        qgcApp()->mainRootWindow()->close(); // 优雅关闭主窗口
+        QEvent event{QEvent::Quit};//通过 QEvent 机制处理系统信号（观察者模式）
+        qgcApp()->event(&event); // 发送退出事件
     }
 }
 
@@ -89,6 +92,7 @@ int main(int argc, char *argv[])
     // not be able to run at the same time
     const QString runguardString = QStringLiteral("%1 RunGuardKey").arg(QGC_APP_NAME);
 
+    //通过 RunGuard 确保同一时间只有一个 QGC 实例运行。基于系统锁、文件锁或共享内存检测重复启动。
     RunGuard guard(runguardString);
     if (!guard.tryToRun()) {
         QApplication errorApp(argc, argv);
@@ -99,6 +103,10 @@ int main(int argc, char *argv[])
     }
 #endif
 
+
+
+//Linux 非 root 运行
+//以 root 运行可能导致权限问题或安全隐患。
 #ifdef Q_OS_LINUX
 #ifndef Q_OS_ANDROID
     if (getuid() == 0) {
@@ -121,12 +129,14 @@ int main(int argc, char *argv[])
 
     AppMessages::installHandler();
 
+//MacOS 禁用 App Nap，防止 macOS 的 App Nap 机制降低 QGC 后台性能
 #ifdef Q_OS_MACOS
     // Prevent Apple's app nap from screwing us over
     // tip: the domain can be cross-checked on the command line with <defaults domains>
     QProcess::execute("defaults", {"write org.qgroundcontrol.qgroundcontrol NSAppSleepDisabled -bool YES"});
 #endif
 
+//Windows OpenGL 渲染器选择，允许命令行指定 OpenGL 实现（硬件加速或软件渲染）
 #ifdef Q_OS_WIN
     // Set our own OpenGL buglist
     // qputenv("QT_OPENGL_BUGLIST", ":/opengl/resources/opengl/buglist.json");
@@ -154,12 +164,17 @@ int main(int argc, char *argv[])
     bool stressUnitTests = false;       // Stress test unit tests
     bool quietWindowsAsserts = false;   // Don't let asserts pop dialog boxes
 
+
+    //--unittest：运行单元测试。
+    //--unittest-stress：压力测试模式。
+    //--no-windows-assert-ui：禁用 Windows 断言弹窗（用于 CI/CD）。
     QString unitTestOptions;
+    //新增命令行参数，在rgCmdLineOptions添加条目
     CmdLineOpt_t rgCmdLineOptions[] = {
         { "--unittest",             &runUnitTests,          &unitTestOptions },
         { "--unittest-stress",      &stressUnitTests,       &unitTestOptions },
         { "--no-windows-assert-ui", &quietWindowsAsserts,   nullptr },
-        // Add additional command line option flags here
+        //在对应位置处理参数逻辑
     };
 
     ParseCmdLineOptions(argc, argv, rgCmdLineOptions, std::size(rgCmdLineOptions), false);
@@ -178,6 +193,7 @@ int main(int argc, char *argv[])
         const DWORD dwMode = SetErrorMode(SEM_NOGPFAULTERRORBOX);
         SetErrorMode(dwMode | SEM_NOGPFAULTERRORBOX);
     }
+
 #endif // Q_OS_WIN
 #else
     CmdLineOpt_t rgCmdLineOptions[] = {
@@ -188,6 +204,7 @@ int main(int argc, char *argv[])
 
     QGCApplication app(argc, argv, runUnitTests || simpleBootTest);
 
+//捕获 Ctrl+C (SIGINT) 和终止信号 (SIGTERM)，优雅退出
 #ifdef Q_OS_LINUX
 #ifndef Q_OS_ANDROID
     std::signal(SIGINT, sigHandler);
@@ -195,10 +212,16 @@ int main(int argc, char *argv[])
 #endif
 #endif
 
-    app.init();
+    //预加载资源：在 app.init() 中异步加载重型资源，延迟初始化：非关键模块按需加载
+    app.init();//初始化日志系统、加载配置、创建主窗口等
 
     int exitCode = 0;
 
+
+    //添加新平台支持
+    //实现平台特定的初始化/清理逻辑
+    //条件编译：仅在调试版本或单元测试构建时启用。
+    //runTests：执行 Google Test 或 Qt Test 框架的测试用例。
 #ifdef QGC_UNITTEST_BUILD
     if (runUnitTests) {
         exitCode = runTests(stressUnitTests, unitTestOptions);
@@ -214,7 +237,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    app.shutdown();
+    app.shutdown();//清理资源，保存状态
 
     qDebug() << "Exiting main";
 

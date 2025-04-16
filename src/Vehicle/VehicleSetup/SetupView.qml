@@ -21,6 +21,7 @@ import QGroundControl.MultiVehicleManager
 Rectangle {
     id:     setupView
     color:  qgcPal.window
+    border.color: "#00ffffff"
     z:      QGroundControl.zOrderTopMost
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }

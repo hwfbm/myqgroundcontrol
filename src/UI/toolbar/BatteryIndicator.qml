@@ -22,24 +22,28 @@ import MAVLink
 
 //-------------------------------------------------------------------------
 //-- Battery Indicator
+// 实时显示电池状态：电压、百分比或两者同时显示
+// 支持多电池：通过 Repeater 动态生成每个电池的视觉指示
+// 交互功能：点击弹出详细电池信息面板
+// 阈值警告：根据用户设置的阈值（threshold1/threshold2）改变颜色提示
 Item {
     id:             control
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
     width:          batteryIndicatorRow.width
 
-    property bool       showIndicator:      true
-    property bool       waitForParameters:  false   // UI won't show until parameters are ready
+    property bool       showIndicator:      true//是否显示电池指示器（可通过配置关闭）
+    property bool       waitForParameters:  false   // 是否等待飞控参数加载完成后再显示 UI
     property Component  expandedPageComponent
 
-    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property var    _batterySettings:   QGroundControl.settingsManager.batteryIndicatorSettings
+    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle//当前活动的无人机对象（通过 multiVehicleManager 获取）
+    property var    _batterySettings:   QGroundControl.settingsManager.batteryIndicatorSettings//电池显示相关的用户设置（如显示模式、警告阈值）
     property Fact   _indicatorDisplay:  _batterySettings.valueDisplay
-    property bool   _showPercentage:    _indicatorDisplay.rawValue === 0
+    property bool   _showPercentage:    _indicatorDisplay.rawValue === 0  //是否显示百分比（根据 valueDisplay 设置）
     property bool   _showVoltage:       _indicatorDisplay.rawValue === 1
     property bool   _showBoth:          _indicatorDisplay.rawValue === 2
 
-    // Properties to hold the thresholds
+    // Properties to hold the thresholds用户配置的电量警告阈值（用于触发颜色变化）
     property int threshold1: _batterySettings.threshold1.rawValue
     property int threshold2: _batterySettings.threshold2.rawValue   
 
@@ -49,7 +53,7 @@ Item {
         anchors.bottom: parent.bottom
 
         Repeater {
-            model: _activeVehicle ? _activeVehicle.batteries : 0
+            model: control._activeVehicle ? control._activeVehicle.batteries : 0 //
 
             Loader {
                 anchors.top:        parent.top

@@ -13,15 +13,19 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 import QtQuick.Window
 
+//import "../QmlControls"  // 从UI目录返回到src，再进入QmlControls
 import QGroundControl
 import QGroundControl.Palette
+//import QGroundControl.Palette 1.0  // 标准 QGC 调色板模块
 import QGroundControl.Controls
 import QGroundControl.FactControls
 import QGroundControl.ScreenTools
 import QGroundControl.FlightDisplay
-import QGroundControl.FlightMap
+//import "../FlightMap"
+//import "../FlightDisplay"
 
 import QGroundControl.UTMSP
+
 
 /// @brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
@@ -193,6 +197,7 @@ ApplicationWindow {
 
 
     //弹出一个简易的提示框，比如用于提示错误、信息等
+    //动态实例化一个 QML 组件（simpleMessageDialogComponent），配置对话框的标题、内容、按钮等属性，并打开对话框。
     //默认按钮是 Dialog.Ok
     function showMessageDialog(dialogTitle, dialogText, buttons = Dialog.Ok, acceptFunction = null, closeFunction = null) {
         simpleMessageDialogComponent.createObject(mainWindow, { title: dialogTitle, text: dialogText, buttons: buttons, acceptFunction: acceptFunction, closeFunction: closeFunction }).open()
@@ -201,50 +206,61 @@ ApplicationWindow {
     // This variant is only meant to be called by QGCApplication
     function _showMessageDialog(dialogTitle, dialogText) {
         showMessageDialog(dialogTitle, dialogText)
-    }
+    }//这是一个内部封装的函数，专门用于展示消息对话框（如警告、错误等）
 
     //simpleMessageDialogComponent 是 QML 动态创建用的模板
+    //这里定义了一个 Component 类型，它不会直接在 UI 中渲染，而是作为模板供 Qt.createComponent() / Qt.createQmlObject() 动态实例化使用
     Component {
         id: simpleMessageDialogComponent
-
+//是 QGC 自定义的消息对话框，支持弹出文字提示，可能带有 OK/Cancel 按钮
         QGCSimpleMessageDialog {
         }
     }
 
     /// Saves main window position and size
+    //这个组件用于保存 mainWindow 的位置和大小信息。退出时保存，在下次打开 QGC 时自动还原窗口状态
     MainWindowSavedState {
         window: mainWindow
     }
 
-    property bool _forceClose: false
+    property bool _forceClose: false //标记位，配合关闭流程使用
+    //通过设置 _forceClose = true，确保即使某些检查没通过，也能强制关闭
 
+
+    //完成退出的最后一步
     function finishCloseProcess() {
-        _forceClose = true
+        _forceClose = true //强制关闭标记设为 true
         // For some reason on the Qml side Qt doesn't automatically disconnect a signal when an object is destroyed.
         // So we have to do it ourselves otherwise the signal flows through on app shutdown to an object which no longer exists.
-        firstRunPromptManager.clearNextPromptSignal()
-        QGroundControl.linkManager.shutdown()
-        QGroundControl.videoManager.stopVideo();
-        mainWindow.close()
+        firstRunPromptManager.clearNextPromptSignal() //手动断开 firstRunPromptManager 的信号连接，防止退出时触发已被销毁对象的槽
+        QGroundControl.linkManager.shutdown() //停止所有通信链路
+        QGroundControl.videoManager.stopVideo(); //停止视频流
+        mainWindow.close() //关闭主窗口，触发退出
     }
 
     // Check for things which should prevent the app from closing
     //  Returns true if it is OK to close
-    readonly property int _skipUnsavedMissionCheckMask: 0x01
-    readonly property int _skipPendingParameterWritesCheckMask: 0x02
-    readonly property int _skipActiveConnectionsCheckMask: 0x04
+    readonly property int _skipUnsavedMissionCheckMask: 0x01 //	跳过检查“未保存的任务”
+    readonly property int _skipPendingParameterWritesCheckMask: 0x02 //跳过检查“参数写入”
+    readonly property int _skipActiveConnectionsCheckMask: 0x04 //跳过检查“活跃链接”
     property int _closeChecksToSkip: 0
+
+    //关闭前的检查
+    //检查跳过项由 _closeChecksToSkip 决定，是一个 bitmask
     function performCloseChecks() {
+        //检查是否有未保存的任务（航线）
         if (!(_closeChecksToSkip & _skipUnsavedMissionCheckMask) && !checkForUnsavedMission()) {
             return false
         }
+        //检查是否有参数写入未完成
         if (!(_closeChecksToSkip & _skipPendingParameterWritesCheckMask) && !checkForPendingParameterWrites()) {
             return false
         }
+        //检查是否还有无人机连接，link是否还开着）
         if (!(_closeChecksToSkip & _skipActiveConnectionsCheckMask) && !checkForActiveConnections()) {
             return false
         }
-        finishCloseProcess()
+        finishCloseProcess()//检查都通过，调用 finishCloseProcess 完成关闭
         return true
     }
 
