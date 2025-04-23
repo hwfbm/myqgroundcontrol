@@ -43,6 +43,9 @@ include_directories(
     /Users/jzpfbm/Qt/6.8.3/macos/include
     /Users/jzpfbm/Qt/6.8.3/Src
 )
+include_directories(${CMAKE_SOURCE_DIR}/mavlink/battery)
+#${CMAKE_SOURCE_DIR}是CMake 的预定义变量，表示 顶层 CMakeLists.txt 文件所在的目录（即项目的根目录），如果项目在 /home/user/project，那么 ${CMAKE_SOURCE_DIR} 会被替换为该路径
+
 
 
 project(${QGC_APP_NAME}
@@ -210,6 +213,9 @@ find_package(Qt6
         Test
 )
 
+
+
+
 if(LINUX)
     find_package(Qt6 ${QT_MINIMUM_VERSION} COMPONENTS WaylandClient)
 endif()
@@ -306,11 +312,21 @@ endif()
 #               QGroundControl Target
 #######################################################
 
+
+#用于创建可执行文件
+#${CMAKE_PROJECT_NAME}	使用项目名称作为可执行文件名（即 QGroundControl）
+# WIN32	在 Windows 上构建为 GUI 应用程序（不显示控制台窗口）
+# MACOSX_BUNDLE	在 macOS 上构建为 .app 应用程序包
+#${QGC_RESOURCES}	包含项目的资源文件（通常是 Qt 的 .qrc 文件）
 qt_add_executable(${CMAKE_PROJECT_NAME}
     WIN32
     MACOSX_BUNDLE
     ${QGC_RESOURCES}
+    libs/qgroundcontrol/libs/mavlink/message_definitions/v1.0/battery.xml
 )
+# 或者直接对整个项目启用
+
+#qt_add_lupdate(PROJECT)  # 扫描整个项目的翻译字符串
 
 target_compile_definitions(${CMAKE_PROJECT_NAME}
     PRIVATE
@@ -484,6 +500,8 @@ if(QGC_CUSTOM_BUILD)
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_SOURCES})
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_LIBRARIES})
     target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DIRECTORIES})
+   # include_directories(${CMAKE_SOURCE_DIR}/mavlink/battery)
+
 endif()
 
 include(Install)
