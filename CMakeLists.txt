@@ -1,11 +1,13 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.25) #CMake 最小版本和模块路径
 
+#设置模块搜索路径，以便 include() 查找自定义 CMake 脚本。
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_SOURCE_DIR}/cmake
     ${CMAKE_SOURCE_DIR}/cmake/modules
     ${CMAKE_SOURCE_DIR}/cmake/find-modules
 )
 
+#默认使用 Release 模式（适用于单构建类型平台，如 Linux/macOS）
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release")
@@ -19,7 +21,7 @@ set(CMAKE_REQUIRED_QUIET ON)
 #######################################################
 
 include(CustomOptions)
-
+#如果项目目录下存在 custom 文件夹，则启用定制构建逻辑
 if(IS_DIRECTORY ${CMAKE_SOURCE_DIR}/custom)
     message(STATUS "Enabling custom build")
     set(QGC_CUSTOM_BUILD ON)
@@ -31,9 +33,12 @@ endif()
 #                   Project Info
 #######################################################
 
+
+
 # set(CMAKE_OSX_ARCHITECTURES "arm64")
 # set(CMAKE_OSX_SYSROOT "iphoneos")
-if(APPLE)
+
+if(APPLE) # macOS 相关配置，限定 macOS 的最小部署版本
     set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")
 endif()
 
@@ -54,7 +59,7 @@ project(${QGC_APP_NAME}
     HOMEPAGE_URL "https://qgroundcontrol.com/"
     LANGUAGES C CXX
 )
-
+# macOS 相关配置
 if(APPLE AND NOT IOS)
     set(MACOS TRUE)
 endif()
@@ -66,11 +71,13 @@ endif()
 include(GNUInstallDirs)
 include(FetchContent)
 include(CMakePrintHelpers)
-
-set(CMAKE_CXX_STANDARD 20)
+#基本构建配置
+set(CMAKE_CXX_STANDARD 20) #使用 C++20
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+#自动处理 Qt 的 moc
+#启用 Qt 的自动生成特性（AUTOMOC, AUTOUIC, AUTORCC 等）
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
@@ -87,6 +94,8 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     endif()
 endif()
 
+# 启用 CCache/SCCache（加速构建）
+# 可选启用 ccache 或 sccache 来加速编译过程
 if(QGC_USE_CACHE)
     if(CMAKE_HOST_UNIX)
         find_program(CCACHE_PROGRAM ccache)
@@ -160,7 +169,7 @@ if(QT_VERSION LESS QT_MINIMUM_VERSION)
     Installed version: ${QT_VERSION}")
 endif()
 
-add_compile_definitions(QT_DISABLE_DEPRECATED_UP_TO=0x060800)
+add_compile_definitions(QT_DISABLE_DEPRECATED_UP_TO=0x060800) #禁用旧 API
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_definitions(
@@ -177,7 +186,7 @@ set(QML_IMPORT_PATH ${CMAKE_SOURCE_DIR}/src)
 
 set(QT_QML_GENERATE_QMLLS_INI ON)
 
-
+#Qt6 模块查找与验证
 find_package(Qt6
     ${QT_MINIMUM_VERSION}
     REQUIRED
@@ -283,6 +292,8 @@ endif()
 
 # Note: Adding Resources to Library instead requires using Q_INIT_RESOURCE(qgcresources)
 
+
+#资源文件 (.qrc)，加载项目需要的 Qt 资源文件
 if(NOT QGC_CUSTOM_BUILD)
     # Custom builds can override the resources
     list(APPEND QGC_RESOURCES
@@ -318,17 +329,17 @@ endif()
 # WIN32	在 Windows 上构建为 GUI 应用程序（不显示控制台窗口）
 # MACOSX_BUNDLE	在 macOS 上构建为 .app 应用程序包
 #${QGC_RESOURCES}	包含项目的资源文件（通常是 Qt 的 .qrc 文件）
+#最终可执行文件生成：使用 Qt 的宏构建可执行文件，包含 .qrc 资源以及自定义的 battery.xml MAVLink 消息文件
 qt_add_executable(${CMAKE_PROJECT_NAME}
     WIN32
     MACOSX_BUNDLE
     ${QGC_RESOURCES}
-    libs/qgroundcontrol/libs/mavlink/message_definitions/v1.0/battery.xml
 )
 # 或者直接对整个项目启用
 
 #qt_add_lupdate(PROJECT)  # 扫描整个项目的翻译字符串
 
-target_compile_definitions(${CMAKE_PROJECT_NAME}
+target_compile_definitions(${CMAKE_PROJECT_NAME} # 定义宏常量
     PRIVATE
         QGC_APP_NAME="${QGC_APP_NAME}"
         QGC_ORG_NAME="${QGC_ORG_NAME}"
@@ -339,7 +350,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
 
 file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
 set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/i18n")
-qt_add_translations(${CMAKE_PROJECT_NAME}
+qt_add_translations(${CMAKE_PROJECT_NAME} # 添加翻译（.ts 文件）
     # TS_FILE_BASE ${CMAKE_PROJECT_NAME}
     # TS_FILE_DIR ${CMAKE_SOURCE_DIR}/translations/
     TS_FILES ${TS_SOURCES}
@@ -348,9 +359,9 @@ qt_add_translations(${CMAKE_PROJECT_NAME}
 )
 
 set_source_files_properties(resources/qtquickcontrols2.conf PROPERTIES QT_RESOURCE_ALIAS qtquickcontrols2.conf)
-qt_add_resources(${CMAKE_PROJECT_NAME} "app_res" FILES resources/qtquickcontrols2.conf)
+qt_add_resources(${CMAKE_PROJECT_NAME} "app_res" FILES resources/qtquickcontrols2.conf)  # 添加 Qt 资源（比如 qtquickcontrols2 配置）
 
-qt_import_plugins(${CMAKE_PROJECT_NAME}
+qt_import_plugins(${CMAKE_PROJECT_NAME} # 导入 Qt 插件
     INCLUDE Qt6::QSvgPlugin
     EXCLUDE_BY_TYPE geoservices
     INCLUDE_BY_TYPE sqldrivers Qt6::QSQLiteDriverPlugin
@@ -363,6 +374,7 @@ set_target_properties(${CMAKE_PROJECT_NAME}
 )
 
 if(WIN32)
+    #拷贝安装器相关资源（如 .msi, .nsi, .rc 等），设置图标和窗口属性
     # windows installer files shared with core and custom
     set(DEPLOY_WIN_FILES
         "${CMAKE_SOURCE_DIR}/deploy/windows/driver.msi"
@@ -394,7 +406,9 @@ if(WIN32)
             QT_TARGET_RC_ICONS "${QGC_WINDOWS_ICON_PATH}"
     )
     add_compile_definitions(_USE_MATH_DEFINES)
-elseif(MACOS)
+
+
+elseif(MACOS)#设置 MACOSX_BUNDLE 相关属性（比如图标、版本号、Bundle ID）
     set(MACOSX_BUNDLE_ICON_FILE "macx.icns")
     set(app_icon_macos "${QGC_MACOS_ICON_PATH}/macx.icns")
     set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
@@ -412,7 +426,11 @@ elseif(MACOS)
             MACOSX_BUNDLE_LONG_VERSION_STRING "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
             MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
     )
+
+
 elseif(IOS)
+    #设置 XCODE 的构建属性，例如 Info.plist、AppIcon、部署目标等
+    #调用 qt_add_ios_ffmpeg_libraries
     enable_language(OBJC)
 
     set(CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "14.0")
@@ -437,6 +455,8 @@ elseif(IOS)
     # set(QT_NO_FFMPEG_XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON)
     qt_add_ios_ffmpeg_libraries(${CMAKE_PROJECT_NAME})
 elseif(ANDROID)
+    #设置 Android ABI、版本号、包名、最小/目标 SDK
+    #计算并设置 ANDROID_VERSION_CODE 和 VERSION_NAME
     CPMAddPackage(
         NAME android_openssl
         URL https://github.com/KDAB/android_openssl/archive/refs/heads/master.zip
@@ -490,16 +510,18 @@ elseif(ANDROID)
     )
 endif()
 
-add_subdirectory(src)
+add_subdirectory(src) # 添加主代码目录
 
 if(QGC_BUILD_TESTING)
-    add_subdirectory(test)
+    add_subdirectory(test) # 添加测试目录（如果启用 QGC_BUILD_TESTING）
 endif()
 
+
+#自定义构建支持（插件化设计）
 if(QGC_CUSTOM_BUILD)
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_SOURCES})
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_LIBRARIES})
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DIRECTORIES})
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_SOURCES})  #添加自定义源文件
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_LIBRARIES})  # 添加自定义库
+    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DIRECTORIES}) # 添加包含目录
    # include_directories(${CMAKE_SOURCE_DIR}/mavlink/battery)
 
 endif()

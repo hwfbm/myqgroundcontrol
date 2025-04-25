@@ -1450,7 +1450,7 @@ endmacro()
 
 # registers a package that has been added to CPM
 #CPM.cmake 依赖管理工具中的核心注册机制，用于内部记录所有已添加的依赖包信息
-数据结构示例：假设注册两个包后
+#数据结构示例：假设注册两个包后
 # cmake
 # CPMRegisterPackage(fmt "10.0.0")
 # CPMRegisterPackage(catch2 "3.3.2")

@@ -7,8 +7,12 @@
  *
  ****************************************************************************/
 
+//处理 MAVLink 通信的核心模块
+
 #include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
+
+
 
 QGC_LOGGING_CATEGORY(QGCMAVLinkLog, "qgc.mavlink.qgcmavlink")
 
@@ -94,6 +98,10 @@ QList<QGCMAVLink::FirmwareClass_t> QGCMAVLink::allFirmwareClasses(void)
 
     return classes;
 }
+
+
+
+
 
 QList<QGCMAVLink::VehicleClass_t> QGCMAVLink::allVehicleClasses(void)
 {

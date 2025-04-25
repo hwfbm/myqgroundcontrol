@@ -8,7 +8,6 @@
  ****************************************************************************/
 
 #pragma once
-
 #include <QtCore/QList>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
@@ -20,6 +19,8 @@
 Q_DECLARE_LOGGING_CATEGORY(QGCMAVLinkLog)
 // Q_DECLARE_METATYPE(mavlink_message_t)
 Q_DECLARE_METATYPE(MAV_TYPE)
+
+
 Q_DECLARE_METATYPE(MAV_AUTOPILOT)
 
 // TODO: Q_NAMESPACE

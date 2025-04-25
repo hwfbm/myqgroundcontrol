@@ -60,6 +60,7 @@
 #ifdef QGC_UTM_ADAPTER
 #include "UTMSPVehicle.h"
 #include "UTMSPManager.h"
+
 #endif
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -74,6 +75,12 @@ QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 #define DEFAULT_LON -120.083923f
 #define SET_HOME_TERRAIN_ALT_MAX 10000
 #define SET_HOME_TERRAIN_ALT_MIN -500
+
+
+extern "C" {
+#include "battery/mavlink_msg_hydrogen_battery.h"
+}
+
 
 const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
 

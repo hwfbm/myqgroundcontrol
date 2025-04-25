@@ -778,12 +778,7 @@ bool LinkManager::isLinkUSBDirect(const LinkInterface *link)
     return false;
 }
 
-void LinkManager::resetMavlinkSigning()
-{
-    for (const SharedLinkInterfacePtr &sharedLink: _rgLinks) {
-        sharedLink->initMavlinkSigning();
-    }
-}
+
 
 #ifndef QGC_NO_SERIAL_LINK // Serial Only Functions
 
@@ -982,15 +977,6 @@ QStringList LinkManager::serialBaudRates()
     return SerialConfiguration::supportedBaudRates();
 }
 
-bool LinkManager::_isSerialPortConnected() const
-{
-    for (const SharedLinkInterfacePtr &link: _rgLinks) {
-        if (qobject_cast<const SerialLink*>(link.get())) {
-            return true;
-        }
-    }
 
-    return false;
-}
 
 #endif // QGC_NO_SERIAL_LINK
