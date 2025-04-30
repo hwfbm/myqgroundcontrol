@@ -778,6 +778,12 @@ bool LinkManager::isLinkUSBDirect(const LinkInterface *link)
     return false;
 }
 
+void LinkManager::resetMavlinkSigning()
+{
+    for (const SharedLinkInterfacePtr &sharedLink: _rgLinks) {
+        sharedLink->initMavlinkSigning();
+    }
+}
 
 
 #ifndef QGC_NO_SERIAL_LINK // Serial Only Functions

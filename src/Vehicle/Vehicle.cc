@@ -77,11 +77,6 @@ QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 #define SET_HOME_TERRAIN_ALT_MIN -500
 
 
-extern "C" {
-#include "battery/mavlink_msg_hydrogen_battery.h"
-}
-
-
 const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
 
 // Standard connected vehicle
@@ -549,6 +544,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_BATTERY_STATUS:
         _handleBatteryStatus(message);
         break;
+    case MAVLINK_MSG_ID_HYDROGEN_BATTERY:
+        _handleHydrogenBattery(message);//我加的协议
+        break;
     case MAVLINK_MSG_ID_SYS_STATUS:
         _handleSysStatus(message);
         break;
@@ -1015,20 +1013,24 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
     }
 }
 
-void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
+void Vehicle::_handleBatteryStatus(mavlink_message_t& message) //处理来自 MAVLink 协议的电池状态消息
 {
-    mavlink_battery_status_t batteryStatus;
-    mavlink_msg_battery_status_decode(&message, &batteryStatus);
+    mavlink_battery_status_t batteryStatus; //首先声明了一个 mavlink_battery_status_t 类型的变量
+    mavlink_msg_battery_status_decode(&message, &batteryStatus); //使用 mavlink_msg_battery_status_decode 函数从传入的消息中解码电池状态信息
 
+    //更新最低电池充电状态
+    // 这段代码检查一个哈希表（_lowestBatteryChargeStateAnnouncedMap）中是否已经记录了当前电池的 ID。如果没有，就将电池的充电状态添加到哈希表中
     if (!_lowestBatteryChargeStateAnnouncedMap.contains(batteryStatus.id)) {
         _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
     }
 
-    QString batteryMessage;
-
+    QString batteryMessage;//根据充电状态发送警告消息
+    // 这里使用 switch 语句根据电池的充电状态（batteryStatus.charge_state）来决定是否需要发送警告消息。
+    // batteryStatus.charge_state 是一个枚举值，表示电池的充电状态
+    //根据不同的充电状态发送警告消息
     switch (batteryStatus.charge_state) {
     case MAV_BATTERY_CHARGE_STATE_OK:
-        _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+        _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;//根据不同的充电状态执行不同的操作
         break;
     case MAV_BATTERY_CHARGE_STATE_LOW:
         if (batteryStatus.charge_state > _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id]) {
@@ -1062,6 +1064,8 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
         break;
     }
 
+    //如果 batteryMessage 不为空，说明至少有一个电池状态需要警告
+    //代码构建了一个警告消息，并使用 _say 函数显示警告。
     if (!batteryMessage.isEmpty()) {
         QString batteryIdStr("%1");
         if (_batteryFactGroupListModel.count() > 1) {
@@ -1070,9 +1074,24 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
             batteryIdStr = batteryIdStr.arg("");
         }
         _say(tr("warning"));
+        //_vehicleIdSpeech() 函数可能用于获取车辆的语音标识，batteryMessage 包含电池状态的描述，batteryIdStr 包含电池的 ID
         _say(QStringLiteral("%1 %2 ").arg(_vehicleIdSpeech()).arg(batteryMessage.arg(batteryIdStr)));
     }
 }
+
+void Vehicle::_handleHydrogenBattery(const mavlink_message_t& message) //我加的协议解析
+{
+    mavlink_hydrogen_battery_t hydrogenBatteryMsg;
+    mavlink_msg_hydrogen_battery_decode(&message, &hydrogenBatteryMsg);
+
+    qDebug() << "Received HYDROGEN_BATTERY:"
+             << "Voltage:" << hydrogenBatteryMsg.voltage
+             << "Current:" << hydrogenBatteryMsg.current
+             << "Temperature:" << hydrogenBatteryMsg.temperature;
+
+            // TODO: 后续可以在这里存到某个 FactGroup 或者更新界面
+}
+
 
 void Vehicle::_setHomePosition(QGeoCoordinate& homeCoord)
 {
