@@ -548,6 +548,9 @@ list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_SOURCE_DIR}/cmake/modules
     ${CMAKE_SOURCE_DIR}/cmake/find-modules
 )
+set(QT_QML_GENERATE_QMLLS_INI ON)
+
+
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
@@ -706,6 +709,7 @@ if(ANDROID)
     list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QGC_STABLE_BUILD QT_HOST_PATH)
 endif()
 
+
 find_package(Qt6
     ${QT_MINIMUM_VERSION}
     REQUIRED
@@ -740,6 +744,7 @@ find_package(Qt6
         SerialPort
         Test
 )
+
 
 if(LINUX)
     find_package(Qt6 ${QT_MINIMUM_VERSION} COMPONENTS WaylandClient)
@@ -806,6 +811,8 @@ endif()
 #######################################################
 
 # Note: Adding Resources to Library instead requires using Q_INIT_RESOURCE(qgcresources)
+# 确保 QML 语言服务器能识别模块
+
 
 if(NOT QGC_CUSTOM_BUILD)
     # Custom builds can override the resources

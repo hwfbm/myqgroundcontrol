@@ -14,6 +14,7 @@
 #include "MAVLinkLib.h"
 #include "MockConfiguration.h"
 #include "MockLinkMissionItemHandler.h"
+#include "mavlink_custom.h"
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
@@ -164,6 +165,7 @@ private:
     void _sendVibration();
     void _sendSysStatus();
     void _sendBatteryStatus();
+    void _sendHydrogenBatteryStatus();//我添加的mock battery
     void _sendChunkedStatusText(uint16_t chunkId, bool missingChunks);
     void _sendStatusTextMessages();
     void _respondWithAutopilotVersion();

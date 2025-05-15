@@ -61,6 +61,8 @@
 #include "UTMSPVehicle.h"
 #include "UTMSPManager.h"
 
+
+
 #endif
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -75,6 +77,7 @@ QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 #define DEFAULT_LON -120.083923f
 #define SET_HOME_TERRAIN_ALT_MAX 10000
 #define SET_HOME_TERRAIN_ALT_MIN -500
+
 
 
 const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
@@ -1068,9 +1071,11 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message) //处理来自 MA
     //代码构建了一个警告消息，并使用 _say 函数显示警告。
     if (!batteryMessage.isEmpty()) {
         QString batteryIdStr("%1");
+        //_batteryFactGroupListModel 中有多个电池状态（count() > 1），则将 batteryIdStr 替换为具体的电池 ID（batteryStatus.id）
         if (_batteryFactGroupListModel.count() > 1) {
             batteryIdStr = batteryIdStr.arg(batteryStatus.id);
         } else {
+            //如果只有一个电池状态，则将 batteryIdStr 替换为空字符串
             batteryIdStr = batteryIdStr.arg("");
         }
         _say(tr("warning"));
@@ -1085,9 +1090,9 @@ void Vehicle::_handleHydrogenBattery(const mavlink_message_t& message) //我加�
     mavlink_msg_hydrogen_battery_decode(&message, &hydrogenBatteryMsg);
 
     qDebug() << "Received HYDROGEN_BATTERY:"
-             << "Voltage:" << hydrogenBatteryMsg.voltage
-             << "Current:" << hydrogenBatteryMsg.current
-             << "Temperature:" << hydrogenBatteryMsg.temperature;
+             << "Voltage:" << hydrogenBatteryMsg.bat_voltage
+             << "Current:" << hydrogenBatteryMsg.servo_current
+             << "Temperature:" << hydrogenBatteryMsg.pcb_temp;
 
             // TODO: 后续可以在这里存到某个 FactGroup 或者更新界面
 }

@@ -1,90 +1,180 @@
 {
-    "version":      1,
-    "fileType":     "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":             "id",
-    "shortDesc":        "Battery Id",
-    "type":             "uint8"
-},
-{
-    "name":             "batteryFunction",
-    "shortDesc":        "Battery Function",
-    "type":             "uint8",
-    "enumStrings":      "n/a,All Flight Systems,Propulsion,Avionics,Payload",
-    "enumValues":       "0,1,2,3,4",
-    "decimalPlaces":    0
-},
-{
-    "name":             "batteryType",
-    "shortDesc":        "Battery Type",
-    "type":             "uint8",
-    "enumStrings":      "n/a,LIPO,LIFE,LION,NIMH",
-    "enumValues":       "0,1,2,3,4",
-    "decimalPlaces":    0
-},
-{
-    "name":             "voltage",
-    "shortDesc":        "Voltage",
-    "type":             "double",
-    "decimalPlaces":    2,
-    "units":            "v"
-},
-{
-    "name":             "percentRemaining",
-    "shortDesc":        "Percent",
-    "type":             "double",
-    "decimalPlaces":    0,
-    "units":            "%"
-},
-{
-    "name":             "mahConsumed",
-    "shortDesc":        "Consumed",
-    "type":             "double",
-    "decimalPlaces":    0,
-    "units":            "mAh"
-},
-{
-    "name":             "current",
-    "shortDesc":        "Current",
-    "type":             "double",
-    "decimalPlaces":    2,
-    "units":            "A"
-},
-{
-    "name":             "temperature",
-    "shortDesc":        "Temperature",
-    "type":             "double",
-    "decimalPlaces":    0,
-    "units":            "C"
-},
-{
-    "name":             "instantPower",
-    "shortDesc":        "Watts",
-    "type":             "double",
-    "decimalPlaces":    2,
-    "units":            "W"
-},
-{
-    "name":             "timeRemaining",
-    "shortDesc":        "Time Remaining",
-    "type":             "double",
-    "decimalPlaces":    0,
-    "units":            "s"
-},
-{
-    "name":             "timeRemainingStr",
-    "shortDesc":        "Time Remaining",
-    "type":             "string"
-},
-{
-    "name":             "chargeState",
-    "shortDesc":        "Charge State",
-    "type":             "uint8",
-    "enumStrings":      "n/a,Ok,Low,Critical,Emergency,Failed,Unhealthy,Charging",
-    "enumValues":       "0,1,2,3,4,5,6,7",
-    "decimalPlaces":    0
-}
-]
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "id",
+            "shortDesc": "Battery Id",
+            "type": "uint8"
+        },
+        {
+            "name": "batteryFunction",
+            "shortDesc": "Battery Function",
+            "type": "uint8",
+            "enumStrings": "n/a,All Flight Systems,Propulsion,Avionics,Payload",
+            "enumValues": "0,1,2,3,4",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "batteryType",
+            "shortDesc": "Battery Type",
+            "type": "uint8",
+            "enumStrings": "n/a,LIPO,LIFE,LION,NIMH",
+            "enumValues": "0,1,2,3,4",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "voltage",
+            "shortDesc": "Voltage",
+            "type": "double",
+            "decimalPlaces": 2,
+            "units": "v"
+        },
+        {
+            "name": "percentRemaining",
+            "shortDesc": "Percent",
+            "type": "double",
+            "decimalPlaces": 0,
+            "units": "%"
+        },
+        {
+            "name": "mahConsumed",
+            "shortDesc": "Consumed",
+            "type": "double",
+            "decimalPlaces": 0,
+            "units": "mAh"
+        },
+        {
+            "name": "current",
+            "shortDesc": "Current",
+            "type": "double",
+            "decimalPlaces": 2,
+            "units": "A"
+        },
+        {
+            "name": "temperature",
+            "shortDesc": "Temperature",
+            "type": "double",
+            "decimalPlaces": 0,
+            "units": "C"
+        },
+        {
+            "name": "instantPower",
+            "shortDesc": "Watts",
+            "type": "double",
+            "decimalPlaces": 2,
+            "units": "W"
+        },
+        {
+            "name": "timeRemaining",
+            "shortDesc": "Time Remaining",
+            "type": "double",
+            "decimalPlaces": 0,
+            "units": "s"
+        },
+        {
+            "name": "timeRemainingStr",
+            "shortDesc": "Time Remaining",
+            "type": "string"
+        },
+        {
+            "name": "chargeState",
+            "shortDesc": "Charge State",
+            "type": "uint8",
+            "enumStrings": "n/a,Ok,Low,Critical,Emergency,Failed,Unhealthy,Charging",
+            "enumValues": "0,1,2,3,4,5,6,7",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "bat_voltage",
+            "shortDesc": "Battery Voltage",
+            "type": "uint16",
+            "units": "mV",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "hydroId",
+            "shortDesc": "Battery hydroId",
+            "type": "uint8",
+            "enumStrings": "电堆1,电堆2",
+            "enumValues": "0,1",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "servo_current",
+            "shortDesc": "Servo Current",
+            "type": "uint16",
+            "units": "mA",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "stack_voltage",
+            "shortDesc": "Stack Voltage",
+            "type": "uint16",
+            "units": "mV",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "servo_voltage",
+            "shortDesc": "Servo Voltage",
+            "type": "uint16",
+            "units": "mV",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "bat_refuel_current",
+            "shortDesc": "Battery Refuel Current",
+            "type": "uint16",
+            "units": "mA",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "gas_tank_pressure",
+            "shortDesc": "Gas Tank Pressure",
+            "type": "uint16",
+            "units": "Pa",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "pipe_pressure",
+            "shortDesc": "Pipe Pressure",
+            "type": "uint16",
+            "units": "Pa",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "pcb_temp",
+            "shortDesc": "PCB Temperature",
+            "type": "int8",
+            "units": "°C",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "stack_temp",
+            "shortDesc": "Stack Temperature",
+            "type": "int8",
+            "units": "°C",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "work_status",
+            "shortDesc": "Work Status",
+            "type": "uint8",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "fault_status",
+            "shortDesc": "Fault Status",
+            "type": "uint8",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "self_check",
+            "shortDesc": "Self-check Result",
+            "type": "uint8",
+            "enumStrings": "未通过,已通过",
+            "enumValues": "0,1",
+            "decimalPlaces": 0
+        }
+    ]
 }

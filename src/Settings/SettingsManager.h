@@ -7,7 +7,7 @@
  *
  ****************************************************************************/
 
-#pragma once
+#pragma once// #pragma once 确保头文件只被包含一次
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
@@ -35,7 +35,11 @@ class VideoSettings;
 class Viewer3DSettings;
 class MavlinkSettings;
 
-Q_DECLARE_LOGGING_CATEGORY(SettingsManagerLog)
+
+
+//定义了一个名为 SettingsManager 的类，它是一个单例类，用于集中管理 QGroundControl 应用程序中的所有设置。
+//SettingsManager 提供了一个统一的接口，用于访问和操作各种设置类，这些设置类涵盖了从电池指示器到飞行模式、地图设置等多个方面
+Q_DECLARE_LOGGING_CATEGORY(SettingsManagerLog) //定义了一个日志类别 SettingsManagerLog，用于记录与 SettingsManager 相关的日志信息
 
 /// Provides access to all app settings
 class SettingsManager : public QObject
@@ -43,7 +47,7 @@ class SettingsManager : public QObject
     Q_OBJECT
     // QML_ELEMENT
     // QML_UNCREATABLE("")
-    Q_MOC_INCLUDE("ADSBVehicleManagerSettings.h")
+    Q_MOC_INCLUDE("ADSBVehicleManagerSettings.h") //Q_MOC_INCLUDE 宏确保 Qt 的元对象系统（MOC）能够处理这些头文件，使得这些设置类可以在 QML 中使用
 #ifndef QGC_NO_ARDUPILOT_DIALECT
     Q_MOC_INCLUDE("APMMavlinkStreamRateSettings.h")
 #endif
@@ -97,11 +101,14 @@ public:
     SettingsManager(QObject *parent = nullptr);
     ~SettingsManager();
 
-    static SettingsManager *instance();
-    static void registerQmlTypes();
+    static SettingsManager *instance(); //返回 SettingsManager 的单例实例
+    static void registerQmlTypes(); //注册 QML 类型，使得设置类可以在 QML 中使用
 
-    void init();
+    void init(); //初始化方法，可能用于加载默认设置或初始化设置类
 
+
+    //设置类访问方法
+    //提供了多个方法，用于获取不同类型的设置对象。这些方法返回对应的设置类实例，允许用户访问和修改设置
     ADSBVehicleManagerSettings *adsbVehicleManagerSettings() const;
 #ifndef QGC_NO_ARDUPILOT_DIALECT
     APMMavlinkStreamRateSettings *apmMavlinkStreamRateSettings() const;
@@ -129,6 +136,7 @@ public:
 #endif
 
 private:
+    //私有成员变量用于存储设置类的实例。这些变量在构造函数中初始化，并在析构函数中清理
     ADSBVehicleManagerSettings *_adsbVehicleManagerSettings = nullptr;
 #ifndef QGC_NO_ARDUPILOT_DIALECT
     APMMavlinkStreamRateSettings *_apmMavlinkStreamRateSettings = nullptr;

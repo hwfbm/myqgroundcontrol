@@ -452,6 +452,42 @@ void MockLink::_sendBatteryStatus()
         0, // MAV_BATTERY_MODE
         0  // MAV_BATTERY_FAULT
     );
+    _sendHydrogenBatteryStatus(); // 发出自定义的消息
+    respondWithMavlinkMessage(msg);
+
+}
+
+void MockLink::_sendHydrogenBatteryStatus()
+{
+    mavlink_message_t msg{};
+    mavlink_hydrogen_battery_t hydrogenBattery{};
+
+            // 填写模拟数据
+    hydrogenBattery.id = 0;
+    hydrogenBattery.self_check = 1;
+    hydrogenBattery.stack_voltage = 48;
+    hydrogenBattery.pipe_pressure = 120;
+    hydrogenBattery.servo_voltage = 5;
+    hydrogenBattery.servo_current = 20;
+    hydrogenBattery.bat_voltage = 24;
+    hydrogenBattery.bat_refuel_current = 800;
+    hydrogenBattery.gas_tank_pressure = 105;
+    hydrogenBattery.pcb_temp = 25;
+    hydrogenBattery.stack_temp = 40;
+    hydrogenBattery.work_status = 1;
+    hydrogenBattery.fault_status = 0;
+
+            // 打包消息（使用你的自定义 msg 编码函数）
+
+    mavlink_msg_hydrogen_battery_encode(
+        _vehicleSystemId,
+        _vehicleComponentId,
+        &msg,
+        &hydrogenBattery
+        );
+  qDebug() << "发的自定义MAVLink消息，ID:" << msg.msgid;
+    qDebug()<<"发了自定义mock消息哦";
+
     respondWithMavlinkMessage(msg);
 }
 

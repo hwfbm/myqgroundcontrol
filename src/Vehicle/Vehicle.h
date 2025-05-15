@@ -149,7 +149,7 @@ public:
     Q_ENUM(CheckList) //Q_ENUM 宏用于使枚举类型 CheckList 可以被 Qt 的元对象系统识别，从而可以在 QML 中使用
 
 
-    //对于使用 CONSTANT 标记的属性，它们通常不需要在构造函数中初始化，因为它们的值在编译时就已经确定，且不会改变
+    //对于使用 CONSTANT 标记的属性，它们通常不需要在构造函数中初始化，因为它们的值在编译时就已经确定，且不会改变，如果是指针，表示：属性指针本身（即 _batteryFactGroupListModel 的地址）在对象生命周期内不变
     Q_PROPERTY(int                  id                          READ id                                                             CONSTANT) //车辆的唯一标识符
     Q_PROPERTY(AutoPilotPlugin*     autopilotPlugin             MEMBER _autopilotPlugin                                             CONSTANT) //自动飞行插件对象。
     Q_PROPERTY(QGeoCoordinate       coordinate                  READ coordinate                                                     NOTIFY coordinateChanged)//地理位置坐标
@@ -685,6 +685,8 @@ public:
     Q_INVOKABLE void sendCommand(int compId, int command, bool showError, double param1 = 0.0, double param2 = 0.0, double param3 = 0.0, double param4 = 0.0, double param5 = 0.0, double param6 = 0.0, double param7 = 0.0);
 
 
+
+
     //功能：定义命令失败的不同原因
     // MavCmdResultCommandResultOnly：命令结果仅指定成功/失败信息。
     // MavCmdResultFailureNoResponseToCommand：命令没有收到响应。
@@ -694,6 +696,10 @@ public:
         MavCmdResultFailureNoResponseToCommand, ///< No response from vehicle to command
         MavCmdResultFailureDuplicateCommand,    ///< Unable to send command since duplicate is already being waited on for response
     } MavCmdResultFailureCode_t;
+
+
+
+
 
     /// Callback for sendMavCommandWithHandler which handles MAV_RESULT_IN_PROGRESS acks
     ///     @param progressHandlerData  Opaque data passed in to sendMavCommand call
@@ -1249,13 +1255,29 @@ private slots:
         mavlink_message_t           message;
     } RequestMessageInfo_t;
 
-    QMap<int /* compId */, QMap<int /* msgId */, RequestMessageInfo_t*>> _requestMessageInfoMap; // Map of all request message calls currently waiting on a response
+    QMap<int /* compId */, QMap<int /* msgId */, RequestMessageInfo_t*>> _requestMessageInfoMap; //这是一个嵌套的映射表，用于管理当前正在等待响应的 MAVLink 消息请求，RequestMessageInfo_t 是之前定义的结构体，用于存储请求消息的相关信息， Map of all request message calls currently waiting on a response
 
-    void _removeRequestMessageInfo(int compId, int msgId);
+    void _removeRequestMessageInfo(int compId, int msgId); //这是一个成员函数，用于从 _requestMessageInfoMap 中移除指定的请求消息信息。它通过组件 ID 和消息 ID 定位到对应的条目并将其删除
 
-    static void _requestMessageCmdResultHandler             (void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
-    static void _requestMessageWaitForMessageResultHandler  (void* resultHandlerData, bool noResponsefromVehicle, const mavlink_message_t& message);
+    static void _requestMessageCmdResultHandler             (void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);//这是一个静态回调函数，用于处理 MAVLink 命令的确认（ACK）结果，resultHandlerData：用户提供的不透明数据，compId：组件 ID，ack：MAVLink 的 COMMAND_ACK 消息，包含命令确认的结果，failureCode：命令失败的错误代码（如果失败）
+    static void _requestMessageWaitForMessageResultHandler  (void* resultHandlerData, bool noResponsefromVehicle, const mavlink_message_t& message);//这是一个静态回调函数，用于处理等待 MAVLink 消息的结果，resultHandlerData：用户提供的不透明数据，noResponsefromVehicle：布尔值，表示是否从无人机收到响应。message：接收到的 MAVLink 消息
 
+
+
+    // MAVLink 命令列表条目
+    // MavCommandListEntry_t：这是一个结构体，用于存储 MAVLink 命令的详细信息：包括目标组件 ID、命令类型、参数、重试次数、超时时间等，这种结构体通常用于构建命令队列，支持命令的发送、确认和重试机制
+
+    // targetCompId：目标组件 ID，默认值为 MAV_COMP_ID_AUTOPILOT1（通常是飞行控制器）。
+    // useCommandInt：布尔值，表示是否使用整数参数的命令格式。
+    // command：MAVLink 命令的类型（如 MAV_CMD_NAV_WAYPOINT）。
+    // frame：命令的坐标系（如 MAV_FRAME_GLOBAL_RELATIVE_ALT）。
+    // rgParam1 到 rgParam7：命令的参数，具体含义取决于命令类型。
+    // showError：布尔值，表示是否显示错误信息。
+    // ackHandlerInfo：用于处理命令确认（ACK）的回调信息。
+    // maxTries：最大重试次数，默认值为 _mavCommandMaxRetryCount。
+    // tryCount：当前重试次数。
+    // elapsedTimer：计时器，用于记录命令发送后的时间。
+    // ackTimeoutMSecs：命令确认的超时时间，默认值为 _mavCommandAckTimeoutMSecs。
     typedef struct MavCommandListEntry {
         int                     targetCompId        = MAV_COMP_ID_AUTOPILOT1;
         bool                    useCommandInt       = false;
@@ -1276,136 +1298,170 @@ private slots:
         int                     ackTimeoutMSecs     = _mavCommandAckTimeoutMSecs;
     } MavCommandListEntry_t;
 
-    QList<MavCommandListEntry_t>    _mavCommandList;
-    QTimer                          _mavCommandResponseCheckTimer;
-    static const int                _mavCommandMaxRetryCount                = 3;
-    static const int                _mavCommandResponseCheckTimeoutMSecs    = 500;
-    static const int                _mavCommandAckTimeoutMSecs              = 3000;
-    static const int                _mavCommandAckTimeoutMSecsHighLatency   = 120000;
 
+
+
+    QList<MavCommandListEntry_t>    _mavCommandList; //一个列表，用于存储待发送的 MAVLink 命令条目，每个条目包含命令的详细信息，如目标组件 ID、命令类型、参数等
+    QTimer                          _mavCommandResponseCheckTimer;//一个定时器，用于定期检查 MAVLink 命令的响应情况
+    static const int                _mavCommandMaxRetryCount                = 3;//命令的最大重试次数，默认为 3 次
+    static const int                _mavCommandResponseCheckTimeoutMSecs    = 500;//检查命令响应的超时时间，默认为 500 毫秒
+    static const int                _mavCommandAckTimeoutMSecs              = 3000;//命令确认（ACK）的超时时间，默认为 3000 毫秒。
+    static const int                _mavCommandAckTimeoutMSecsHighLatency   = 120000; //在高延迟情况下，命令确认ACK）的超时时间，默认为 120000 毫秒（2 分钟）
+
+
+
+    //一个工作函数，用于实际发送 MAVLink 命令
+    // commandInt：是否使用整数参数的命令格式。
+    // showError：是否显示错误信息。
+    // ackHandlerInfo：ACK 回调信息，如果为 nullptr，表示没有回调。
+    // compId：目标组件 ID。
+    // command：命令类型。
+    // frame：命令的坐标系。
+    // param1 到 param7：命令的参数。
     void _sendMavCommandWorker  (
             bool commandInt, bool showError, 
             const MavCmdAckHandlerInfo_t* ackHandlerInfo,   ///> nullptr to signale no handlers
             int compId, MAV_CMD command, MAV_FRAME frame, 
             float param1, float param2, float param3, float param4, double param5, double param6, float param7);
-    void _sendMavCommandFromList(int index);
-    int  _findMavCommandListEntryIndex(int targetCompId, MAV_CMD command);
-    bool _sendMavCommandShouldRetry(MAV_CMD command);
-    bool _commandCanBeDuplicated(MAV_CMD command);
 
-    QMap<uint8_t /* batteryId */, uint8_t /* MAV_BATTERY_CHARGE_STATE_OK */> _lowestBatteryChargeStateAnnouncedMap;
 
-    float _altitudeTuningOffset = qQNaN(); // altitude offset, so the plotted value is around 0
+    void _sendMavCommandFromList(int index);//从 _mavCommandList 中发送指定索引的命令
+    int  _findMavCommandListEntryIndex(int targetCompId, MAV_CMD command);//在 _mavCommandList 中查找指定目标组件 ID 和命令类型的条目索引
+    bool _sendMavCommandShouldRetry(MAV_CMD command);//判断是否应该重试发送某个命令
+    bool _commandCanBeDuplicated(MAV_CMD command);//判断某个命令是否可以重复发送
+
+
+    //电池状态管理
+    QMap<uint8_t /* batteryId */, uint8_t /* MAV_BATTERY_CHARGE_STATE_OK */> _lowestBatteryChargeStateAnnouncedMap;//一个映射表，用于记录每个电池 ID 的最低充电状态（MAV_BATTERY_CHARGE_STATE_OK），这可能用于监控电池健康状态并通知用户。
+
+
+    //高度调整
+    float _altitudeTuningOffset = qQNaN(); //高度调整偏移量，用于将高度值调整到接近 0 的范围。初始值为 qQNaN（表示不是一个数字） altitude offset, so the plotted value is around 0
 
     // these flags are used to determine if the speed change action from fly view should be shown
-    bool _multirotor_speed_limits_available = false;
-    bool _fixed_wing_airspeed_limits_available = false;
+    bool _multirotor_speed_limits_available = false; //布尔值，表示多旋翼的速度限制是否可用
+    bool _fixed_wing_airspeed_limits_available = false;//表示固定翼的空速限制是否可用
+
 
     // FactGroup facts
+    //这些常量字符串定义了不同的参数组（FactGroup）名称，用于组织和管理无人机的各种状态和参数
+    const QString _settingsGroup =               QStringLiteral("Vehicle%1");        // 用于存储车辆设置的组名，其中 %1 会被替换为 MAVLink 系统 ID，%1 replaced with mavlink system id
+    const QString _joystickEnabledSettingsKey =  QStringLiteral("JoystickEnabled");  //用于存储是否启用操纵杆的设置键
 
-    const QString _settingsGroup =               QStringLiteral("Vehicle%1");        // %1 replaced with mavlink system id
-    const QString _joystickEnabledSettingsKey =  QStringLiteral("JoystickEnabled");
-
-    const QString _vehicleFactGroupName =            QStringLiteral("vehicle");
-    const QString _gpsFactGroupName =                QStringLiteral("gps");
+    const QString _vehicleFactGroupName =            QStringLiteral("vehicle");  //车辆相关参数
+    const QString _gpsFactGroupName =                QStringLiteral("gps"); //GPS 相关参数
     const QString _gps2FactGroupName =               QStringLiteral("gps2");
-    const QString _windFactGroupName =               QStringLiteral("wind");
-    const QString _vibrationFactGroupName =          QStringLiteral("vibration");
-    const QString _temperatureFactGroupName =        QStringLiteral("temperature");
-    const QString _clockFactGroupName =              QStringLiteral("clock");
-    const QString _setpointFactGroupName =           QStringLiteral("setpoint");
-    const QString _distanceSensorFactGroupName =     QStringLiteral("distanceSensor");
+    const QString _windFactGroupName =               QStringLiteral("wind");//风速相关参数
+    const QString _vibrationFactGroupName =          QStringLiteral("vibration");//振动相关参数
+    const QString _temperatureFactGroupName =        QStringLiteral("temperature");//温度相关参数
+    const QString _clockFactGroupName =              QStringLiteral("clock");//时钟相关参数
+    const QString _setpointFactGroupName =           QStringLiteral("setpoint");//目标点相关参数
+    const QString _distanceSensorFactGroupName =     QStringLiteral("distanceSensor");//距离传感器相关参数
     const QString _localPositionFactGroupName =      QStringLiteral("localPosition");
-    const QString _localPositionSetpointFactGroupName = QStringLiteral("localPositionSetpoint");
-    const QString _escStatusFactGroupName =          QStringLiteral("escStatus");
-    const QString _estimatorStatusFactGroupName =    QStringLiteral("estimatorStatus");
-    const QString _terrainFactGroupName =            QStringLiteral("terrain");
-    const QString _hygrometerFactGroupName =         QStringLiteral("hygrometer");
-    const QString _generatorFactGroupName =          QStringLiteral("generator");
-    const QString _efiFactGroupName =                QStringLiteral("efi");
-    const QString _rpmFactGroupName =                QStringLiteral("rpm");
+    const QString _localPositionSetpointFactGroupName = QStringLiteral("localPositionSetpoint");//局部位置相关参数
+    const QString _escStatusFactGroupName =          QStringLiteral("escStatus");//电子调速器（ESC）状态
+    const QString _estimatorStatusFactGroupName =    QStringLiteral("estimatorStatus");//估计器状态
+    const QString _terrainFactGroupName =            QStringLiteral("terrain");//地形相关参数
+    const QString _hygrometerFactGroupName =         QStringLiteral("hygrometer");//湿度计相关参数
+    const QString _generatorFactGroupName =          QStringLiteral("generator");//发电机相关参数
+    const QString _efiFactGroupName =                QStringLiteral("efi");//电子燃油喷射（EFI）相关参数
+    const QString _rpmFactGroupName =                QStringLiteral("rpm");//转速相关参数
 
-    VehicleFactGroup*               _vehicleFactGroup;
-    VehicleGPSFactGroup             _gpsFactGroup;
-    VehicleGPS2FactGroup            _gps2FactGroup;
-    VehicleWindFactGroup            _windFactGroup;
-    VehicleVibrationFactGroup       _vibrationFactGroup;
-    VehicleTemperatureFactGroup     _temperatureFactGroup;
-    VehicleClockFactGroup           _clockFactGroup;
-    VehicleSetpointFactGroup        _setpointFactGroup;
-    VehicleDistanceSensorFactGroup  _distanceSensorFactGroup;
-    VehicleLocalPositionFactGroup   _localPositionFactGroup;
-    VehicleLocalPositionSetpointFactGroup _localPositionSetpointFactGroup;
-    VehicleEscStatusFactGroup       _escStatusFactGroup;
-    VehicleEstimatorStatusFactGroup _estimatorStatusFactGroup;
-    VehicleHygrometerFactGroup      _hygrometerFactGroup;
-    VehicleGeneratorFactGroup       _generatorFactGroup;
-    VehicleEFIFactGroup             _efiFactGroup;
-    VehicleRPMFactGroup             _rpmFactGroup;
-    TerrainFactGroup                _terrainFactGroup;
-    QmlObjectListModel              _batteryFactGroupListModel;
 
-    TerrainProtocolHandler* _terrainProtocolHandler = nullptr;
+    //这些变量定义了一系列的“FactGroup”对象，用于管理无人机的各种状态和传感器数据。
+    VehicleFactGroup*               _vehicleFactGroup;//管理与无人机整体状态相关的数据，例如飞行模式、电池状态等
+    VehicleGPSFactGroup             _gpsFactGroup;//管理 GPS 数据，管理 GPS 数据，例如经纬度、高度、卫星数量等
+    VehicleGPS2FactGroup            _gps2FactGroup;//管理第二个 GPS 模块的数据（如果无人机配备了多个 GPS 模块）
+    VehicleWindFactGroup            _windFactGroup;//管理风速数据
+    VehicleVibrationFactGroup       _vibrationFactGroup;//管理振动数据
+    VehicleTemperatureFactGroup     _temperatureFactGroup;//管理温度数据
+    VehicleClockFactGroup           _clockFactGroup;//管理时钟相关数据，例如系统时间和时间同步状态
+    VehicleSetpointFactGroup        _setpointFactGroup;//管理目标点（Setpoint）数据，例如目标位置、速度等
+    VehicleDistanceSensorFactGroup  _distanceSensorFactGroup;//管理距离传感器数据，例如障碍物距离
+    VehicleLocalPositionFactGroup   _localPositionFactGroup;//管理局部位置数据，例如相对于起飞点的位置
+    VehicleLocalPositionSetpointFactGroup _localPositionSetpointFactGroup; //管理局部位置目标点数据，例如目标局部位置
+    VehicleEscStatusFactGroup       _escStatusFactGroup;//管理电子调速器（ESC）状态，例如电机转速和电流
+    VehicleEstimatorStatusFactGroup _estimatorStatusFactGroup;//管理估计器状态，例如位置估计精度和传感器偏差
+    VehicleHygrometerFactGroup      _hygrometerFactGroup;//管理湿度计数据，例如湿度
+    VehicleGeneratorFactGroup       _generatorFactGroup;//管理发电机状态，例如发电机输出功率
+    VehicleEFIFactGroup             _efiFactGroup;//管理电子燃油喷射（EFI）数据，例如燃油流量
+    VehicleRPMFactGroup             _rpmFactGroup; //管理转速数据，例如发动机转速
+    TerrainFactGroup                _terrainFactGroup;//管理地形数据，例如地形高度
 
-    MissionManager*                 _missionManager             = nullptr;
-    GeoFenceManager*                _geoFenceManager            = nullptr;
-    RallyPointManager*              _rallyPointManager          = nullptr;
-    VehicleLinkManager*             _vehicleLinkManager         = nullptr;
-    FTPManager*                     _ftpManager                 = nullptr;
-    InitialConnectStateMachine*     _initialConnectStateMachine = nullptr;
-    Actuators*                      _actuators                  = nullptr;
-    RemoteIDManager*                _remoteIDManager            = nullptr;
-    StandardModes*                  _standardModes              = nullptr;
+    QmlObjectListModel              _batteryFactGroupListModel;//用于管理电池状态的列表模型。这可能是一个 QML 可用的模型，用于在用户界面中显示电池信息
 
+    TerrainProtocolHandler* _terrainProtocolHandler = nullptr; //地形协议处理器，指向 TerrainProtocolHandler 对象，用于处理地形数据的协议交互。这可能涉及从服务器获取地形高度等操作。
+
+    MissionManager*                 _missionManager             = nullptr;  //管理无人机的任务（如航线规划和执行）
+    GeoFenceManager*                _geoFenceManager            = nullptr;  //管理地理围栏（GeoFence），用于限制无人机的飞行区域
+    RallyPointManager*              _rallyPointManager          = nullptr;  //管理集结点（Rally Point），用于定义无人机在特定情况下的返回点
+    VehicleLinkManager*             _vehicleLinkManager         = nullptr;  //管理无人机的通信链路，例如 Wi-Fi、串口或无线电链路
+    FTPManager*                     _ftpManager                 = nullptr;  //管理文件传输协议（FTP）相关的操作，可能用于上传或下载固件、日志文件等
+    InitialConnectStateMachine*     _initialConnectStateMachine = nullptr;  //初始化状态机，用于管理无人机的初始连接状态，例如连接过程中的各个阶段
+
+    // 执行器与模式管理器
+    Actuators*                      _actuators                  = nullptr;//_actuators：管理无人机的执行器（如电机、舵机等）
+    RemoteIDManager*                _remoteIDManager            = nullptr;//_remoteIDManager：管理远程识别（Remote ID）相关的功能，可能用于无人机的远程识别和跟踪
+    StandardModes*                  _standardModes              = nullptr;//管理无人机的标准飞行模式
+
+
+
+    //地形查询成员
     // Terrain query members, used to get terrain altitude for doSetHome()
-    TerrainAtCoordinateQuery*   _currentDoSetHomeTerrainAtCoordinateQuery = nullptr;
-    QGeoCoordinate              _doSetHomeCoordinate;
+    TerrainAtCoordinateQuery*   _currentDoSetHomeTerrainAtCoordinateQuery = nullptr;  //指向当前正在进行的“设置家点”（doSetHome）地形查询对象
+    QGeoCoordinate              _doSetHomeCoordinate; //存储“设置家点”的地理坐标
 
     // Terrain query members, used to get altitude above terrain Fact
-    QElapsedTimer               _altitudeAboveTerrQueryTimer;
-    TerrainAtCoordinateQuery*   _altitudeAboveTerrTerrainAtCoordinateQuery = nullptr;
+    QElapsedTimer               _altitudeAboveTerrQueryTimer;//用于记录地形查询的时间
+    TerrainAtCoordinateQuery*   _altitudeAboveTerrTerrainAtCoordinateQuery = nullptr;//指向当前正在进行的“地形上方高度”查询对象
+
     // We use this to limit above terrain altitude queries based on distance and altitude change
+    //用于记录上次查询的地理坐标和相对高度，以便限制重复查询
     QGeoCoordinate              _altitudeAboveTerrLastCoord;
     float                       _altitudeAboveTerrLastRelAlt = qQNaN();
 
 public:
-    int32_t getMessageRate(uint8_t compId, uint16_t msgId);
-    void setMessageRate(uint8_t compId, uint16_t msgId, int32_t rate);
+    int32_t getMessageRate(uint8_t compId, uint16_t msgId);//获取指定组件 ID 和消息 ID 的消息发送频率（单位：Hz）
+    void setMessageRate(uint8_t compId, uint16_t msgId, int32_t rate);//设置指定组件 ID 和消息 ID 的消息发送频率
 
 signals:
-    void mavlinkMsgIntervalsChanged(uint8_t compid, uint16_t msgId, int32_t rate);
+    void mavlinkMsgIntervalsChanged(uint8_t compid, uint16_t msgId, int32_t rate);//当消息间隔被修改时发出的信号，通知其他部分消息间隔已更改
 
 private:
-    void _handleMessageInterval(const mavlink_message_t& message);
+    void _handleMessageInterval(const mavlink_message_t& message);//处理接收到的 MAVLink 消息间隔消息
 
-    static void _requestMessageMessageIntervalResultHandler(void* resultHandlerData, MAV_RESULT result, RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
-    void _requestMessageInterval(uint8_t compId, uint16_t msgId);
+    static void _requestMessageMessageIntervalResultHandler(void* resultHandlerData, MAV_RESULT result, RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);//请求消息间隔结果的回调函数
+    void _requestMessageInterval(uint8_t compId, uint16_t msgId);//请求指定组件 ID 和消息 ID 的消息间隔。
 
-    static void _setMessageRateCommandResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
+    static void _setMessageRateCommandResultHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);//设置消息频率命令的结果回调函数
 
     typedef QPair<uint8_t, uint16_t> MavCompMsgId;
-    QHash<MavCompMsgId, int32_t> _mavlinkMsgIntervals;
-    QMultiHash<uint8_t, uint16_t> _unsupportedMessageIds;
-    uint16_t _lastSetMsgIntervalMsgId = 0;
+    QHash<MavCompMsgId, int32_t> _mavlinkMsgIntervals;//存储组件 ID 和消息 ID 的组合（MavCompMsgId）与消息发送频率的映射
+    QMultiHash<uint8_t, uint16_t> _unsupportedMessageIds;//存储不支持的消息 ID 列表
+    uint16_t _lastSetMsgIntervalMsgId = 0;//记录最后设置消息间隔的消息 ID
 
 /*===========================================================================*/
 /*                         Status Text Handler                               */
 /*===========================================================================*/
+
 private:
+    //这些属性用于管理状态文本消息的类型（无、正常、警告、错误）和消息数量
     Q_PROPERTY(bool    messageTypeNone    READ messageTypeNone    NOTIFY messageTypeChanged)
     Q_PROPERTY(bool    messageTypeNormal  READ messageTypeNormal  NOTIFY messageTypeChanged)
     Q_PROPERTY(bool    messageTypeWarning READ messageTypeWarning NOTIFY messageTypeChanged)
     Q_PROPERTY(bool    messageTypeError   READ messageTypeError   NOTIFY messageTypeChanged)
     Q_PROPERTY(int     messageCount       READ messageCount       NOTIFY messageCountChanged)
-    Q_PROPERTY(QString formattedMessages  READ formattedMessages  NOTIFY formattedMessagesChanged)
+    Q_PROPERTY(QString formattedMessages  READ formattedMessages  NOTIFY formattedMessagesChanged)//formattedMessages 属性用于存储格式化后的消息文本
 
     // Q_PROPERTY(StatusTextHandler *statusTextHandler READ statusTextHandler NOTIFY statusTextHandlerChanged)
 
 public:
-    Q_INVOKABLE void resetAllMessages();
-    Q_INVOKABLE void resetErrorLevelMessages();
-    Q_INVOKABLE void clearMessages();
+    Q_INVOKABLE void resetAllMessages();//重置所有消息
+    Q_INVOKABLE void resetErrorLevelMessages();//重置错误级别消息
+    Q_INVOKABLE void clearMessages();//清除所有消息
 
+
+    //这些方法用于获取状态文本消息的类型、数量和格式化后的消息文本
     bool messageTypeNone() const;
     bool messageTypeNormal() const;
     bool messageTypeWarning() const;
@@ -1416,6 +1472,7 @@ public:
     // StatusTextHandler* statusTextHandler() { return m_statusTextHandler; }
 
 signals:
+    //这些信号用于通知其他部分状态文本消息的接收、变化或更新
     void textMessageReceived(int sysid, int componentid, int severity, QString text, QString description);
 
     void messagesReceivedChanged();
@@ -1429,48 +1486,70 @@ signals:
     // void statusTextHandlerChanged();
 
 private slots:
-    void _textMessageReceived(MAV_COMPONENT componentid, MAV_SEVERITY severity, QString text, QString description);
-    void _errorMessageReceived(QString message);
+    void _textMessageReceived(MAV_COMPONENT componentid, MAV_SEVERITY severity, QString text, QString description);//处理接收到的状态文本消息
+    void _errorMessageReceived(QString message); //处理接收到的错误消息
 
 private:
-    void _createStatusTextHandler();
+    void _createStatusTextHandler();//用于创建和初始化 StatusTextHandler 对象。这个方法可能在类的构造函数中被调用，以确保状态文本处理器在类实例化时可用
 
-    StatusTextHandler *m_statusTextHandler = nullptr;
+    StatusTextHandler *m_statusTextHandler = nullptr;//状态文本处理器，：指向 StatusTextHandler 对象的指针，用于管理无人机的状态文本消息（如警告、错误等）
 /*---------------------------------------------------------------------------*/
 /*===========================================================================*/
 /*                        Image Protocol Manager                             */
 /*===========================================================================*/
 private:
-    Q_PROPERTY(uint flowImageIndex READ flowImageIndex NOTIFY flowImageIndexChanged)
+    Q_PROPERTY(uint flowImageIndex READ flowImageIndex NOTIFY flowImageIndexChanged)//图像协议管理器。flowImageIndex：一个属性，表示当前的图像索引。通过 flowImageIndex() 方法读取，当索引变化时发出 flowImageIndexChanged 信号
 
 public:
-    uint32_t flowImageIndex() const;
+    uint32_t flowImageIndex() const; //返回当前的图像索引
 
 signals:
-    void flowImageIndexChanged();
+    void flowImageIndexChanged(); //当图像索引发生变化时发出的信号
 
 private:
-    void _createImageProtocolManager();
+    void _createImageProtocolManager();//用于创建和初始化 ImageProtocolManager 对象。这个方法可能在类的构造函数中被调用，以确保图像协议管理器在类实例化时可用
 
-    ImageProtocolManager *_imageProtocolManager = nullptr;
+    ImageProtocolManager *_imageProtocolManager = nullptr;//指向 ImageProtocolManager 对象的指针，用于管理图像传输协议
 /*---------------------------------------------------------------------------*/
 /*===========================================================================*/
 /*                         MAVLink Log Manager                               */
 /*===========================================================================*/
 private:
-    Q_PROPERTY(MAVLinkLogManager *mavlinkLogManager READ mavlinkLogManager NOTIFY mavlinkLogManagerChanged)
+    Q_PROPERTY(MAVLinkLogManager *mavlinkLogManager READ mavlinkLogManager NOTIFY mavlinkLogManagerChanged)//一个属性，表示 MAVLink 日志管理器对象。通过 mavlinkLogManager() 方法读取，当对象变化时发出 mavlinkLogManagerChanged 信号。
 
 public:
-    MAVLinkLogManager *mavlinkLogManager() const;
+    MAVLinkLogManager *mavlinkLogManager() const; //返回当前的 MAVLink 日志管理器对象
 
 signals:
-    void mavlinkLogManagerChanged();
+    void mavlinkLogManagerChanged(); //当 MAVLink 日志管理器对象发生变化时发出的信号
 
 private:
-    void _createMAVLinkLogManager();
+    void _createMAVLinkLogManager(); //初始化 MAVLink 日志管理器
 
-    MAVLinkLogManager *_mavlinkLogManager = nullptr;
+    MAVLinkLogManager *_mavlinkLogManager = nullptr;//mavlinkLogManager 属性和 mavlinkLogManagerChanged 信号用于管理 MAVLink 日志
 
 /*---------------------------------------------------------------------------*/
 };
+
+//Q_DECLARE_METATYPE 是 Qt 框架中的一个宏，用于将自定义类型注册到 Qt 的元类型系统（Meta-Object System）中。通过注册，自定义类型可以在 Qt 的信号和槽机制、QVariant 类型、QSettings 等功能中使用
 Q_DECLARE_METATYPE(Vehicle::MavCmdResultFailureCode_t)
+
+// 假设 Vehicle::MavCmdResultFailureCode_t 是一个枚举类型，用于表示 MAVLink 命令执行失败的原因。例如：
+
+
+//     namespace Vehicle {
+//     enum MavCmdResultFailureCode_t {
+//         FailureCode_None,
+//         FailureCode_Timeout,
+//         FailureCode_InvalidParameter,
+//         FailureCode_Other
+//     };
+// }
+// 为了在 Qt 的信号和槽机制中使用这个枚举类型，或者将其存储在 QVariant 中，需要在代码中注册它：
+
+// Q_DECLARE_METATYPE(Vehicle::MavCmdResultFailureCode_t)
+// 在信号和槽中使用自定义类型：
+//     假设你有一个信号，需要传递 MavCmdResultFailureCode_t 类型的参数：
+//             signals:
+//                     void commandFailed(Vehicle::MavCmdResultFailureCode_t failureCode);
+// 如果没有注册 MavCmdResultFailureCode_t，编译器会报错，提示该类型未注册到元类型系统中。

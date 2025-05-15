@@ -780,7 +780,7 @@ ApplicationWindow {
                 }  
 
                 QGCMouseArea {
-                    fillItem: parent
+                    fillItem: indicatorDrawer.parent
                     onClicked: indicatorDrawer._expanded = true
                 }
             }

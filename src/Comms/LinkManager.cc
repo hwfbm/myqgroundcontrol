@@ -250,7 +250,7 @@ void LinkManager::_linkDisconnected()
 SharedLinkInterfacePtr LinkManager::sharedLinkInterfacePointerForLink(const LinkInterface *link)
 {
     //如果找到匹配的 LinkInterface 对象，返回其对应的 shared_ptr
-    //遍历 _rgLinks 容器（存储 SharedLinkInterfacePtr 的列表）
+    //遍历 _rgLinks 容器（存储 SharedLinkInterfacePtr 的列表，智能指针容器）
     for (SharedLinkInterfacePtr &sharedLink: _rgLinks) {
         // // 比较裸指针是否指向同一对象
         if (sharedLink.get() == link) {

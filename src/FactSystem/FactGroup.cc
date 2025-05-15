@@ -143,9 +143,9 @@ void FactGroup::_addFactGroup(FactGroup *factGroup, const QString &name)
         return;
     }
 
-    _nameToFactGroupMap[name] = factGroup;
+    _nameToFactGroupMap[name] = factGroup;//	将子 FactGroup 以名字注册进当前 FactGroup 中，形成树状结构
 
-    emit factGroupNamesChanged();
+    emit factGroupNamesChanged();//发出信号，通知 QML 或系统状态发生变化，可以刷新 UI
 }
 
 void FactGroup::_updateAllValues()

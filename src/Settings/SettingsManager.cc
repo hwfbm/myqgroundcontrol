@@ -58,8 +58,14 @@ SettingsManager *SettingsManager::instance()
     return _settingsManagerInstance();
 }
 
-void SettingsManager::registerQmlTypes()
+void SettingsManager::registerQmlTypes()//这个方法使用了 qmlRegisterUncreatableType 函数，使得 SettingsManager 类可以在 QML 中被引用，但不能被直接实例化。
 {
+    //qmlRegisterUncreatableType：这是一个 Qt 提供的函数，用于将一个 C++ 类注册到 QML 环境中，但不允许在 QML 中直接实例化该类
+    //SettingsManager：这是要注册的类，SettingsManager 类通常是一个单例类，这意味着在整个应用程序中只有一个 ，在 QML 中，可以通过 SettingsManager 类的单例实例来访问和操作设置
+    //"QGroundControl.SettingsManager"：这是 QML 中使用的模块名称
+    //1, 0：这是模块的版本号，表示主版本号为 1，次版本号为 0
+    //"SettingsManager"：这是 QML 中使用的类名称
+    //"Reference only"：这是一个描述字符串，用于在 QML 中提供关于该类的额外信息。这里表示该类只能被引用，不能被直接实例化
     (void) qmlRegisterUncreatableType<SettingsManager>("QGroundControl.SettingsManager", 1, 0, "SettingsManager", "Reference only");
 }
 

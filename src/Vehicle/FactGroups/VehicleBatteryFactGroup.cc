@@ -21,22 +21,68 @@ const char* VehicleBatteryFactGroup::_batteryFactGroupNamePrefix = "battery";
 //将所有Fact添加到组中
 //设置初始值（大部分为NaN表示无效值）
 //连接剩余时间变化的信号到处理槽函数
-VehicleBatteryFactGroup::VehicleBatteryFactGroup(uint8_t batteryId, QObject* parent): FactGroup             (1000, ":/json/Vehicle/BatteryFact.json", parent)
-    , _batteryIdFact        (0, _batteryIdFactName,        FactMetaData::valueTypeUint8)
-    , _batteryFunctionFact  (0, _batteryFunctionFactName,  FactMetaData::valueTypeUint8)
-    , _batteryTypeFact      (0, _batteryTypeFactName,      FactMetaData::valueTypeUint8)
-    , _voltageFact          (0, _voltageFactName,          FactMetaData::valueTypeDouble)
-    , _currentFact          (0, _currentFactName,          FactMetaData::valueTypeDouble)
-    , _mahConsumedFact      (0, _mahConsumedFactName,      FactMetaData::valueTypeDouble)
-    , _temperatureFact      (0, _temperatureFactName,      FactMetaData::valueTypeDouble)
-    , _percentRemainingFact (0, _percentRemainingFactName, FactMetaData::valueTypeDouble)
-    , _timeRemainingFact    (0, _timeRemainingFactName,    FactMetaData::valueTypeDouble)
-    , _timeRemainingStrFact (0, _timeRemainingStrFactName, FactMetaData::valueTypeString)
-    , _chargeStateFact      (0, _chargeStateFactName,      FactMetaData::valueTypeUint8)
-    , _instantPowerFact     (0, _instantPowerFactName,     FactMetaData::valueTypeDouble)
+VehicleBatteryFactGroup::VehicleBatteryFactGroup(uint8_t batteryId, QObject* parent): FactGroup(1000, ":/json/Vehicle/BatteryFact.json", parent),
+        _batVoltageFact(0, "bat_voltage", FactMetaData::valueTypeUint16),
+        _servoCurrentFact(0, "servo_current", FactMetaData::valueTypeUint16),
+        _stackVoltageFact(0, "stack_voltage", FactMetaData::valueTypeUint16),
+        _servoVoltageFact(0, "servo_voltage", FactMetaData::valueTypeUint16),
+        _batRefuelCurrentFact(0, "bat_refuel_current", FactMetaData::valueTypeUint16),
+        _gasTankPressureFact(0, "gas_tank_pressure", FactMetaData::valueTypeUint16),
+        _pipePressureFact(0, "pipe_pressure", FactMetaData::valueTypeUint16),
+        _pcbTempFact(0, "pcb_temp", FactMetaData::valueTypeInt8),
+        _stackTempFact(0, "stack_temp", FactMetaData::valueTypeInt8),
+        _workStatusFact(0, "work_status", FactMetaData::valueTypeUint8),
+        _faultStatusFact(0, "fault_status", FactMetaData::valueTypeUint8),
+        _selfCheckFact(0, "self_check", FactMetaData::valueTypeUint8),
+        _idFact(0, "id", FactMetaData::valueTypeUint8)
+        , _batteryIdFact        (0, _batteryIdFactName,                 FactMetaData::valueTypeUint8)
+        , _batteryFunctionFact  (0, _batteryFunctionFactName,           FactMetaData::valueTypeUint8)
+        , _batteryTypeFact      (0, _batteryTypeFactName,               FactMetaData::valueTypeUint8)
+        , _voltageFact          (0, _voltageFactName,                   FactMetaData::valueTypeDouble)
+        , _currentFact          (0, _currentFactName,                   FactMetaData::valueTypeDouble)
+        , _mahConsumedFact      (0, _mahConsumedFactName,               FactMetaData::valueTypeDouble)
+        , _temperatureFact      (0, _temperatureFactName,               FactMetaData::valueTypeDouble)
+        , _percentRemainingFact (0, _percentRemainingFactName,          FactMetaData::valueTypeDouble)
+        , _timeRemainingFact    (0, _timeRemainingFactName,             FactMetaData::valueTypeDouble)
+        , _timeRemainingStrFact (0, _timeRemainingStrFactName,          FactMetaData::valueTypeString)
+        , _chargeStateFact      (0, _chargeStateFactName,               FactMetaData::valueTypeUint8)
+        , _instantPowerFact     (0, _instantPowerFactName,              FactMetaData::valueTypeDouble)
 {
 
      // 添加所有Fact到组中
+
+    _addFact(&_batVoltageFact,         "bat_voltage");
+    _addFact(&_servoCurrentFact,       "servo_current");
+    _addFact(&_stackVoltageFact,       "stack_voltage");
+    _addFact(&_servoVoltageFact,       "servo_voltage");
+    _addFact(&_batRefuelCurrentFact,   "bat_refuel_current");
+    _addFact(&_gasTankPressureFact,    "gas_tank_pressure");
+    _addFact(&_pipePressureFact,       "pipe_pressure");
+    _addFact(&_pcbTempFact,            "pcb_temp");
+    _addFact(&_stackTempFact,          "stack_temp");
+    _addFact(&_workStatusFact,         "work_status");
+    _addFact(&_faultStatusFact,        "fault_status");
+    _addFact(&_selfCheckFact,          "self_check");
+    _addFact(&_idFact,                 "hydroId"); //避免和 _batteryIdFact 冲突
+
+
+    // 设置初始值
+    //初始化各个电池字段的默认值（RawValue），保证启动时有值可用（哪怕是空值 NaN 或状态码）
+    //在 QGC UI 中显示出这些字段的时候，如果没有收到飞控数据，也能看到占位默认值
+    _batVoltageFact.setRawValue        (0);
+    _servoCurrentFact.setRawValue      (0);
+    _stackVoltageFact.setRawValue      (0);
+    _servoVoltageFact.setRawValue      (0);
+    _batRefuelCurrentFact.setRawValue  (0);
+    _gasTankPressureFact.setRawValue   (0);
+    _pipePressureFact.setRawValue      (0);
+    _pcbTempFact.setRawValue           (0);
+    _stackTempFact.setRawValue         (0);
+    _workStatusFact.setRawValue        (0);
+    _faultStatusFact.setRawValue       (0);
+    _selfCheckFact.setRawValue         (0);
+    _idFact.setRawValue                (batteryId);
+
 
     _addFact(&_batteryIdFact,               _batteryIdFactName);
     _addFact(&_batteryFunctionFact,         _batteryFunctionFactName);
@@ -51,8 +97,6 @@ VehicleBatteryFactGroup::VehicleBatteryFactGroup(uint8_t batteryId, QObject* par
     _addFact(&_chargeStateFact,             _chargeStateFactName);
     _addFact(&_instantPowerFact,            _instantPowerFactName);
 
-
-    // 设置初始值
     _batteryIdFact.setRawValue          (batteryId);
     _batteryFunctionFact.setRawValue    (MAV_BATTERY_FUNCTION_UNKNOWN);
     _batteryTypeFact.setRawValue        (MAV_BATTERY_TYPE_UNKNOWN);
@@ -65,30 +109,46 @@ VehicleBatteryFactGroup::VehicleBatteryFactGroup(uint8_t batteryId, QObject* par
     _chargeStateFact.setRawValue        (MAV_BATTERY_CHARGE_STATE_UNDEFINED);
     _instantPowerFact.setRawValue       (qQNaN());
     // 连接信号槽
+    qDebug() << "HYDROGEN_BATTERY ID AT COMPILE TIME = " << MAVLINK_MSG_ID_HYDROGEN_BATTERY;
+
     connect(&_timeRemainingFact, &Fact::rawValueChanged, this, &VehicleBatteryFactGroup::_timeRemainingChanged);
 }
 
 
 
 //消息处理入口
+//根据 MAVLink 消息类型，判断是否需要处理电池数据，动态创建或查找电池组，确保每个电池 ID 有对应的数据存储结构
 // 这个方法处理需要创建电池组的消息：
 // 高延迟消息默认使用电池ID 0
 // 电池状态消息使用消息中的电池ID
 void VehicleBatteryFactGroup::handleMessageForFactGroupCreation(Vehicle* vehicle, mavlink_message_t& message)
 {
+    //mavlink_message_t& message：接收到的 MAVLink 消息
+    //Vehicle* vehicle：指向当前载具（如无人机）的指针，用于管理电池组
     switch (message.msgid) {
+        // 处理 HIGH_LATENCY 或 HIGH_LATENCY2 消息：高延迟遥测消息（用于低带宽链路，如卫星通信）
     case MAVLINK_MSG_ID_HIGH_LATENCY:
     case MAVLINK_MSG_ID_HIGH_LATENCY2:
-        _findOrAddBatteryGroupById(vehicle, 0);
+        _findOrAddBatteryGroupById(vehicle, 0);//调用 _findOrAddBatteryGroupById，强制使用电池 ID 0：高延迟消息通常不携带多电池信息，默认处理单电池场景
         break;
+        //标准电池状态消息（包含详细电池数据）
     case MAVLINK_MSG_ID_BATTERY_STATUS:
     {
+        //mavlink_msg_battery_status_decode 解析消息内容到 batteryStatus 结构体
         mavlink_battery_status_t batteryStatus;
-        mavlink_msg_battery_status_decode(&message, &batteryStatus);
-        _findOrAddBatteryGroupById(vehicle, batteryStatus.id);
-    }
+        mavlink_msg_battery_status_decode(&message, &batteryStatus);//从 batteryStatus.id 中提取电池标识符
+        _findOrAddBatteryGroupById(vehicle, batteryStatus.id);//创建或查找电池组：调用 _findOrAddBatteryGroupById，传入载具和电池 ID
+    }break;
+    case MAVLINK_MSG_ID_HYDROGEN_BATTERY: // HYDROGEN_BATTERY
+        mavlink_hydrogen_battery_t batteryStatus;
+         mavlink_msg_hydrogen_battery_decode(&message, &batteryStatus);
+        _findOrAddBatteryGroupById(vehicle, batteryStatus.id); // 若有 battery_id 字段可替换为实际 id
+        break;
+    default:
+        qDebug() << "未处理的消息 ID:" << message.msgid;
         break;
     }
+
 }
 
 
@@ -106,8 +166,23 @@ void VehicleBatteryFactGroup::handleMessage(Vehicle* vehicle, mavlink_message_t&
     case MAVLINK_MSG_ID_BATTERY_STATUS:
         _handleBatteryStatus(vehicle, message);
         break;
+    case MAVLINK_MSG_ID_HYDROGEN_BATTERY: // HYDROGEN_BATTERY
+        qDebug() << "Hydrogen battery 在handleMessage被调用";
+        _handleHydrogenBattery(vehicle, message);
+
+        break;
+    default:
+        qDebug() << "未处理的消息 ID:" << message.msgid;
+        break;
     }
+
+        qDebug() << "handlemessage收到MAVLink消息，ID:" << message.msgid;
+    qDebug() << "原生Voltage:" << _voltageFact.rawValue();
+    qDebug() << "原生Percent remaining:" << _percentRemainingFact.rawValue();
+       qDebug() << "自定义的voltage:" << _batVoltageFact.rawValue();
 }
+
+
 
 
 //高延迟消息处理
@@ -150,7 +225,9 @@ void VehicleBatteryFactGroup::_handleHighLatency2(Vehicle* vehicle, mavlink_mess
 //     标记遥测数据可用
 void VehicleBatteryFactGroup::_handleBatteryStatus(Vehicle* vehicle, mavlink_message_t& message) //它接收一个指向 Vehicle 类的指针和一个 MAVLink 消息结构体的引用
 {
-    qDebug() << "电池状态消息到达！消息ID:" << message.msgid;
+    int count=0;
+
+    qDebug() << "电池状态消息到达！消息ID:" << message.msgid<<" "<<count++;
     mavlink_battery_status_t batteryStatus;
     mavlink_msg_battery_status_decode(&message, &batteryStatus);//使用 mavlink_msg_battery_status_decode() 函数解码传入的消息
 
@@ -177,7 +254,7 @@ void VehicleBatteryFactGroup::_handleBatteryStatus(Vehicle* vehicle, mavlink_mes
         }
         totalVoltage += cellVoltage;
     }
-  // 设置所有Fact值，设置了 VehicleBatteryFactGroup 对象的各种属性值，例如电池功能、类型、温度、电压、电流等
+  //设置所有Fact值，设置了 VehicleBatteryFactGroup 对象的各种属性值，例如电池功能、类型、温度、电压、电流等
     group->function()->setRawValue          (batteryStatus.battery_function);
     group->type()->setRawValue              (batteryStatus.type);
     group->temperature()->setRawValue       (batteryStatus.temperature == INT16_MAX ?   qQNaN() : static_cast<double>(batteryStatus.temperature) / 100.0);
@@ -190,6 +267,41 @@ void VehicleBatteryFactGroup::_handleBatteryStatus(Vehicle* vehicle, mavlink_mes
     // 计算瞬时功率 = 电压 * 电流
     group->instantPower()->setRawValue      (totalVoltage * group->current()->rawValue().toDouble());
     group->_setTelemetryAvailable(true); //标记遥测数据可用
+
+
+}
+
+
+void VehicleBatteryFactGroup::_handleHydrogenBattery(Vehicle* vehicle, mavlink_message_t& message)
+{
+    int count=0;
+
+    qDebug() << "氢协议电池状态消息到达！消息ID:" << message.msgid<<" "<<count++;
+    mavlink_hydrogen_battery_t battery;
+    mavlink_msg_hydrogen_battery_decode(&message, &battery);
+
+    VehicleBatteryFactGroup* group = _findOrAddBatteryGroupById(vehicle, battery.id); // 可按需要更改 ID
+
+    // 设置各项属性（单位转换正确）
+    group->batVoltage()->setRawValue(static_cast<double>(battery.bat_voltage) / 1000.0);         // V
+    group->servoCurrent()->setRawValue(static_cast<double>(battery.servo_current) / 1000.0);     // A
+    group->stackVoltage()->setRawValue(static_cast<double>(battery.stack_voltage) / 1000.0);     // V
+    group->servoVoltage()->setRawValue(static_cast<double>(battery.servo_voltage) / 1000.0);     // V
+    group->batRefuelCurrent()->setRawValue(static_cast<double>(battery.bat_refuel_current) / 1000.0); // A
+    group->gasTankPressure()->setRawValue(battery.gas_tank_pressure);                            // Pa
+    group->pipePressure()->setRawValue(battery.pipe_pressure);                                   // Pa
+    group->pcbTemp()->setRawValue(static_cast<double>(battery.pcb_temp));                        // °C
+    group->stackTemp()->setRawValue(static_cast<double>(battery.stack_temp));                    // °C
+    group->workStatus()->setRawValue(battery.work_status);                                       // 状态码
+    group->faultStatus()->setRawValue(battery.fault_status);                                     // 故障码
+    group->selfCheck()->setRawValue(battery.self_check);                                         // 0/1
+    group->hydroId()->setRawValue(battery.id);
+    // 可以根据需要添加更多字段，如氢燃料浓度、电堆电压等
+
+    group->_setTelemetryAvailable(true);//标记遥测数据可用
+    qDebug() << "Hydrogen battery data received，在_handleHydrogenBattery函数中";
+
+
 }
 
 
@@ -209,7 +321,7 @@ VehicleBatteryFactGroup* VehicleBatteryFactGroup::_findOrAddBatteryGroupById(Veh
     for (int i=0; i<batteries->count(); i++) {
         //检查并处理现有电池组
         VehicleBatteryFactGroup* group = batteries->value<VehicleBatteryFactGroup*>(i);
-        int listBatteryId = group->id()->rawValue().toInt();
+        int listBatteryId = group->hydroId()->rawValue().toInt();
         if (listBatteryId >  batteryId) {
             // 在正确位置插入新电池组
             //如果找到 ID 匹配的电池组，直接返回这个电池组。如果没有找到匹配的 ID，但找到了一个更大的 ID，就在该位置插入一个新的电池组
@@ -237,6 +349,7 @@ void VehicleBatteryFactGroup::_timeRemainingChanged(QVariant value)
 {
     if (qIsNaN(value.toDouble())) {
         _timeRemainingStrFact.setRawValue("--:--:--");
+        qDebug()<<"运行到改的这里了";
     } else {
         int totalSeconds    = value.toInt();
         int hours           = totalSeconds / 3600;

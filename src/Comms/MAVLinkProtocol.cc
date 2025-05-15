@@ -118,34 +118,47 @@ void MAVLinkProtocol::logSentBytes(const LinkInterface *link, const QByteArray &
     }
 }
 
-//接收数据入口
-void MAVLinkProtocol::receiveBytes(LinkInterface *link, const QByteArray &data)
+//接收数据入口。将原始字节流解析为 MAVLink 消息，并触发后续处理流程
+void MAVLinkProtocol::receiveBytes(LinkInterface *link, const QByteArray &data)//link：通信链路对象（如串口、UDP连接），data：接收到的原始字节数据
 {
+    //获取链路的智能指针，确保对象生命周期安全
     //调用成员函数，根据传入的 link，返回一个 SharedLinkInterfacePtr
     //将返回的共享指针存入常量 linkPtr，避免意外修改
+    //LinkManager 单例维护所有活跃链路的共享指针，负责创建和管理所有链接（如串口、UDP、TCP 等）对象，这里 SharedLinkInterfacePtr 是一个 std::shared_ptr<LinkInterface> 的别名。它一创建对象，就用 shared_ptr 包裹住了。并存进了 _rgLinks 这个容器中，容器内部保存的全部是 shared_ptr
     const SharedLinkInterfacePtr linkPtr = LinkManager::instance()->sharedLinkInterfacePointerForLink(link);//获取LinkManager 的单例实例
     if (!linkPtr) {
         qCDebug(MAVLinkProtocolLog) << "receiveBytes: link gone!" << data.size() << "bytes arrived too late";
-        return;
+        return;//如果链路已断开（返回空指针），则直接跳过处理
     }//确认这个 link 还有效，否则直接跳过
 
-    for (const uint8_t &byte: data) {
-        const uint8_t mavlinkChannel = link->mavlinkChannel();
+    //直接操作原始字节流，避免内存复制
+    for (const uint8_t &byte: data)
+    {
+        const uint8_t mavlinkChannel = link->mavlinkChannel();//mavlinkChannel()返回 MAVLink 通道，每个链路分配独立 MAVLink 通道（0-15）
         mavlink_message_t message{};
         mavlink_status_t status{};
 
+        //mavlink_parse_char() 是 MAVLink 库的核心函数
+        //输入：单个字节 + 解析状态机（status）
+        //输出：完整消息（message）或继续等待（MAVLINK_FRAMING_INCOMPLETE）
+        //通道管理：mavlinkChannel 区分不同链路（多设备支持）
         if (mavlink_parse_char(mavlinkChannel, byte, &message, &status) != MAVLINK_FRAMING_OK) {
             continue;
         }
+        _updateVersion(link, mavlinkChannel);//动态协商：检测消息中的 MAVLINK_VERSION 字段，支持 MAVLink 1.0 ↔ 2.0 自动切换
+        _updateCounters(mavlinkChannel, message); //消息统计
 
-        _updateVersion(link, mavlinkChannel);
-        _updateCounters(mavlinkChannel, message);
+        //转发条件：非转发模式才执行（避免循环转发）
+        //双通道转发：_forward()：常规消息转发，_forwardSupport()：特殊消息（如心跳）处理
         if (!linkPtr->linkConfiguration()->isForwarding()) {
             _forward(message);
             _forwardSupport(message);
         }
-        _logData(link, message);
+        _logData(link, message);//数据记录，原始消息写入临时文件（_tempLogFile，支持崩溃恢复（checkForLostLogFiles）
 
+
+        //状态机检查：验证消息完整性
+        //异常处理：失败时终止当前链路处理
         if (!_updateStatus(link, linkPtr, mavlinkChannel, message)) {
             break;
         }
