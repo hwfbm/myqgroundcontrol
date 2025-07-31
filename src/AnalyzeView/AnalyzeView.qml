@@ -19,7 +19,7 @@ import QGroundControl.ScreenTools
 
 Rectangle {
     id:     _root
-    color:  qgcPal.window
+    color:  "blue"
     z:      QGroundControl.zOrderTopMost
 
     signal popout()

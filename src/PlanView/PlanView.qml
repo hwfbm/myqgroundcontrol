@@ -28,6 +28,8 @@ import QGroundControl.FlightDisplay
 import QGroundControl.UTMSP
 
 
+//任务规划视图，完整的任务规划、地理围栏和集结点管理功能
+
 Item {
     id: _root
 
@@ -41,27 +43,35 @@ Item {
     readonly property var   _defaultVehicleCoordinate:  QtPositioning.coordinate(37.803784, -122.462276)
     readonly property bool  _waypointsOnlyMode:         QGroundControl.corePlugin.options.missionWaypointsOnly
 
-    property var    _planMasterController:              planMasterController
-    property var    _missionController:                 _planMasterController.missionController
-    property var    _geoFenceController:                _planMasterController.geoFenceController
-    property var    _rallyPointController:              _planMasterController.rallyPointController
+    property var    _planMasterController:              planMasterController//总控制器，协调任务、地理围栏和集结点的管理，MissionManager中注册
+    property var    _missionController:                 _planMasterController.missionController//专门处理任务项逻辑
+    property var    _geoFenceController:                _planMasterController.geoFenceController//管理地理围栏
+    property var    _rallyPointController:              _planMasterController.rallyPointController//管理集结点
     property var    _visualItems:                       _missionController.visualItems
     property bool   _lightWidgetBorders:                editorMap.isSatelliteMap
     property bool   _addROIOnClick:                     false
     property bool   _singleComplexItem:                 _missionController.complexMissionItemNames.length === 1
-     property int    _editingLayer:                      {if(!_utmspEnabled){layerTabBar.currentIndex ? _layers[layerTabBar.currentIndex] : _layerMission}else{layerTabBarUTMSP.currentIndex ? _layersUTMSP[layerTabBarUTMSP.currentIndex] : _layerMission}}
+
+
+
     property int    _toolStripBottom:                   toolStrip.height + toolStrip.y
     property var    _appSettings:                       QGroundControl.settingsManager.appSettings
     property var    _planViewSettings:                  QGroundControl.settingsManager.planViewSettings
     property bool   _promptForPlanUsageShowing:         false
-    property bool   _utmspEnabled:                      QGroundControl.utmspSupported
+
     property bool   _resetGeofencePolygon:              false   //Reset the Geofence Polygon
     property var    _vehicleID
     property bool   _triggerSubmit
     property bool   _resetRegisterFlightPlan
 
+    // 定义编辑层
     readonly property var       _layers:                    [_layerMission, _layerGeoFence, _layerRallyPoints]
     readonly property var       _layersUTMSP:               [_layerMission, _layerRallyPoints, _layerUTMSP] //Adds additional UTMSP layer
+    property bool   _utmspEnabled:                      QGroundControl.utmspSupported
+    // 当前编辑层
+    property int    _editingLayer:             {if(!_utmspEnabled){layerTabBar.currentIndex ? _layers[layerTabBar.currentIndex] : _layerMission}else{layerTabBarUTMSP.currentIndex ? _layersUTMSP[layerTabBarUTMSP.currentIndex] : _layerMission}}
+
+
 
     readonly property int       _layerMission:              1
     readonly property int       _layerGeoFence:             2
@@ -83,11 +93,12 @@ Item {
     property bool _firstRallyLoadComplete:      false
     property bool _firstLoadComplete:           false
 
+    //地图区域：显示任务路径、地理围栏和集结点
     MapFitFunctions {
         id:                         mapFitFunctions  // The name for this id cannot be changed without breaking references outside of this code. Beware!
         map:                        editorMap
         usePlannedHomePosition:     true
-        planMasterController:       _planMasterController
+        planMasterController:       _planMasterController//总控制器，协调任务、地理围栏和集结点的管理
     }
 
     onVisibleChanged: {
@@ -338,7 +349,10 @@ Item {
         anchors.top:    planToolBar.bottom
         anchors.bottom: parent.bottom
 
+
+        //地图交互
         FlightMap {
+            //// ... 属性配置 ...
             id:                         editorMap
             anchors.fill:               parent
             mapName:                    "MissionEditor"
@@ -368,8 +382,10 @@ Item {
                 QGroundControl.flightMapPosition = editorMap.center
             }
 
+            //处理地图点击事件
             onMapClicked: (mouse) => {
                 // Take focus to close any previous editing
+
                 editorMap.focus = true
                 if (!mainWindow.allowViewSwitch()) {
                     return
@@ -382,8 +398,9 @@ Item {
                 	QGroundControl.utmspManager.utmspVehicle.updateLastCoordinates(coordinate.latitude, coordinate.longitude)
                 }
                 
+                // 根据当前编辑层执行不同操作
                 switch (_editingLayer) {
-                case _layerMission:
+                case _layerMission: // 任务层
                     if (addWaypointRallyPointAction.checked) {
                         insertSimpleItemAfterCurrent(coordinate)
                     } else if (_addROIOnClick) {
@@ -392,19 +409,19 @@ Item {
                     }
 
                     break
-                case _layerRallyPoints:
+                case _layerRallyPoints: // 集结点层
                     if (_rallyPointController.supported && addWaypointRallyPointAction.checked) {
                         _rallyPointController.addPoint(coordinate)
                     }
                     break
 
-                case _layerUTMSP:
+                case _layerUTMSP:// UTMSP层
                     if (addWaypointRallyPointAction.checked) {
                     	insertSimpleItemAfterCurrent(coordinate)
                     } else if (_addROIOnClick) {
                     	insertROIAfterCurrent(coordinate)
                         _addROIOnClick = false
-                    }
+                    }// UTMSP特定处理
                     break
                 }
             }
@@ -651,6 +668,13 @@ Item {
                         enabled:            true
                         visible:            true
                         dropPanelComponent: centerMapDropPanel
+                    },
+                    ToolStripAction {
+                        text:               qsTr("飞哥")
+                        //iconSource:         "/qmlimages/MapCenter.svg"
+                        enabled:            true
+                        visible:            true
+                       // dropPanelComponent: centerMapDropPanel
                     }
                 ]
             }

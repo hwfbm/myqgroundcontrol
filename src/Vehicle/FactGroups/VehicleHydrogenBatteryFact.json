@@ -1,0 +1,97 @@
+{
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "hydroId",
+            "shortDesc": "Hydrogen Battery ID",
+            "type": "uint8",
+            "enumStrings": "电堆1,电堆2,电堆3",
+            "enumValues": "0,1,2",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "bat_voltage",
+            "shortDesc": "Battery Voltage",
+            "type": "uint16",
+            "units": "mV",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "servo_current",
+            "shortDesc": "Servo Current",
+            "type": "uint16",
+            "units": "mA",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "stack_voltage",
+            "shortDesc": "Stack Voltage",
+            "type": "uint16",
+            "units": "mV",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "servo_voltage",
+            "shortDesc": "Servo Voltage",
+            "type": "uint16",
+            "units": "mV",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "bat_refuel_current",
+            "shortDesc": "Battery Refuel Current",
+            "type": "uint16",
+            "units": "mA",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "gas_tank_pressure",
+            "shortDesc": "Gas Tank Pressure",
+            "type": "uint16",
+            "units": "Pa",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "pipe_pressure",
+            "shortDesc": "Pipe Pressure",
+            "type": "uint16",
+            "units": "Pa",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "pcb_temp",
+            "shortDesc": "PCB Temperature",
+            "type": "int8",
+            "units": "°C",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "stack_temp",
+            "shortDesc": "Stack Temperature",
+            "type": "int8",
+            "units": "°C",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "work_status",
+            "shortDesc": "Work Status",
+            "type": "uint8",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "fault_status",
+            "shortDesc": "Fault Status",
+            "type": "uint8",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "self_check",
+            "shortDesc": "Self Check Result",
+            "type": "uint8",
+            "enumStrings": "未通过,已通过",
+            "enumValues": "0,1",
+            "decimalPlaces": 0
+        }
+    ]
+}

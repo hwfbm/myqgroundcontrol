@@ -542,6 +542,8 @@
 
 
 cmake_minimum_required(VERSION 3.25)
+set(QGC_LANGUAGES en zh_CN)
+
 
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_SOURCE_DIR}/cmake
@@ -848,6 +850,8 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
     MACOSX_BUNDLE
     ${QGC_RESOURCES}
     src/MAVLink/LibEvents/mavlink_custom.h
+    hydrogenbatteryhandler.h hydrogenbatteryhandler.cpp
+    #src/Vehicle/FactGroups/vehiclehydrogenbatteryfactgroup.h src/Vehicle/FactGroups/vehiclehydrogenbatteryfactgroup.cpp
 )
 
 target_compile_definitions(${CMAKE_PROJECT_NAME}
@@ -859,9 +863,19 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
         QGC_SETTINGS_VERSION=${QGC_SETTINGS_VERSION}
 )
 
-file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts)
+
+
+# Qt6 中 qt_add_translations() 会自动执行：查找传入的 .ts 文件，自动生成对应的 .qm 文件（使用 lrelease），把 .qm 加入资源系统（如 :/i18n/qgc_source_zh_CN.qm）
+#实际执行lrelease qgc_source_zh_CN.ts -qm qgc_source_zh_CN.qm
+# Qt 的 QTranslator::load() 有一个机制：
+# 如果 .qm 文件路径在 build/i18n/ 下，并且你使用 qt_add_translations() 自动构建并链接了这个目录，那么这个目录下的 .qm 文件就会在运行时被 Qt 自动识别为 :/i18n/xxx.qm 的一部分。
+# 所以不需要你手动加进 .qrc。
+
+
+
+file(GLOB TS_SOURCES ${CMAKE_SOURCE_DIR}/translations/qgc_*.ts) #翻译文件
 set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/i18n")
-qt_add_translations(${CMAKE_PROJECT_NAME}
+qt_add_translations(${CMAKE_PROJECT_NAME}#调用了 qt_add_translations()，Qt6 提供的官方 CMake API，添加翻译文件
     # TS_FILE_BASE ${CMAKE_PROJECT_NAME}
     # TS_FILE_DIR ${CMAKE_SOURCE_DIR}/translations/
     TS_FILES ${TS_SOURCES}
@@ -1023,6 +1037,7 @@ if(QGC_CUSTOM_BUILD)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_LIBRARIES})
     target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CUSTOM_DIRECTORIES})
 endif()
+#target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE HAVE_MAVLINK_CHANNEL_T)
 
 include(Install)
 

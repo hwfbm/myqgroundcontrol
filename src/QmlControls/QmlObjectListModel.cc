@@ -22,7 +22,7 @@ QmlObjectListModel::QmlObjectListModel(QObject* parent)
     , _skipDirtyFirstItem       (false)
     , _externalBeginResetModel  (false)
 {
-
+  qDebug() << "[QmlObjectListModel] created at" << this << "parent=" << parent;
 }
 
 QmlObjectListModel::~QmlObjectListModel()

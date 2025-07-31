@@ -79,10 +79,11 @@ VehicleFactGroup::VehicleFactGroup(QObject* parent)
     _hobbsFact.setRawValue(QVariant(QString("0000:00:00")));
 }
 
-void VehicleFactGroup::handleMessage(Vehicle* vehicle, mavlink_message_t& message)
+//统一在一个类（FactGroup 派生类）中管理和暴露某一类飞行数据，并更新 QML 绑定的数据接口
+void VehicleFactGroup::handleMessage(Vehicle* vehicle, mavlink_message_t& message)//处理与姿态、飞行高度、HUD 状态、IMU 等相关的 MAVLink 消息
 {
     switch (message.msgid) {
-    case MAVLINK_MSG_ID_ATTITUDE:
+    case MAVLINK_MSG_ID_ATTITUDE: //处理姿态角
         _handleAttitude(vehicle, message);
         break;
     case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
@@ -91,7 +92,7 @@ void VehicleFactGroup::handleMessage(Vehicle* vehicle, mavlink_message_t& messag
     case MAVLINK_MSG_ID_ALTITUDE:
         _handleAltitude(message);
         break;
-    case MAVLINK_MSG_ID_VFR_HUD:
+    case MAVLINK_MSG_ID_VFR_HUD: //飞行速度、高度、航向等
         _handleVfrHud(message);
         break;
     case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:

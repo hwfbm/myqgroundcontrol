@@ -47,6 +47,7 @@
 #include "TerrainQuery.h"
 #include "TrajectoryPoints.h"
 #include "VehicleBatteryFactGroup.h"
+#include "VehicleHydrogenBatteryFactGroup.h"
 #include "VehicleLinkManager.h"
 #include "VehicleObjectAvoidance.h"
 #include "VideoManager.h"
@@ -56,6 +57,8 @@
 #include <MAVLinkSigning.h>
 #include "GimbalController.h"
 #include "MavlinkSettings.h"
+
+
 
 #ifdef QGC_UTM_ADAPTER
 #include "UTMSPVehicle.h"
@@ -82,7 +85,21 @@ QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
 const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
 
+
+// 功能能力对比
+//     功能模块      在线车辆	         离线车辆
+//     参数管理      动态同步飞控参数  仅加载参数元数据
+//     任务规划	实时上传/下载航点	仅本地编辑
+//     传感器校准	支持实际校准操作	禁用
+//     实时遥测	持续更新传感器数据	模拟数据或为空
+//     固件升级	可触发实际升级流程	仅显示升级选项（不可操作）
+
+
+
 // Standard connected vehicle
+//在线连接
+// 关键依赖：必须提供有效的通信链路对象
+// 动态识别：固件类型和载具类型通常后续会根据实际飞控心跳更新
 Vehicle::Vehicle(LinkInterface*             link,
                  int                        vehicleId,
                  int                        defaultComponentId,
@@ -116,7 +133,11 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _efiFactGroup                 (this)
     , _rpmFactGroup                 (this)
     , _terrainFactGroup             (this)
+
+
     , _terrainProtocolHandler       (new TerrainProtocolHandler(this, &_terrainFactGroup, this))
+    ,_batteryFactGroup(new VehicleBatteryFactGroup(0,this))
+// , _hydrogenbatteryFactGroupListModel(this)
 {
     connect(JoystickManager::instance(), &JoystickManager::activeJoystickChanged, this, &Vehicle::_loadJoystickSettings);
     connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &Vehicle::_activeVehicleChanged);
@@ -153,8 +174,11 @@ Vehicle::Vehicle(LinkInterface*             link,
     _utmspVehicle = UTMSPManager::instance()->instantiateVehicle(this);
 #endif
 
-    _autopilotPlugin = _firmwarePlugin->autopilotPlugin(this);
-    _autopilotPlugin->setParent(this);
+
+    //autopilotPlugin获取不通固件对象，关联当前vechile对象，autopilotPlugin返回的是一个裸指针
+    //若没有关联父对象没释放会内存泄漏
+    _autopilotPlugin = _firmwarePlugin->autopilotPlugin(this); //在这里就创建了固件，是px4还是apm
+    _autopilotPlugin->setParent(this); //必须设置父对象
 
     // PreArm Error self-destruct timer
     connect(&_prearmErrorTimer, &QTimer::timeout, this, &Vehicle::_prearmErrorTimeout);
@@ -196,6 +220,9 @@ Vehicle::Vehicle(LinkInterface*             link,
 }
 
 // Disconnected Vehicle for offline editing
+//离线编辑
+// 配置对象：不绑定任何硬件连接
+// 用户主导：所有参数由界面选择决定
 Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
                  MAV_TYPE                   vehicleType,
                  QObject*                   parent)
@@ -233,7 +260,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     connect(SettingsManager::instance()->appSettings()->offlineEditingCruiseSpeed(),   &Fact::rawValueChanged, this, &Vehicle::_offlineCruiseSpeedSettingChanged);
     connect(SettingsManager::instance()->appSettings()->offlineEditingHoverSpeed(),    &Fact::rawValueChanged, this, &Vehicle::_offlineHoverSpeedSettingChanged);
 
-    _offlineFirmwareTypeSettingChanged(_firmwareType);  // This adds correct terrain capability bit
+    _offlineFirmwareTypeSettingChanged(_firmwareType);  //处理飞控固件类型变更的核心逻辑，主要用于离线状态下的飞控固件类型切换 This adds correct terrain capability bit
     _firmwarePlugin->initializeVehicle(this);
 }
 
@@ -254,6 +281,7 @@ void Vehicle::stopTrackingFirmwareVehicleTypeChanges(void)
 
 void Vehicle::_commonInit()
 {
+    //初始化加载固件，调用的是管理器类FirmwarePluginManager的firmwarePluginForAutopilot
     _firmwarePlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
 
     connect(_firmwarePlugin, &FirmwarePlugin::toolIndicatorsChanged, this, &Vehicle::toolIndicatorsChanged);
@@ -365,6 +393,9 @@ void Vehicle::_commonInit()
     _loadJoystickSettings();
 
     _gimbalController = new GimbalController(this);
+
+    //_hydrogenBatteryFactGroupListModel.setParent(this);
+
 }
 
 Vehicle::~Vehicle()
@@ -411,15 +442,22 @@ void Vehicle::deleteGimbalController()
     }
 }
 
+//处理飞控固件类型变更的核心逻辑，主要用于离线状态下的飞控固件类型切换
+//响应GUI设置的飞控类型变更（如用户在下拉框中选择ArduPilot/PX4），根据新固件类型加载对应的功能插件，更新飞控协议能力集（如地形功能支持）
 void Vehicle::_offlineFirmwareTypeSettingChanged(QVariant varFirmwareType)
 {
-    _firmwareType = static_cast<MAV_AUTOPILOT>(varFirmwareType.toInt());
+    _firmwareType = static_cast<MAV_AUTOPILOT>(varFirmwareType.toInt());//将QVariant类型的设置值转换为MAV_AUTOPILOT枚举
+    //插件热切换：通过工厂模式获取对应固件的插件实例
+    //多态行为：后续所有飞控交互将通过该插件实例的虚函数表调用
     _firmwarePlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
-    if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+    if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA)//ArduPilot专属能力：设置地形功能支持标志位
+    {
         _capabilityBits |= MAV_PROTOCOL_CAPABILITY_TERRAIN;
-    } else {
+    } else//其他固件类型会清除该能力标志
+    {
         _capabilityBits &= ~MAV_PROTOCOL_CAPABILITY_TERRAIN;
     }
+    //通知QML界面刷新显示，系统协调：其他模块通过信号得知能力变化
     emit firmwareTypeChanged();
     emit capabilityBitsChanged(_capabilityBits);
 }
@@ -456,15 +494,24 @@ void Vehicle::resetCounters()
     _heardFrom          = false;
 }
 
+
+//LinkInterface* link：发送消息的链接接口
+//mavlink_message_t message：接收到的 MAVLink 消息
+//接收并处理来自无人机的 MAVLink 消息，更新车辆的状态，并将消息传递给相关的处理模块
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
     // If the link is already running at Mavlink V2 set our max proto version to it.
     unsigned mavlinkVersion = MAVLinkProtocol::instance()->getCurrentVersion();
+
+    //检查并更新支持的最高 MAVLink 协议版本：_maxProtoVersion：存储支持的最高协议版本，mavlinkVersion：当前接收到的消息的协议版本
     if (_maxProtoVersion != mavlinkVersion && mavlinkVersion >= 200) {
         _maxProtoVersion = mavlinkVersion;
         qCDebug(VehicleLog) << "_mavlinkMessageReceived Link already running Mavlink v2. Setting _maxProtoVersion" << _maxProtoVersion;
     }
 
+
+    //过滤消息来源
+    //功能：确保消息来自当前车辆（_id）或是一个特殊的 RADIO_STATUS 消息：message.sysid：消息的系统 ID，_id：当前车辆的系统 ID，MAVLINK_MSG_ID_RADIO_STATUS：RADIO_STATUS 消息的 ID，_vehicleLinkManager->containsLink(link)：检查链接是否属于当前车辆
     if (message.sysid != _id && message.sysid != 0) {
         // We allow RADIO_STATUS messages which come from a link the vehicle is using to pass through and be handled
         if (!(message.msgid == MAVLINK_MSG_ID_RADIO_STATUS && _vehicleLinkManager->containsLink(link))) {
@@ -473,18 +520,27 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     }
 
     // We give the link manager first whack since it it reponsible for adding new links
+    //将接收到的消息传递给 _vehicleLinkManager，以便更新链接状态
     _vehicleLinkManager->mavlinkMessageReceived(link, message);
 
     //-- Check link status
+    //更新消息统计
+    //功能：更新接收到的消息数量，并发出信号
     _messagesReceived++;
-    emit messagesReceivedChanged();
+    emit messagesReceivedChanged();//暴露给qml
+
+    //处理心跳消息
+    //功能：处理心跳消息，更新车辆的组件 ID 和消息序列号：_heardFrom：标记是否已经收到过消息。_compID：车辆的组件 ID_messageSeq：消息序列号。
     if(!_heardFrom) {
         if(message.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
             _heardFrom  = true;
             _compID     = message.compid;
             _messageSeq = message.seq + 1;
         }
-    } else {
+    }
+    //处理消息丢失
+    //功能：计算并更新丢失的消息数量：_messageSeq：当前的消息序列号。_messagesLost：丢失的消息数量
+    else {
         if(_compID == message.compid) {
             uint16_t seq_received = static_cast<uint16_t>(message.seq);
             uint16_t packet_lost_count = 0;
@@ -501,11 +557,16 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         }
     }
 
+
+    // 调用插件处理消息：调用固件插件处理接收到的消息
+    //_firmwarePlugin：固件插件对象
     // Give the plugin a change to adjust the message contents
     if (!_firmwarePlugin->adjustIncomingMavlinkMessage(this, &message)) {
         return;
     }
 
+
+    //调用核心插件处理消息：corePlugin：核心插件对象
     // Give the Core Plugin access to all mavlink traffic
     if (!QGCCorePlugin::instance()->mavlinkMessage(this, link, message)) {
         return;
@@ -514,6 +575,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     if (!_terrainProtocolHandler->mavlinkMessageReceived(message)) {
         return;
     }
+    //调用文件传输管理器处理消息，_ftpManager：文件传输管理器对象
     _ftpManager->_mavlinkMessageReceived(message);
     _parameterManager->mavlinkMessageReceived(message);
     (void) QMetaObject::invokeMethod(_imageProtocolManager, "mavlinkMessageReceived", Qt::AutoConnection, message);
@@ -521,16 +583,20 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 
     _waitForMavlinkMessageMessageReceivedHandler(message);
 
-    // Battery fact groups are created dynamically as new batteries are discovered
-    VehicleBatteryFactGroup::handleMessageForFactGroupCreation(this, message);
+    // Battery fact groups are created dynamically as new batteries are discovered随着新电池的发现，电池事实组会动态创建
+    //VehicleBatteryFactGroup::handleMessageForFactGroupCreation(this, message);
+    VehicleHydrogenBatteryFactGroup::handleMessageForFactGroupCreation(this, message);
 
     // Let the fact groups take a whack at the mavlink traffic
+    //所有继承 QGCFactGroup 的模块统一加入 _factGroups 容器，然后在 _mavlinkMessageReceived() 中统一调用 factGroup->handleMessage()；
+    //每个 FactGroup 自己在 handleMessage() 中判断 msgid 是否是它负责的
     for (FactGroup* factGroup : factGroups()) {
         factGroup->handleMessage(this, message);
     }
 
-    this->handleMessage(this, message);
+    this->handleMessage(this, message); //处理与姿态、飞行高度、HUD 状态、IMU 等相关的 MAVLink 消息
 
+    //处理特定消息
     switch (message.msgid) {
     case MAVLINK_MSG_ID_HOME_POSITION:
         _handleHomePosition(message);
@@ -544,11 +610,43 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_RC_CHANNELS:
         _handleRCChannels(message);
         break;
+    // case MAVLINK_MSG_ID_HYDROGEN_BATTERY:
+    //     _handleHydrogenBattery(message);
+    //     //_batteryFactGroup->handleMessage (this,message);
+    //     qDebug()<<"在vechile中调用了我的协氢handleMessage";
+    //     break;
     case MAVLINK_MSG_ID_BATTERY_STATUS:
         _handleBatteryStatus(message);
+        qDebug() << "[Vehicle] 收到MAVLINK_MSG_ID_BATTERY_STATUS的 msgid = " << message.msgid;
         break;
-    case MAVLINK_MSG_ID_HYDROGEN_BATTERY:
-        _handleHydrogenBattery(message);//我加的协议
+    // case MAVLINK_MSG_ID_HYDROGEN_BATTERY:
+    //     qDebug() << "[Vehicle] 收到我的HYDROGEN_BATTERY的 msgid = " << message.msgid;
+    //     _handleHydrogenBattery(message);//我加的协议
+    //     break;
+
+
+
+
+    // case MAVLINK_MSG_ID_DATA32: {
+    //     mavlink_data32_t data;
+    //     mavlink_msg_data32_decode(&message, &data);
+
+    //             // 定义的 hydrogenBatteryHandler 处理逻辑
+    //     HydrogenBatteryHandler::instance()->handleData32(data.data, sizeof(data.data));
+
+    //     break;
+    // }
+
+    case MAVLINK_MSG_ID_DATA32:
+        if (message.msgid == MAVLINK_MSG_ID_DATA32) {
+            // 只处理 type = 100 的氢电池
+            mavlink_data32_t data;
+            mavlink_msg_data32_decode(&message, &data);
+            qDebug() << "收到MAVLINK_MSG_ID_DATA32消息 ID:" << message.msgid;
+            if (data.type == 100) {
+                _handleHydrogenBattery(message);
+            }
+        }
         break;
     case MAVLINK_MSG_ID_SYS_STATUS:
         _handleSysStatus(message);
@@ -658,6 +756,11 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     }
     }
 
+    if (message.msgid == MAVLINK_MSG_ID_DATA32) {
+        qDebug() << "QGC 收到了 msgid = 229";
+    } else {
+       // qDebug() << "Vehicle::_mavlinkMessageReceived收到MAVLink消息，验证mocklink：ID:" << message.msgid;
+    }
     // This must be emitted after the vehicle processes the message. This way the vehicle state is up to date when anyone else
     // does processing.
     emit mavlinkMessageReceived(message);
@@ -1020,7 +1123,7 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message) //处理来自 MA
 {
     mavlink_battery_status_t batteryStatus; //首先声明了一个 mavlink_battery_status_t 类型的变量
     mavlink_msg_battery_status_decode(&message, &batteryStatus); //使用 mavlink_msg_battery_status_decode 函数从传入的消息中解码电池状态信息
-
+    qDebug() << "进到了vechile调用了_handleBatteryStatus";
     //更新最低电池充电状态
     // 这段代码检查一个哈希表（_lowestBatteryChargeStateAnnouncedMap）中是否已经记录了当前电池的 ID。如果没有，就将电池的充电状态添加到哈希表中
     if (!_lowestBatteryChargeStateAnnouncedMap.contains(batteryStatus.id)) {
@@ -1084,18 +1187,47 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message) //处理来自 MA
     }
 }
 
-void Vehicle::_handleHydrogenBattery(const mavlink_message_t& message) //我加的协议解析
+void Vehicle::_handleHydrogenBattery(mavlink_message_t& message) //我加的协议解析，用来解析电池状态，与前端交互
 {
-    mavlink_hydrogen_battery_t hydrogenBatteryMsg;
-    mavlink_msg_hydrogen_battery_decode(&message, &hydrogenBatteryMsg);
+    mavlink_data32_t data;
+    mavlink_msg_data32_decode(&message, &data);
+    qDebug() << "[Vehicle] 处理氢电池 Data32 消息，batteryId:" << message.msgid;
 
-    qDebug() << "Received HYDROGEN_BATTERY:"
-             << "Voltage:" << hydrogenBatteryMsg.bat_voltage
-             << "Current:" << hydrogenBatteryMsg.servo_current
-             << "Temperature:" << hydrogenBatteryMsg.pcb_temp;
+    // if (data.type != 100 || data.len < 20)
+    //     return;
 
-            // TODO: 后续可以在这里存到某个 FactGroup 或者更新界面
+    const uint8_t batteryId = data.data[19];
+    const uint8_t faultStatus = data.data[17];
+    const uint8_t selfCheck = data.data[18];
+
+    if (!_lowestHydrogenBatteryFaultAnnouncedMap.contains(batteryId)) {
+        _lowestHydrogenBatteryFaultAnnouncedMap[batteryId] = 0;
+    }
+
+    QString batteryMessage;
+
+    if (selfCheck == 0) {
+        batteryMessage = tr("Hydrogen battery %1 self-check failed");
+    } else if (faultStatus & 0x01) {
+        batteryMessage = tr("Hydrogen battery %1 overvoltage");
+    } else if (faultStatus & 0x02) {
+        batteryMessage = tr("Hydrogen battery %1 undervoltage");
+    } else if (faultStatus & 0x04) {
+        batteryMessage = tr("Hydrogen battery %1 overtemperature");
+    }
+
+    if (!batteryMessage.isEmpty()) {
+        QString idStr = _hydrogenbatteryFactGroupListModel.count() > 1
+                            ? QString("%1").arg(batteryId)
+                            : QString("");
+        _say(tr("warning"));
+        _say(QStringLiteral("%1 %2 ").arg(_vehicleIdSpeech()).arg(batteryMessage.arg(idStr)));
+        _lowestHydrogenBatteryFaultAnnouncedMap[batteryId] = faultStatus;
+    }
 }
+
+
+
 
 
 void Vehicle::_setHomePosition(QGeoCoordinate& homeCoord)
@@ -3360,8 +3492,14 @@ QString Vehicle::vehicleImageOpaque() const
 
 QString Vehicle::vehicleImageOutline() const
 {
-    if(_firmwarePlugin)
-        return _firmwarePlugin->vehicleImageOutline(this);
+    if(_firmwarePlugin){
+        qDebug() << "_firmwarePlugin class:" << _firmwarePlugin->metaObject()->className();
+    qDebug() << "toolIndicators returned URLs:";
+    for (const QVariant& v : _firmwarePlugin->toolIndicators(this)) {
+        qDebug() << v.toUrl().toString();
+    }
+
+    return _firmwarePlugin->vehicleImageOutline(this);}
     else
         return QString();
 }
@@ -3377,6 +3515,11 @@ QVariant Vehicle::mainStatusIndicatorContentItem()
 const QVariantList& Vehicle::toolIndicators()
 {
     if(_firmwarePlugin) {
+        qDebug() << "_firmwarePlugin 类:" << _firmwarePlugin->metaObject()->className();
+        qDebug() << "toolIndicators returned URLs:";
+        for (const QVariant& v : _firmwarePlugin->toolIndicators(this)) {
+            qDebug() << v.toUrl().toString();
+        }
         return _firmwarePlugin->toolIndicators(this);
     }
     static QVariantList emptyList;
@@ -3386,6 +3529,7 @@ const QVariantList& Vehicle::toolIndicators()
 const QVariantList& Vehicle::modeIndicators()
 {
     if(_firmwarePlugin) {
+
         return _firmwarePlugin->modeIndicators(this);
     }
     static QVariantList emptyList;
@@ -4148,10 +4292,11 @@ void Vehicle::_textMessageReceived(MAV_COMPONENT componentid, MAV_SEVERITY sever
     m_statusTextHandler->handleHTMLEscapedTextMessage(componentid, severity, text.toHtmlEscaped(), description);
 }
 
+//Vehicle 收到错误信息（如来自 MAVLink 的 STATUSTEXT）
 void Vehicle::_errorMessageReceived(QString message)
 {
     if (_isActiveVehicle) {
-        qgcApp()->showCriticalVehicleMessage(message);
+        qgcApp()->showCriticalVehicleMessage(message);//如果当前是激活的车辆，就通过 qgcApp() 调用 showCriticalVehicleMessage(...)
     }
 }
 

@@ -21,6 +21,24 @@ class FirmwarePlugin;
 
 Q_DECLARE_LOGGING_CATEGORY(CompInfoParamLog)
 
+
+// 核心职能
+
+// 参数元数据管理
+
+//             存储飞控参数的描述性信息（非参数值本身）：
+//                 参数名称、单位、默认值
+//                     数据类型（int/float/bool）
+//                 取值范围/枚举选项
+//     分组信息（如"电池"、"遥控器"组）
+//     读写权限（只读/可写）
+// 协议适配层
+
+//             解析不同飞控固件（PX4/ArduPilot）的参数元数据格式
+//         处理APM特有的.pdef.xml参数定义文件
+//             适配PX4的参数动态发现机制
+// 缓存优化
+        //对参数元数据建立内存缓存，避免重复解析：
 class CompInfoParam : public CompInfo
 {
     Q_OBJECT

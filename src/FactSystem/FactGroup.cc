@@ -7,6 +7,7 @@
  *
  ****************************************************************************/
 
+#include<QFile>
 #include "FactGroup.h"
 #include "QGCLoggingCategory.h"
 
@@ -18,6 +19,13 @@ FactGroup::FactGroup(int updateRateMsecs, const QString &metaDataFile, QObject *
     , _ignoreCamelCase(ignoreCamelCase)
 {
     // qCDebug(FactGroupLog) << Q_FUNC_INFO << this;
+
+    qDebug() << "加载metadata路径:" << metaDataFile;
+    QFile file(metaDataFile);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qWarning() << "!!! 加载失败: 无法打开元数据文件:" << metaDataFile;
+    }
+
     _setupTimer();
     _nameToFactMetaDataMap = FactMetaData::createMapFromJsonFile(metaDataFile, this);
 }

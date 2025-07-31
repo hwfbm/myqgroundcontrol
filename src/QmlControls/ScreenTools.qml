@@ -25,6 +25,8 @@ import QGroundControl.ScreenToolsController
             ...
         }
 */
+//作用是为整个 UI 系统提供屏幕分辨率适配、字体尺寸、平台信息和控件默认大小的统一接口
+//提供 QGroundControl 的字体尺寸、控件尺寸、屏幕适配信息，方便 QML UI 根据屏幕大小自适应布局。根据平台使用不同布局或字体
 Item {
     id: _screenTools
 
@@ -141,7 +143,8 @@ Item {
     }
 
     /// Returns the current x position of the mouse in global screen coordinates.
-    function mouseX() {
+    function mouseX() //获取鼠标位置或打印屏幕参数调试信息
+    {
         return ScreenToolsController.mouseX()
     }
 

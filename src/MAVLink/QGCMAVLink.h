@@ -35,9 +35,12 @@ public:
     QGCMAVLink(QObject *parent = nullptr);
     ~QGCMAVLink();
 
-    typedef int FirmwareClass_t;
-    typedef int VehicleClass_t;
-
+    typedef int FirmwareClass_t; //把int类型语意上转换为FirmwareClass_t固件分类
+    typedef int VehicleClass_t;//车辆分类
+    //static如果写在类体里，则表示“这是属于类本身，而不是某个对象”的静态数据成员
+    //constexpr告诉编译器“这个初始化表达式在编译期就能算出结果”，并且允许把 FirmwareClassPX4 用在需要编译期常量的地方（比如模板实参、数组长度、switch-case 的 case 标签等）。
+    //const类型修饰：变量本身是只读的，不能修改
+    //constexpr 已经隐含了顶层 const（变量本身是常量），所以再写一个 const 有点“重复”constexpr 已经隐含了顶层 const（变量本身是常量），所以再写一个 const 有点“重复”
     static constexpr const FirmwareClass_t FirmwareClassPX4       = MAV_AUTOPILOT_PX4;
     static constexpr const FirmwareClass_t FirmwareClassArduPilot = MAV_AUTOPILOT_ARDUPILOTMEGA;
     static constexpr const FirmwareClass_t FirmwareClassGeneric   = MAV_AUTOPILOT_GENERIC;

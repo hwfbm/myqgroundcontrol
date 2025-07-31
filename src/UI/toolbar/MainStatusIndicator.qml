@@ -39,13 +39,13 @@ RowLayout {
         text:           mainStatusText()
         font.pointSize: ScreenTools.largeFontPointSize
 
-        property string _commLostText:      qsTr("Comms Lost")
-        property string _readyToFlyText:    qsTr("Ready To Fly")
-        property string _notReadyToFlyText: qsTr("Not Ready")
-        property string _disconnectedText:  qsTr("Disconnected - Click to manually connect")
-        property string _armedText:         qsTr("Armed")
-        property string _flyingText:        qsTr("Flying")
-        property string _landingText:       qsTr("Landing")
+        property string _commLostText:      qsTr("飞行器通信丢失")
+        property string _readyToFlyText:    qsTr("飞行器准备起飞")
+        property string _notReadyToFlyText: qsTr("飞行器未准备好")
+        property string _disconnectedText:  qsTr("飞行器未连接，单击手动连接")
+        property string _armedText:         qsTr("飞行器进入预备模式")
+        property string _flyingText:        qsTr("飞行中")
+        property string _landingText:       qsTr("降落中")
 
         function mainStatusText() {
             var statusText
@@ -55,12 +55,12 @@ RowLayout {
                     return mainStatusLabel._commLostText
                 }
                 if (_activeVehicle.armed) {
-                    _mainStatusBGColor = "green"
+                    _mainStatusBGColor = "blue"
 
                     if (_healthAndArmingChecksSupported) {
                         if (_activeVehicle.healthAndArmingCheckReport.canArm) {
                             if (_activeVehicle.healthAndArmingCheckReport.hasWarningsOrErrors) {
-                                _mainStatusBGColor = "yellow"
+                                _mainStatusBGColor = "purple"
                             }
                         } else {
                             _mainStatusBGColor = "red"
@@ -78,9 +78,9 @@ RowLayout {
                     if (_healthAndArmingChecksSupported) {
                         if (_activeVehicle.healthAndArmingCheckReport.canArm) {
                             if (_activeVehicle.healthAndArmingCheckReport.hasWarningsOrErrors) {
-                                _mainStatusBGColor = "yellow"
+                                _mainStatusBGColor = "purple"
                             } else {
-                                _mainStatusBGColor = "green"
+                                _mainStatusBGColor = "blue"
                             }
                             return mainStatusLabel._readyToFlyText
                         } else {
@@ -89,34 +89,49 @@ RowLayout {
                         }
                     } else if (_activeVehicle.readyToFlyAvailable) {
                         if (_activeVehicle.readyToFly) {
-                            _mainStatusBGColor = "green"
+                            _mainStatusBGColor = "blue"
                             return mainStatusLabel._readyToFlyText
                         } else {
-                            _mainStatusBGColor = "yellow"
+                            _mainStatusBGColor = "purple"
                             return mainStatusLabel._notReadyToFlyText
                         }
                     } else {
                         // Best we can do is determine readiness based on AutoPilot component setup and health indicators from SYS_STATUS
                         if (_activeVehicle.allSensorsHealthy && _activeVehicle.autopilotPlugin.setupComplete) {
-                            _mainStatusBGColor = "green"
+                            _mainStatusBGColor = "blue"
                             return mainStatusLabel._readyToFlyText
                         } else {
-                            _mainStatusBGColor = "yellow"
+                            _mainStatusBGColor = "purple"
                             return mainStatusLabel._notReadyToFlyText
                         }
                     }
                 }
             } else {
-                _mainStatusBGColor = qgcPal.brandingPurple
+                _mainStatusBGColor = "transparent"//qgcPal.toolbarBackground//brandingPurple
                 return mainStatusLabel._disconnectedText
             }
         }
 
+        // QGCMouseArea {
+        //     anchors.fill:   parent
+        //     onClicked:      dropMainStatusIndicator()
+        // }
+
+
         QGCMouseArea {
-            anchors.fill:   parent
-            onClicked:      dropMainStatusIndicator()
+            anchors.fill: parent
+            onClicked: dropMainStatusIndicator()
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            //ToolTip.visible: containsMouse
+            //ToolTip.text: qsTr("Click to reconnect or view more info")
+
         }
-    }
+        Behavior on color {
+             ColorAnimation { easing.type: Easing.InExpo; duration: 300 }
+        }
+}
+
 
     QGCLabel {
         id:             vtolModeLabel
@@ -213,7 +228,7 @@ RowLayout {
 
             SettingsGroupLayout {
                 //Layout.fillWidth:   true
-                heading:            qsTr("Vehicle Messages")
+                heading:            qsTr("飞行器信息")
                 visible:            !vehicleMessageList.noMessages
 
                 VehicleMessageList { 
@@ -223,7 +238,7 @@ RowLayout {
 
             SettingsGroupLayout {
                 //Layout.fillWidth:   true
-                heading:            qsTr("Sensor Status")
+                heading:            qsTr("传感器状态")
                 visible:            !_healthAndArmingChecksSupported
 
                 GridLayout {
@@ -246,7 +261,7 @@ RowLayout {
 
             SettingsGroupLayout {
                 //Layout.fillWidth:   true
-                heading:            qsTr("Overall Status")
+                heading:            qsTr("整体状况")
                 visible:            _healthAndArmingChecksSupported && _activeVehicle.healthAndArmingCheckReport.problemsForCurrentMode.count > 0
 
                 // List health and arming checks
@@ -387,7 +402,7 @@ RowLayout {
 
                     onClicked: {
                         if (_vtolInFWDFlight) {
-                            mainWindow.vtolTransitionToMRFlightRequest()
+                            mainWindow.vtolTransitionToMRFlightRequest()//发出固定翼转为多旋翼信号
                         } else {
                             mainWindow.vtolTransitionToFwdFlightRequest()
                         }

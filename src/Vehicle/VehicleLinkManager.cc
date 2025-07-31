@@ -41,16 +41,19 @@ VehicleLinkManager::~VehicleLinkManager()
 void VehicleLinkManager::mavlinkMessageReceived(LinkInterface *link, const mavlink_message_t &message)
 {
     // Radio status messages come from Sik Radios directly. It doesn't indicate there is any life on the other end.
+    //忽略 RADIO_STATUS（ID 109）；
     if (message.msgid == MAVLINK_MSG_ID_RADIO_STATUS) {
         return;
     }
 
+    //检查 link 是否记录在 _rgLinkInfo 中
     const int linkIndex = _containsLinkIndex(link);
     if (linkIndex == -1) {
         _addLink(link);
         return;
     }
 
+    //如果连接恢复了，则调用 _commRegainedOnLink(link)
     LinkInfo_t &linkInfo = _rgLinkInfo[linkIndex];
     linkInfo.heartbeatElapsedTimer.restart();
     if (_rgLinkInfo[linkIndex].commLost) {

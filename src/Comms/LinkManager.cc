@@ -533,14 +533,41 @@ void LinkManager::_updateAutoConnectLinks()
 #endif
 }
 
+//主要功能是关闭和清理所有与无人机（或车辆）的连接，并确保在程序退出时所有相关对象都被正确删除
 void LinkManager::shutdown()
 {
-    setConnectionsSuspended(tr("Shutdown"));
-    disconnectAll();
+    setConnectionsSuspended(tr("Shutdown"));//用于暂停所有当前的连接
+    disconnectAll();//用于断开所有与无人机（或车辆）的连接。这通常会关闭网络连接、串口连接等
 
     // Wait for all the vehicles to go away to ensure an orderly shutdown and deletion of all objects
-    while (MultiVehicleManager::instance()->vehicles()->count()) {
-        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+    //等待所有无人机消失
+
+    //获取 MultiVehicleManager 的单例实例
+    while (MultiVehicleManager::instance()->vehicles()->count())//vehicles()返回一个包含所有当前连接的无人机（或车辆）的列表，count()：返回列表中的无人机（或车辆）数量
+    {
+        //只要还有无人机（或车辆）存在，就继续循环
+        //处理所有待处理的事件，但排除用户输入事件。这确保了程序在关闭时可以处理其他事件（如网络事件），但不会响应用户输入
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);// 相当于：只处理紧急后台事务，但忽略鼠标键盘操作： 处理：定时器事件、网络响应、界面重绘等/类比：你只查看工作群消息（不理会朋友发来的闲聊），然后马上继续工作
+
+        //QCoreApplication::processEvents();  // 相当于：暂停手头工作，处理所有待办事项，立即处理所有堆积的事件（比如界面刷新、网络数据到达等）/类比：你放下文件，去查看手机消息、喝口水、回复邮件，然后再继续工作
+
+        //典型场景：
+        //长时间运算时保持界面不卡死
+        // for(int i=0; i<1000000; i++){
+        //     heavyCalculation();
+        //     QCoreApplication::processEvents(); // 让界面还能动
+        // }
+        // 后台任务需要响应中断
+        //     while(!taskFinished){
+        //     if(needCancel) break;
+        //     QCoreApplication::processEvents(ExcludeUserInputEvents);
+        //     // 防止用户乱按导致意外
+        // }
+        // 场景	推荐用法
+        //     需要实时响应按钮点击	processEvents()
+        //     执行关键操作不想被打断	processEvents(ExcludeUserInputEvents)
+        //     在子线程中	绝对不要用（GUI事件只能在主线程处理）
+
     }
 }
 

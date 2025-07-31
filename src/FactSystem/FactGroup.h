@@ -52,7 +52,7 @@ public:
     QStringList factNames() const { return _factNames; }
     QStringList factGroupNames() const { return _nameToFactGroupMap.keys(); }
     bool telemetryAvailable() const { return _telemetryAvailable; }
-    const QMap<QString, FactGroup*> &factGroups() const { return _nameToFactGroupMap; }
+    const QMap<QString, FactGroup*> &factGroups() const { return _nameToFactGroupMap; } //_nameToFactGroupMap
 
     /// Allows a FactGroup to parse incoming messages and fill in values
     virtual void handleMessage(Vehicle *vehicle, mavlink_message_t &message) {}
@@ -76,7 +76,7 @@ protected:
     const int _updateRateMSecs = 0;   ///< Update rate for Fact::valueChanged signals, 0: immediate update
 
     QMap<QString, Fact*> _nameToFactMap;
-    QMap<QString, FactGroup*> _nameToFactGroupMap;
+    QMap<QString, FactGroup*> _nameToFactGroupMap; //QMap<QString, FactGroup*> 类型），它保存了所有的 FactGroup 实例
     QMap<QString, FactMetaData*> _nameToFactMetaDataMap;
     QStringList _factNames;
 

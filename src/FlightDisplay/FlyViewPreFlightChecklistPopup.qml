@@ -26,9 +26,9 @@ QGCPopupDialog {
     property bool   _enforceChecklist:  _useChecklist && QGroundControl.settingsManager.appSettings.enforceChecklist.rawValue
     property bool   _checklistComplete: _activeVehicle && (_activeVehicle.checkListState === Vehicle.CheckListPassed)
 
-    on_ActiveVehicleChanged: _showPreFlightChecklistIfNeeded()
+    on_ActiveVehicleChanged: _showPreFlightChecklistIfNeeded()//初始化出发。
 
-    Connections {
+    Connections {//通过信号触发
         target:                             mainWindow
         onShowPreFlightChecklistIfNeeded:   _root._showPreFlightChecklistIfNeeded()
     }

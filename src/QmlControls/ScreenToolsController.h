@@ -10,7 +10,7 @@
 
 /// @file
 ///     @author Gus Grubba <gus@auterion.com>
-
+//暴露底层信息给ScreenTools.qml
 #pragma once
 
 #include <QtCore/QLoggingCategory>

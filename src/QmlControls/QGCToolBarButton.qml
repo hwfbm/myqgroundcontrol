@@ -20,10 +20,15 @@ import QGroundControl.ScreenTools
 
 Button {
     id:                 button
-    height:             ScreenTools.defaultFontPixelHeight * 3
+    height:             ScreenTools.defaultFontPixelHeight * 2
     leftPadding:        _horizontalMargin
     rightPadding:       _horizontalMargin
     checkable:          false
+    hoverEnabled:   !ScreenTools.isMobile// 移动设备禁用悬停
+    //定义了两个动态颜色属性（正常时候和按下或选择时候）
+    property color _currentContentColor:  (checked || pressed) ? qgcPal.buttonHighlightText : qgcPal.buttonText
+    property color _currentContentColorSecondary:  (checked || pressed) ? qgcPal.buttonText : qgcPal.buttonHighlight
+
 
     property bool logo: false
 
@@ -31,11 +36,26 @@ Button {
 
     onCheckedChanged: checkable = false
 
+    // background: Rectangle {
+    //     anchors.fill:   parent
+    //     color:          button.checked ? qgcPal.buttonHighlight : Qt.rgba(0,0,0,0)
+    //     border.color:   "white"
+    //     border.width:   QGroundControl.corePlugin.showTouchAreas ? 3 : 0
+    // }
+    //背景设计 (background)
+    // 背景颜色根据状态变化：
+    // 选中/按下状态：高亮色
+    // 悬停状态：悬停色
+    // 默认状态：工具条背景色
     background: Rectangle {
+        id:             buttonBkRect
+        // color:          (button.checked || button.pressed) ?
+        //                     qgcPal.buttonHighlight :
+        //                     (button.hovered ? qgcPal.toolStripHoverColor : qgcPal.toolbarBackground)
+        color:          (button.checked || button.pressed) ?
+                            qgcPal.toolStripHoverColor :qgcPal.toolbarBackground
         anchors.fill:   parent
-        color:          button.checked ? qgcPal.buttonHighlight : Qt.rgba(0,0,0,0)
-        border.color:   "red"
-        border.width:   QGroundControl.corePlugin.showTouchAreas ? 3 : 0
+              border.width:   QGroundControl.corePlugin.showTouchAreas ? 3 : 0
     }
 
     contentItem: Row {
@@ -47,6 +67,7 @@ Button {
             width:                  height
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
+            //当 logo 为真时完全透明；否则如果按钮被选中就用高亮色，未被选中就用普通色
             color:                  logo ? "transparent" : (button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText)
             source:                 button.icon.source
             anchors.verticalCenter: parent.verticalCenter
@@ -59,4 +80,6 @@ Button {
             anchors.verticalCenter: parent.verticalCenter
         }
     }
+
+
 }

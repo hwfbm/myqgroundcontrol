@@ -30,6 +30,9 @@ import QGroundControl.Vehicle
 // 3D Viewer modules
 import Viewer3D
 
+
+//这段代码构成了 QGroundControl 飞行视图的核心界面
+
 Item {
     id: _root
 
@@ -40,19 +43,20 @@ Item {
     // Properties of UTM adapter
     property bool utmspSendActTrigger: false
 
+    //飞行视图的规划主控制器，在组件完成时自动启动
     PlanMasterController {
         id:                     _planController
-        flyView:                true
+        flyView:                true //设置 flyView 为 true 表示这是飞行视图
         Component.onCompleted:  start()
     }
 
-    property bool   _mainWindowIsMap:       mapControl.pipState.state === mapControl.pipState.fullState
+    property bool   _mainWindowIsMap:       mapControl.pipState.state === mapControl.pipState.fullState//判断主窗口是否显示地图
     property bool   _isFullWindowItemDark:  _mainWindowIsMap ? mapControl.isSatelliteMap : true
-    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
-    property var    _missionController:     _planController.missionController
+    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle//获取当前活动飞行器
+    property var    _missionController:     _planController.missionController//各种控制器引用(_missionController, _geoFenceController 等)
     property var    _geoFenceController:    _planController.geoFenceController
     property var    _rallyPointController:  _planController.rallyPointController
-    property real   _margins:               ScreenTools.defaultFontPixelWidth / 2
+    property real   _margins:               ScreenTools.defaultFontPixelWidth / 2///布局相关属性(_margins, _toolsMargin, _rightPanelWidth 等)
     property var    _guidedController:      guidedActionsController
     property var    _guidedValueSlider:     guidedValueSlider
     property var    _widgetLayer:           widgetLayer
@@ -61,29 +65,38 @@ Item {
     property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 30
     property var    _mapControl:            mapControl
 
+    //Z 轴顺序定义(_fullItemZorder, _pipItemZorder)
     property real   _fullItemZorder:    0
     property real   _pipItemZorder:     QGroundControl.zOrderWidgets
 
+
+    //_calcCenterViewPort(): 计算中心视口区域
     function _calcCenterViewPort() {
         var newToolInset = Qt.rect(0, 0, width, height)
         toolstrip.adjustToolInset(newToolInset)
     }
 
+    //dropMainStatusIndicatorTool(): 移除主状态指示器工具
     function dropMainStatusIndicatorTool() {
         toolbar.dropMainStatusIndicatorTool();
     }
 
+    //管理工具边距，用于处理 PIP(画中画)视图的插入
     QGCToolInsets {
         id:                     _toolInsets
         leftEdgeBottomInset:    _pipView.leftEdgeBottomInset
         bottomEdgeLeftInset:    _pipView.bottomEdgeLeftInset
     }
 
+    //顶部工具栏，视频全屏时隐藏
     FlyViewToolBar {
         id:         toolbar
         visible:    !QGroundControl.videoManager.fullScreen
     }
 
+
+
+    //主地图和视频的容器
     Item {
         id:                 mapHolder
         anchors.top:        toolbar.bottom
@@ -91,6 +104,7 @@ Item {
         anchors.left:       parent.left
         anchors.right:      parent.right
 
+        //主地图控件。关联规划控制器，处理 PIP 模式。3D 查看器打开时禁用
         FlyViewMap {
             id:                     mapControl
             planMasterController:   _planController
@@ -102,11 +116,13 @@ Item {
             enabled:                !viewer3DWindow.isOpen
         }
 
+        //视频显示控件，支持 PIP 模式
         FlyViewVideo {
             id:         videoControl
             pipView:    _pipView
         }
 
+        //画中画视图管理器，可以在主地图和视频之间切换，计算并管理边距插入
         PipView {
             id:                     _pipView
             anchors.left:           parent.left
@@ -123,6 +139,8 @@ Item {
             property real bottomEdgeLeftInset: visible ? height + anchors.margins : 0
         }
 
+
+        //小部件层，显示各种飞行信息，处理 UTM 适配器触发信号，管理 3D 查看器状态
         FlyViewWidgetLayer {
             id:                     widgetLayer
             anchors.top:            parent.top
@@ -137,6 +155,7 @@ Item {
             isViewer3DOpen:         viewer3DWindow.isOpen
         }
 
+        //自定义覆盖层，显示额外的自定义信息
         FlyViewCustomLayer {
             id:                 customOverlay
             anchors.fill:       widgetLayer
@@ -147,6 +166,7 @@ Item {
         }
 
         // Development tool for visualizing the insets for a paticular layer, show if needed
+        //用于可视化边距插入的开发工具，默认隐藏
         FlyViewInsetViewer {
             id:                     widgetLayerInsetViewer
             anchors.top:            parent.top
@@ -158,6 +178,7 @@ Item {
             visible:                false
         }
 
+        //引导操作控制器，管理任务控制器和值滑块
         GuidedActionsController {
             id:                 guidedActionsController
             missionController:  _missionController
@@ -165,6 +186,7 @@ Item {
         }
 
         //-- Guided value slider (e.g. altitude)
+        //引导值滑块(如高度调整)，位于右侧，最顶层显示
         GuidedValueSlider {
             id:                 guidedValueSlider
             anchors.right:      parent.right
@@ -174,6 +196,7 @@ Item {
             visible:            false
         }
 
+        //3D 查看器窗口，占据整个视图区域
         Viewer3D{
             id:                     viewer3DWindow
             anchors.fill:           parent

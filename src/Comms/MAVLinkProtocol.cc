@@ -121,6 +121,7 @@ void MAVLinkProtocol::logSentBytes(const LinkInterface *link, const QByteArray &
 //接收数据入口。将原始字节流解析为 MAVLink 消息，并触发后续处理流程
 void MAVLinkProtocol::receiveBytes(LinkInterface *link, const QByteArray &data)//link：通信链路对象（如串口、UDP连接），data：接收到的原始字节数据
 {
+
     //获取链路的智能指针，确保对象生命周期安全
     //调用成员函数，根据传入的 link，返回一个 SharedLinkInterfacePtr
     //将返回的共享指针存入常量 linkPtr，避免意外修改
@@ -137,6 +138,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface *link, const QByteArray &data)/
         const uint8_t mavlinkChannel = link->mavlinkChannel();//mavlinkChannel()返回 MAVLink 通道，每个链路分配独立 MAVLink 通道（0-15）
         mavlink_message_t message{};
         mavlink_status_t status{};
+        if (message.msgid == 229) {
+            qDebug() << "🛰️ MAVLinkProtocol 收到229";
+        }
 
         //mavlink_parse_char() 是 MAVLink 库的核心函数
         //输入：单个字节 + 解析状态机（status）
@@ -162,8 +166,12 @@ void MAVLinkProtocol::receiveBytes(LinkInterface *link, const QByteArray &data)/
         if (!_updateStatus(link, linkPtr, mavlinkChannel, message)) {
             break;
         }
+         if (mavlink_parse_char(mavlinkChannel, byte, &message, &status)) {
+        qDebug() << "[receiveBytes] 收到消息 msgid:" << message.msgid;
+         }
     }
 }
+
 
 void MAVLinkProtocol::_updateVersion(LinkInterface *link, uint8_t mavlinkChannel)
 {

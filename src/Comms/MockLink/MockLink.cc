@@ -40,6 +40,19 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
     , _boardProductId(_mockConfig->boardProductId())
     , _missionItemHandler(new MockLinkMissionItemHandler(this))
     , _mockLinkFTP(new MockLinkFTP(_vehicleSystemId, _vehicleComponentId, this))
+    , bat_voltage    (22)
+    ,servo_current(3)
+    ,stack_voltage(0)
+    , servo_voltage(0)
+    , bat_refuel_current(0)
+    , gas_tank_pressure(0)
+    , pcb_temp(0)
+    , stack_temp(0)
+    , work_status(0)
+    , fault_status(0)
+    , self_check(0)
+      , hydroId(2)
+    , pipe_pressure(33)
 {
     // qCDebug(MockLinkLog) << Q_FUNC_INFO << this;
 
@@ -124,11 +137,17 @@ void MockLink::run1HzTasks()
         return;
     }
 
+     //sendMockErrorMessage("有问题哥们:没gps", MAV_SEVERITY_CRITICAL);
+      //sendMockErrorMessage("警告:电池有问题", MAV_SEVERITY_ALERT);
+
+   // _sendHydrogenBatteryStatus(); // 发出自定义的消息
+    _sendMockMessages(); //发出mock消息
     _sendVibration();
-    _sendBatteryStatus();
+    //_sendBatteryStatus();
     _sendSysStatus();
     _sendADSBVehicles();
     _sendRemoteIDArmStatus();
+
     if (!qgcApp()->runningUnitTests()) {
         // Sending RC Channels during unit test breaks RC tests which does it's own RC simulation
         _sendRCChannels();
@@ -369,8 +388,27 @@ void MockLink::_sendSysStatus()
     respondWithMavlinkMessage(msg);
 }
 
+// 测试用例：验证 severityIsError() 对错误级别消息的识别
+void MockLink::sendMockErrorMessage(const QString& text, uint8_t severity)
+{
+    mavlink_message_t msg;
+    mavlink_statustext_t statustext;
+
+    statustext.severity = severity;
+    QByteArray textBytes = text.toUtf8();
+    strncpy(statustext.text, textBytes.constData(), sizeof(statustext.text));
+    statustext.text[sizeof(statustext.text) - 1] = '\0'; // 保证 null 结尾
+
+    mavlink_msg_statustext_encode(_vehicleSystemId, _vehicleComponentId, &msg, &statustext);
+    respondWithMavlinkMessage(msg);
+}
+
+
 void MockLink::_sendBatteryStatus()
 {
+    qDebug() << "[MockLink] 正在模拟发送 BatteryStatus";
+
+
     if (_battery1PctRemaining > 1) {
         _battery1PctRemaining = static_cast<int8_t>(100 - (_runningTime.elapsed() / 1000));
         _battery1TimeRemaining = static_cast<double>(_batteryMaxTimeRemaining) * (static_cast<double>(_battery1PctRemaining) / 100.0);
@@ -398,6 +436,9 @@ void MockLink::_sendBatteryStatus()
             _battery2ChargeState = MAV_BATTERY_CHARGE_STATE_EMERGENCY;
         }
     }
+
+
+
 
     mavlink_message_t msg{};
     uint16_t rgVoltages[10]{};
@@ -432,64 +473,405 @@ void MockLink::_sendBatteryStatus()
     );
     respondWithMavlinkMessage(msg);
 
-    (void) mavlink_msg_battery_status_pack_chan(
-        _vehicleSystemId,
-        _vehicleComponentId,
-        static_cast<uint8_t>(mavlinkChannel()),
-        &msg,
-        2,                          // battery id
-        MAV_BATTERY_FUNCTION_ALL,
-        MAV_BATTERY_TYPE_LIPO,
-        INT16_MAX,                  // temp cdegC
-        rgVoltagesNone,
-        600,                        // battery cA
-        100,                        // current consumed mAh
-        -1,                         // energy consumed not supported
-        _battery2PctRemaining,
-        _battery2TimeRemaining,
-        _battery2ChargeState,
-        rgVoltagesExtNone,
-        0, // MAV_BATTERY_MODE
-        0  // MAV_BATTERY_FAULT
-    );
-    _sendHydrogenBatteryStatus(); // 发出自定义的消息
-    respondWithMavlinkMessage(msg);
+
+
+
+
+            // (void) mavlink_msg_battery_status_pack_chan(
+    //     _vehicleSystemId,
+    //     _vehicleComponentId,
+    //     static_cast<uint8_t>(mavlinkChannel()),
+    //     &msg,
+    //     2,                          // battery id
+    //     MAV_BATTERY_FUNCTION_ALL,
+    //     MAV_BATTERY_TYPE_LIPO,
+    //     INT16_MAX,                  // temp cdegC
+    //     rgVoltagesNone,
+    //     600,                        // battery cA
+    //     100,                        // current consumed mAh
+    //     -1,                         // energy consumed not supported
+    //     _battery2PctRemaining,
+    //     _battery2TimeRemaining,
+    //     _battery2ChargeState,
+    //     rgVoltagesExtNone,
+    //     0, // MAV_BATTERY_MODE
+    //     0  // MAV_BATTERY_FAULT
+    // );
+
+    // respondWithMavlinkMessage(msg);
+
 
 }
+
+
+// void MockLink::_sendMockMessages()
+// {
+
+//     // static uint64_t lastData32Send = 0;
+//     // uint64_t now = QDateTime::currentMSecsSinceEpoch();
+//     // if (now - lastData32Send > 2000) {  // 每2秒发一次
+//     //     lastData32Send = now;
+
+//         mavlink_message_t msg;
+//         mavlink_data32_t data32 = {};
+//         data32.type = 100;   // 定义的 HydrogenBattery 类型
+//         data32.len = 23;
+
+//                 // 模拟填充 23 字节的有效负载
+//         for (int i = 0; i < 23; ++i) {
+//             data32.data[i] = i * 3;  // 例：data[0]=0, data[1]=3, data[2]=6,...
+//         }
+
+//                 // 编码为 MAVLink 消息
+//         mavlink_msg_data32_encode(
+//             _vehicleSystemId,
+//             _vehicleComponentId,
+//             &msg,
+//             &data32
+//             );
+
+//                 // 发送
+//         respondWithMavlinkMessage(msg);
+
+//         qDebug() << "[MockLink] 发送了模拟 HydrogenBattery 数据";
+// }
+
+// void MockLink::_sendMockMessages()
+// {
+//     static uint64_t lastData32Send = 0;
+//     uint64_t now = QDateTime::currentMSecsSinceEpoch();
+//     if (now - lastData32Send < 2000) return;
+//     lastData32Send = now;
+
+//     mavlink_message_t msg;
+//     mavlink_data32_t data32 = {};
+//     data32.type = 100;   // 自定义类型标识
+//     data32.len = 23;     // 你自定义消息总共 23 字节
+
+//             // 手动填充内容（按照你之前定义的字段顺序和类型）
+//             // ⚠️ 注意字节对齐！uint16 占 2 字节，int8/uint8 占 1 字节
+//     data32.data[0] = 0x44; data32.data[1] = 0x13;   // bat_voltage = 0x1344 = 4932
+//     data32.data[2] = 0xB0; data32.data[3] = 0x04;   // servo_current = 0x04B0 = 1200
+//     data32.data[4] = 0x10; data32.data[5] = 0x0E;   // stack_voltage = 0x0E10 = 3600
+//     data32.data[6] = 0x88; data32.data[7] = 0x13;   // servo_voltage = 0x1388 = 5000
+//     data32.data[8] = 0x20; data32.data[9] = 0x03;   // bat_refuel_current = 800
+//     data32.data[10] = 0x60; data32.data[11] = 0xEA; // gas_tank_pressure = 60000
+//     data32.data[12] = 0x30; data32.data[13] = 0x75; // pipe_pressure = 30000
+//     data32.data[14] = 35;    // pcb_temp = 35°C
+//     data32.data[15] = 42;    // stack_temp = 42°C
+//     data32.data[16] = 0b00001101;  // work_status
+//     data32.data[17] = 0x01; // fault_status
+//     data32.data[18] = 1;     // self_check
+//     data32.data[19] = 1;     // id
+//     // 剩下的 [20-22] 不用或填 0
+//     data32.data[20] = 0;
+//     data32.data[21] = 0;
+//     data32.data[22] = 0;
+
+//     mavlink_msg_data32_encode(
+//         _vehicleSystemId,
+//         _vehicleComponentId,
+//         &msg,
+//         &data32
+//         );
+
+//     respondWithMavlinkMessage(msg);
+//     qDebug() << "[MockLink] 发送了 mock DATA32 氢电池消息, type=100, len=" << data32.len;
+//     qDebug() << "DATA32 sent";
+// }
+
+
+// void MockLink::_sendMockMessages()
+// {
+//     static uint64_t lastData32Send = 0;
+//     uint64_t now = QDateTime::currentMSecsSinceEpoch();
+//     if (now - lastData32Send < 2000) return;
+//     lastData32Send = now;
+
+//             // 模拟 2 块氢电池
+//     for (int batteryIndex = 0; batteryIndex < 2; ++batteryIndex) {
+//         mavlink_message_t msg;
+//         mavlink_data32_t data32 = {};
+//         data32.type = 100;
+//         data32.len = 23;
+
+//         if (batteryIndex == 0) {
+//             // 电池 1 模拟值
+//             data32.data[0]  = 0x44; data32.data[1]  = 0x13; // bat_voltage = 0x1344 = 4932
+//             data32.data[2]  = 0xB0; data32.data[3]  = 0x04; // servo_current = 1200
+//             data32.data[4]  = 0x10; data32.data[5]  = 0x0E; // stack_voltage = 3600
+//             data32.data[6]  = 0x88; data32.data[7]  = 0x13; // servo_voltage = 5000
+//             data32.data[8]  = 0x20; data32.data[9]  = 0x03; // bat_refuel_current = 800
+//             data32.data[10] = 0x60; data32.data[11] = 0xEA; // gas_tank_pressure = 60000
+//             data32.data[12] = 0x30; data32.data[13] = 0x75; // pipe_pressure = 30000
+//             data32.data[14] = 35;                            // pcb_temp = 35°C
+//             data32.data[15] = 42;                            // stack_temp = 42°C
+//             data32.data[16] = 0b00001101;                    // work_status
+//             data32.data[17] = 0x01;                          // fault_status
+//             data32.data[18] = 1;                             // self_check
+//             data32.data[19] = 1;                             // 电池 ID = 1
+//         } else if (batteryIndex == 1) {
+//             // 电池 2 模拟值
+//             data32.data[0]  = 0x10; data32.data[1]  = 0x27; // bat_voltage = 0x2710 = 10000
+//             data32.data[2]  = 0x58; data32.data[3]  = 0x02; // servo_current = 600
+//             data32.data[4]  = 0x20; data32.data[5]  = 0x0F; // stack_voltage = 3872
+//             data32.data[6]  = 0x90; data32.data[7]  = 0x13; // servo_voltage = 5008
+//             data32.data[8]  = 0xF4; data32.data[9]  = 0x01; // bat_refuel_current = 500
+//             data32.data[10] = 0x10; data32.data[11] = 0x27; // gas_tank_pressure = 10000
+//             data32.data[12] = 0x40; data32.data[13] = 0x4E; // pipe_pressure = 20000
+//             data32.data[14] = 33;                            // pcb_temp
+//             data32.data[15] = 40;                            // stack_temp
+//             data32.data[16] = 0b00000010;                    // work_status
+//             data32.data[17] = 0x00;                          // fault_status
+//             data32.data[18] = 1;                             // self_check
+//             data32.data[19] = 2;                             // 电池 ID = 2
+//         }
+
+//                 // 留空字段置 0
+//         data32.data[20] = 0;
+//         data32.data[21] = 0;
+//         data32.data[22] = 0;
+
+//                 // 编码并发送
+//         mavlink_msg_data32_encode(
+//             _vehicleSystemId,
+//             _vehicleComponentId,
+//             &msg,
+//             &data32
+//             );
+
+//         respondWithMavlinkMessage(msg);
+//         qDebug() << "[MockLink] 发送了 mock DATA32 氢电池消息，battery ID =" << data32.data[19];
+//     }
+// }
+
+
+#include <QRandomGenerator>
+
+void MockLink::_sendMockMessages()
+{
+    static uint64_t lastData32Send = 0;
+    uint64_t now = QDateTime::currentMSecsSinceEpoch();
+    if (now - lastData32Send < 2000) return;
+    lastData32Send = now;
+
+    for (int batteryIndex = 0; batteryIndex < 2; ++batteryIndex) {
+        mavlink_message_t msg;
+        mavlink_data32_t data32 = {};
+        data32.type = 100;
+        data32.len = 23;
+
+                // 基准值（根据电池编号设置）
+        int16_t baseBatVoltage       = (batteryIndex == 0) ? 4932 : 10000;
+        int16_t baseServoCurrent     = (batteryIndex == 0) ? 1200 : 600;
+        int16_t baseStackVoltage     = (batteryIndex == 0) ? 3600 : 3872;
+        int16_t baseServoVoltage     = (batteryIndex == 0) ? 5000 : 5008;
+        int16_t baseRefuelCurrent    = (batteryIndex == 0) ? 800  : 500;
+        int16_t baseTankPressure     = (batteryIndex == 0) ? 60000 : 10000;
+        int16_t basePipePressure     = (batteryIndex == 0) ? 30000 : 20000;
+        uint8_t basePcbTemp          = (batteryIndex == 0) ? 35 : 33;
+        uint8_t baseStackTemp        = (batteryIndex == 0) ? 42 : 40;
+        uint8_t workStatus           = (batteryIndex == 0) ? 0b00001101 : 0b00000010;
+        uint8_t faultStatus          = (batteryIndex == 0) ? 0x01 : 0x00;
+        uint8_t selfCheck            = 1;
+        uint8_t id                   = batteryIndex + 1;
+
+        auto rand = QRandomGenerator::global();
+
+        auto addDelta = [&](int base, int delta) {
+            return base + rand->bounded(-delta, delta + 1);
+        };
+
+                // 写入扰动后的值
+        auto write_u16 = [&](int index, int16_t value) {
+            data32.data[index]     = value & 0xFF;
+            data32.data[index + 1] = (value >> 8) & 0xFF;
+        };
+
+        write_u16(0,  addDelta(baseBatVoltage,    20));   // 电池电压 ±20
+        write_u16(2,  addDelta(baseServoCurrent,  10));   // 舵机电流 ±10
+        write_u16(4,  addDelta(baseStackVoltage,  20));
+        write_u16(6,  addDelta(baseServoVoltage,  10));
+        write_u16(8,  addDelta(baseRefuelCurrent, 10));
+        write_u16(10, addDelta(baseTankPressure,  1000));
+        write_u16(12, addDelta(basePipePressure,  1000));
+
+        data32.data[14] = addDelta(basePcbTemp, 2);       // PCB温度 ±2
+        data32.data[15] = addDelta(baseStackTemp, 2);     // Stack温度 ±2
+        data32.data[16] = workStatus;
+        data32.data[17] = faultStatus;
+        data32.data[18] = selfCheck;
+        data32.data[19] = id;
+        data32.data[20] = 0;
+        data32.data[21] = 0;
+        data32.data[22] = 0;
+
+        mavlink_msg_data32_encode(_vehicleSystemId, _vehicleComponentId, &msg, &data32);
+        respondWithMavlinkMessage(msg);
+        qDebug() << "[MockLink] 发送了 mock DATA32 氢电池, id =" << id;
+    }
+}
+
+
 
 void MockLink::_sendHydrogenBatteryStatus()
 {
-    mavlink_message_t msg{};
-    mavlink_hydrogen_battery_t hydrogenBattery{};
+    // mavlink_hydrogen_battery_t hydrogenBattery = {
+    //     .bat_voltage = this->bat_voltage,
+    //     .servo_current = this->servo_current,
+    //     .stack_voltage = this->stack_voltage,
+    //     .servo_voltage = this->servo_voltage,
+    //     .bat_refuel_current = this->bat_refuel_current,
+    //     .gas_tank_pressure = this->gas_tank_pressure,
+    //     .pipe_pressure = this->pipe_pressure,
+    //     .pcb_temp = this->pcb_temp,
+    //     .stack_temp = this->stack_temp,
+    //     .work_status = this->work_status,
+    //     .fault_status = this->fault_status,
+    //     .self_check = static_cast<uint8_t>(this->self_check + 2),
+    //     .id = static_cast<uint8_t>(this->hydroId - 1)
+    // };
 
-            // 填写模拟数据
-    hydrogenBattery.id = 0;
-    hydrogenBattery.self_check = 1;
-    hydrogenBattery.stack_voltage = 48;
-    hydrogenBattery.pipe_pressure = 120;
-    hydrogenBattery.servo_voltage = 5;
-    hydrogenBattery.servo_current = 20;
-    hydrogenBattery.bat_voltage = 24;
-    hydrogenBattery.bat_refuel_current = 800;
-    hydrogenBattery.gas_tank_pressure = 105;
-    hydrogenBattery.pcb_temp = 25;
-    hydrogenBattery.stack_temp = 40;
-    hydrogenBattery.work_status = 1;
-    hydrogenBattery.fault_status = 0;
+    //         // 检查 MAVLink 通道有效性
+    // uint8_t channel = static_cast<uint8_t>(mavlinkChannel());
+    // if (channel >= MAVLINK_COMM_NUM_BUFFERS) {
+    //     qWarning() << "Invalid MAVLink channel:" << channel;
+    //     return;
+    // }
 
-            // 打包消息（使用你的自定义 msg 编码函数）
+    //         // 编码消息
+    // mavlink_message_t msg;
+    // mavlink_msg_hydrogen_battery_encode_chan(
+    //     _vehicleSystemId,
+    //     _vehicleComponentId,
+    //     channel,
+    //     &msg,
+    //     &hydrogenBattery
+    //     );
 
-    mavlink_msg_hydrogen_battery_encode(
-        _vehicleSystemId,
-        _vehicleComponentId,
-        &msg,
-        &hydrogenBattery
-        );
-  qDebug() << "发的自定义MAVLink消息，ID:" << msg.msgid;
-    qDebug()<<"发了自定义mock消息哦";
+    //         // 调试日志（结构化输出）
+    // qDebug().nospace()
+    //     << "发送协氢电池信息 "
+    //     << "{"
+    //     << "\"msgid\":" << msg.msgid << ", "
+    //     << "\"voltage\":" << hydrogenBattery.bat_voltage << ", "
+    //     << "\"current\":" << hydrogenBattery.servo_current << ", "
+    //     << "\"temperature\":" << hydrogenBattery.pcb_temp
+    //     << "}";
 
-    respondWithMavlinkMessage(msg);
+    //         // 发送消息
+    // respondWithMavlinkMessage(msg);
 }
+
+
+
+// void MockLink::_sendHydrogenBatteryStatus()
+// {
+
+
+
+//      mavlink_message_t msg{};
+//     mavlink_hydrogen_battery_t hydrogenBattery{};
+
+// //             // 填写模拟数据
+//     hydrogenBattery.bat_voltage = this->bat_voltage;
+//     hydrogenBattery.servo_voltage = this->servo_voltage;
+//     hydrogenBattery.servo_current = this->servo_current;
+
+//     hydrogenBattery.stack_voltage = this->stack_voltage;
+
+//     hydrogenBattery.bat_refuel_current = this->bat_refuel_current;
+//     hydrogenBattery.gas_tank_pressure = this->gas_tank_pressure;
+// hydrogenBattery.pipe_pressure = this->pipe_pressure;
+
+
+//     hydrogenBattery.pcb_temp = this->pcb_temp;
+//     hydrogenBattery.stack_temp = this->stack_temp;
+//     hydrogenBattery.work_status = this->work_status;
+//     hydrogenBattery.fault_status = this->fault_status;
+//     hydrogenBattery.self_check = this->self_check;
+//     hydrogenBattery.id = this->hydroId;
+
+
+
+
+// mavlink_msg_hydrogen_battery_encode(_vehicleSystemId,
+//                                 _vehicleComponentId,
+//                                  static_cast<uint8_t>(mavlinkChannel()),
+//                                  &msg,
+//                                  &hydrogenBattery
+//                                 );
+
+// //             // 打包消息（使用的自定义 msg 编码函数）
+
+// //     mavlink_msg_hydrogen_battery_encode(
+// //         _vehicleSystemId,
+// //         _vehicleComponentId,
+// //         &msg,
+// //         &hydrogenBattery
+// //         );
+// qDebug() << "send HYDROGEN_BATTERY:"
+//          << "Voltage:" << hydrogenBattery.bat_voltage
+//          << "Current:" << hydrogenBattery.servo_current
+//          << "Temperature:" << hydrogenBattery.pcb_temp;
+//   qDebug() << "发的自定义MAVLink消息，ID:" << msg.msgid;
+// qDebug() << "氢燃料电池数据已发送";
+
+
+//      respondWithMavlinkMessage(msg);
+
+
+// }
+
+
+
+
+ // void MockLink::_sendHydrogenBatteryStatus()
+// {
+//     mavlink_message_t msg{};
+
+
+
+//    // 正确初始化结构体
+//     mavlink_hydrogen_battery_t hydrogenBattery = {
+//         .id=2,
+//         .bat_voltage = 24,
+//         .servo_current = 20,
+//         .stack_voltage = 48,
+//         .servo_voltage = 5,
+//         .bat_refuel_current = 800,
+//         .gas_tank_pressure = 10,
+//         .pipe_pressure = 120,
+//         .pcb_temp = 25,
+//         .stack_temp = 40,
+//         .work_status = 1,
+//         .fault_status = 0,
+//         .self_check = 1,
+//     };
+
+
+//     // 编码消息
+//     // static inline uint16_t mavlink_msg_hydrogen_battery_encode(
+//     //     uint8_t system_id,
+//     //     uint8_t component_id,
+//     //     mavlink_message_t* msg,
+//     //     const mavlink_hydrogen_battery_t* hydrogen_battery)
+//     //system_id：发送设备的系统 ID（如飞控的 ID）
+//     //component_id：发送设备的组件 ID（如电池模块的 ID）
+//     //msg：输出的 MAVLink 消息对象
+//     //hydrogen_battery：输入的氢燃料电池数据
+//     mavlink_msg_hydrogen_battery_encode(
+//         _vehicleSystemId,
+//         _vehicleComponentId,
+//         &msg,
+//         &hydrogenBattery
+//         );
+
+//     qDebug() << "发送自定义MAVLink消息，ID:" << msg.msgid;
+//     qDebug() << "氢燃料电池数据已发送";
+
+//     respondWithMavlinkMessage(msg);
+// }
 
 void MockLink::_sendVibration()
 {
@@ -516,6 +898,7 @@ void MockLink::respondWithMavlinkMessage(const mavlink_message_t &msg)
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN]{};
         const int cBuffer = mavlink_msg_to_send_buffer(buffer, &msg);
         const QByteArray bytes(reinterpret_cast<char*>(buffer), cBuffer);
+       // qDebug() << "MockLink 发送消息 msgid:" << msg.msgid ;
         emit bytesReceived(this, bytes);
     }
 }
@@ -523,6 +906,7 @@ void MockLink::respondWithMavlinkMessage(const mavlink_message_t &msg)
 void MockLink::_writeBytes(const QByteArray &bytes)
 {
     // This prevents the responses to mavlink messages from being sent until the _writeBytes returns.
+    qDebug() << " MockLink::_writeBytes，MockLink 发送了模拟数据！";
     emit writeBytesQueuedSignal(bytes);
 }
 
@@ -530,6 +914,8 @@ void MockLink::_writeBytesQueued(const QByteArray &bytes)
 {
     if (_inNSH) {
         _handleIncomingNSHBytes(bytes.constData(), bytes.length());
+        qDebug() << "写出字节：" << QByteArray((const char*)bytes, bytes.length()).toHex();
+
         return;
     }
 
@@ -562,7 +948,7 @@ void MockLink::_handleIncomingNSHBytes(const char *bytes, int cBytes)
 #endif
     }
 }
-
+//处理从地面站（QGC）发送给模拟飞行器的 原始字节流，将其解析为 MAVLink 消息。
 void MockLink::_handleIncomingMavlinkBytes(const uint8_t *bytes, int cBytes)
 {
     mavlink_message_t msg{};
@@ -570,16 +956,19 @@ void MockLink::_handleIncomingMavlinkBytes(const uint8_t *bytes, int cBytes)
 
     QMutexLocker lock(&_mavlinkAuxMutex);
     for (qint64 i = 0; i < cBytes; i++) {
-        const int parsed = mavlink_parse_char(_getMavlinkAuxChannel(), bytes[i], &msg, &comm);
+        const int parsed = mavlink_parse_char(_getMavlinkAuxChannel(), bytes[i], &msg, &comm);//使用 mavlink_parse_char 逐个字节解析
         if (!parsed) {
-            continue;
+            continue;//成功解析后返回 1，否则返回 0
         }
-        lock.unlock();
-        _handleIncomingMavlinkMsg(msg);
-        lock.relock();
+        //避免在消息处理期间阻塞其他线程
+        lock.unlock();//临时释放锁
+        _handleIncomingMavlinkMsg(msg);//处理消息
+        lock.relock(); //重新加锁
     }
 }
 
+
+//分发已解析的 MAVLink 消息到对应的处理函数（模拟飞行器对地面站命令的响应）
 void MockLink::_handleIncomingMavlinkMsg(const mavlink_message_t &msg)
 {
     if (_missionItemHandler->handleMessage(msg)) {

@@ -35,6 +35,7 @@ class MAVLinkProtocol : public QObject
     Q_OBJECT
 
 public:
+
     /// Constructs an MAVLinkProtocol object.
     ///     @param parent The parent QObject.
     explicit MAVLinkProtocol(QObject *parent = nullptr);

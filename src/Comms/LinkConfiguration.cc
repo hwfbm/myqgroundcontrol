@@ -30,6 +30,11 @@ LinkConfiguration::LinkConfiguration(const QString &name, QObject *parent)
 {
     // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
 }
+LinkConfiguration::LinkConfiguration( QObject *parent)
+    : QObject(parent)
+{
+   // qCDebug(AudioOutputLog) << Q_FUNC_INFO << this;
+}
 
 LinkConfiguration::LinkConfiguration(const LinkConfiguration *copy, QObject *parent)
     : QObject(parent)

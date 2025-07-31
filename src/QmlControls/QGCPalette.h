@@ -14,6 +14,20 @@
 #include <QtCore/QMap>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+// 用于在 QML 界面中提供 颜色统一管理接口，实现：
+// 按主题（Light / Dark）分配颜色；
+// 按控件状态（Enabled / Disabled）分配颜色；
+// 支持从 C++ 管理 QML UI 的颜色；
+// 支持颜色自定义、更新和通知界面刷新。
+
+
+
+
+
+//DECLARE_QGC_COLOR(button, "#aaaaaa", "#ffffff", "#444444", "#000000");
+//会往 _colorInfoMap 中添加这 4 种状态下的颜色值，并将名字加入 _colors 列表
+//QGCCorePlugin::instance()->paletteOverride(#name, colorInfo);
+//意味着颜色初始化时，还允许由插件重写颜色配置，支持更高级定制
 #define DECLARE_QGC_COLOR(name, lightDisabled, lightEnabled, darkDisabled, darkEnabled) \
     { \
         PaletteColorInfo_t colorInfo = { \
@@ -56,6 +70,17 @@
         _colors << #name; \
     }
 
+
+
+// Q_PROPERTY(QColor window READ window WRITE setWindow NOTIFY paletteChanged)
+
+// QColor window() const {
+//     return _colorInfoMap[_theme][_colorGroupEnabled ? ColorGroupEnabled : ColorGroupDisabled]["window"];
+// }
+// void setWindow(const QColor& color) {
+//     _colorInfoMap[_theme][_colorGroupEnabled ? ColorGroupEnabled : ColorGroupDisabled]["window"] = color;
+//     _signalPaletteChangeToAll();
+// }
 #define DEFINE_QGC_COLOR(NAME, SETNAME) \
     Q_PROPERTY(QColor NAME READ NAME WRITE SETNAME NOTIFY paletteChanged) \
     Q_PROPERTY(QStringList NAME ## Colors READ NAME ## Colors NOTIFY paletteChanged) \
@@ -94,12 +119,14 @@ class QGCPalette : public QObject
     // QML_ELEMENT
 
 public:
+    //描述颜色的状态分组的，核心目的是区分在不同状态下所使用的颜色
     enum ColorGroup {
-        ColorGroupDisabled = 0,
-        ColorGroupEnabled,
-        cMaxColorGroup
-    };
+        ColorGroupDisabled = 0, // 颜色处于“禁用”状态时用的颜色
+        ColorGroupEnabled,// 颜色处于“启用”状态时用的颜色
+        cMaxColorGroup // 表示枚举总数量（通常用于数组或循环中）
+    };//cMaxColorGroup 的作用是限定 PaletteColorInfo_t 数组大小
 
+    //当前主题是浅色还是深色
     enum Theme {
         Light = 0,
         Dark,
@@ -107,6 +134,11 @@ public:
     };
     Q_ENUM(Theme)
 
+
+    //每个颜色的四种状态值（亮启用、亮禁用、暗启用、暗禁用）
+    //定义一个二维数组类型别名
+   // 定义一个类型 PaletteColorInfo_t，它是一个：大小为 [主题数量][颜色状态数量] 的 二维 QColor 数组。
+    //第一维：表示 主题（例如：Light / Dark）。第二维：表示 颜色状态（启用 / 禁用）
     typedef QColor PaletteColorInfo_t[cMaxTheme][cMaxColorGroup];
 
     Q_PROPERTY(Theme        globalTheme         READ globalTheme        WRITE setGlobalTheme        NOTIFY paletteChanged)
@@ -154,6 +186,7 @@ public:
     DEFINE_QGC_COLOR(surveyPolygonInterior,         setSurveyPolygonInterior)
     DEFINE_QGC_COLOR(surveyPolygonTerrainCollision, setSurveyPolygonTerrainCollision)
     DEFINE_QGC_COLOR(toolbarBackground,             setToolbarBackground)
+    DEFINE_QGC_COLOR(mytoolbarBackground,           setMytoolbarBackground)
     DEFINE_QGC_COLOR(toolStripFGColor,              setToolStripFGColor)
     DEFINE_QGC_COLOR(toolStripHoverColor,           setToolStripHoverColor)
     DEFINE_QGC_COLOR(groupBorder,                   setGroupBorder)
@@ -187,6 +220,8 @@ private:
     bool                        _colorGroupEnabled; ///< Currently selected ColorGroup. true: enabled, false: disabled
     static QStringList          _colors;
 
+
+    //当主题发生变化时，所有已创建的 QGCPalette 实例都会收到 paletteChanged() 信号，从而刷新 UI
     static QMap<int, QMap<int, QMap<QString, QColor>>> _colorInfoMap;   // theme -> colorGroup -> color name -> color
     static QList<QGCPalette*> _paletteObjects;    ///< List of all active QGCPalette objects
 };

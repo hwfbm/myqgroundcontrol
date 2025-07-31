@@ -17,6 +17,7 @@
 #include <QtCore/QVariantList>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtCore/QFile>
+#include <QString>
 
 #include "HealthAndArmingCheckReport.h"
 #include "MAVLinkStreamConfig.h"
@@ -26,7 +27,7 @@
 #include "SysStatusSensorInfo.h"
 #include "VehicleLinkManager.h"
 
-#include "mavlink_custom.h"
+//#include "mavlink_custom.h"
 
 #include "TerrainFactGroup.h"
 #include "VehicleFactGroup.h"
@@ -108,6 +109,7 @@ class Vehicle : public VehicleFactGroup
     //友元声明（friend classes）允许这些类访问 Vehicle 的私有（private）和保护（protected）成员
     friend class InitialConnectStateMachine;
     friend class VehicleLinkManager;
+    friend class VehicleHydrogenBatteryFactGroup;
     friend class VehicleBatteryFactGroup;           // Allow VehicleBatteryFactGroup to call _addFactGroup
     friend class SendMavCommandWithSignallingTest;  // Unit test
     friend class SendMavCommandWithHandlerTest;     // Unit test
@@ -284,7 +286,8 @@ public:
     Q_PROPERTY(FactGroup*           hygrometer      READ hygrometerFactGroup        CONSTANT) //指向管理气压计相关事实的 FactGroup 对象
     Q_PROPERTY(FactGroup*           generator       READ generatorFactGroup         CONSTANT) //指向管理发电机相关事实的 FactGroup 对象
     Q_PROPERTY(FactGroup*           efi             READ efiFactGroup               CONSTANT) //指向管理 EFI（电子燃油喷射）相关事实的 FactGroup 对象
-    Q_PROPERTY(QmlObjectListModel*  batteries       READ batteries                  CONSTANT) //用于在 QML 中显示电池状态列表
+    Q_PROPERTY(QmlObjectListModel*  hydrogenBatteries       READ hydrogenBatteries  CONSTANT     ) //用于在 QML 中显示电池状态列表 NOTIFY  hydrogenBatteriesChanged
+    // Q_PROPERTY(QmlObjectListModel*  batteries       READ batteries                  CONSTANT) //用于在 QML 中显示电池状态列表
     Q_PROPERTY(Actuators*           actuators       READ actuators                  CONSTANT) //管理无人机的执行器（如电机）
     Q_PROPERTY(HealthAndArmingCheckReport* healthAndArmingCheckReport READ healthAndArmingCheckReport CONSTANT) //可能包含有关无人机健康状况和是否准备好起飞的报告，指向一个包含无人机健康状况和是否准备好起飞的报告的对象
 
@@ -634,6 +637,7 @@ public:
     FactGroup* efiFactGroup                 () { return &_efiFactGroup; }//获取 EFI（电子燃油喷射）相关的事实组
     FactGroup* rpmFactGroup                 () { return &_rpmFactGroup; }//获取转速相关的事实组
     QmlObjectListModel* batteries           () { return &_batteryFactGroupListModel; } //获取电池状态相关的事实组列表
+     QmlObjectListModel* hydrogenBatteries           () { return &_hydrogenbatteryFactGroupListModel; } //获取电池状态相关的事实组列表
 
     MissionManager*                 missionManager      () { return _missionManager; }//获取任务管理器对象的引用，该对象负责管理无人机的任务
     GeoFenceManager*                geoFenceManager     () { return _geoFenceManager; }//获取地理围栏管理器对象的引用，该对象负责处理地理围栏相关的功能
@@ -879,6 +883,7 @@ public slots:
     void _offlineVehicleTypeSettingChanged  (QVariant varVehicleType);  //设置离线车辆类型。此槽函数应仅由任务控制器使用，以从计划文件中设置车辆类型。参数：varVehicleType，QVariant 类型，表示车辆类型 Should only be used by MissionController to set vehicle type from Plan file
 
 signals:
+    void hydrogenBatteriesChanged();
     void coordinateChanged              (QGeoCoordinate coordinate);//当坐标改变时发出信号，参数：coordinate，QGeoCoordinate 类型，表示新的坐标
     void joystickEnabledChanged         (bool enabled);//当操纵杆启用状态改变时发出信号。参数：enabled，布尔值，表示操纵杆是否启用
     void mavlinkMessageReceived         (const mavlink_message_t& message);//当接收到 MAVLink 消息时发出信号，参数：message，mavlink_message_t 类型，表示接收到的消息
@@ -1020,7 +1025,7 @@ private slots:
     void _handleBatteryStatus           (mavlink_message_t& message);//处理电池状态消息
 
 
-    void _handleHydrogenBattery       (const mavlink_message_t& message); //处理氢燃料电池状态消息，我加的协议
+    void _handleHydrogenBattery       (mavlink_message_t& message); //处理氢燃料电池状态消息，我加的协议
 
 
 
@@ -1077,6 +1082,10 @@ private slots:
 
     QTimer              _csvLogTimer;//用于 CSV 日志记录的计时器
     QFile               _csvLogFile;//存储 CSV 日志文件
+
+
+    VehicleBatteryFactGroup*_batteryFactGroup;
+
 
     bool            _joystickEnabled = false;//指示操纵杆是否启用
     bool _isActiveVehicle = false; //指示无人机是否处于激活状态
@@ -1334,6 +1343,9 @@ private slots:
     //电池状态管理
     QMap<uint8_t /* batteryId */, uint8_t /* MAV_BATTERY_CHARGE_STATE_OK */> _lowestBatteryChargeStateAnnouncedMap;//一个映射表，用于记录每个电池 ID 的最低充电状态（MAV_BATTERY_CHARGE_STATE_OK），这可能用于监控电池健康状态并通知用户。
 
+    //电池状态管理
+    QMap<uint8_t /* batteryId */, uint8_t /* MAV_BATTERY_CHARGE_STATE_OK */> _lowestHydrogenBatteryFaultAnnouncedMap;//一个映射表，用于记录每个电池 ID 的最低充电状态（MAV_BATTERY_CHARGE_STATE_OK），这可能用于监控电池健康状态并通知用户。
+
 
     //高度调整
     float _altitudeTuningOffset = qQNaN(); //高度调整偏移量，用于将高度值调整到接近 0 的范围。初始值为 qQNaN（表示不是一个数字） altitude offset, so the plotted value is around 0
@@ -1389,6 +1401,7 @@ private slots:
     TerrainFactGroup                _terrainFactGroup;//管理地形数据，例如地形高度
 
     QmlObjectListModel              _batteryFactGroupListModel;//用于管理电池状态的列表模型。这可能是一个 QML 可用的模型，用于在用户界面中显示电池信息
+    QmlObjectListModel              _hydrogenbatteryFactGroupListModel;
 
     TerrainProtocolHandler* _terrainProtocolHandler = nullptr; //地形协议处理器，指向 TerrainProtocolHandler 对象，用于处理地形数据的协议交互。这可能涉及从服务器获取地形高度等操作。
 

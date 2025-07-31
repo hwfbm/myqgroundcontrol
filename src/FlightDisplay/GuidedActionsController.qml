@@ -129,6 +129,7 @@ Item {
     readonly property int customActionStart:                10000 // Custom actions ids should start here so that they don't collide with the built in actions
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
+   // property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle ?? null
     property var    _flyViewSettings:           QGroundControl.settingsManager.flyViewSettings
     property var    _unitsConversion:           QGroundControl.unitsConversion
     property bool   _useChecklist:              QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
@@ -144,7 +145,11 @@ Item {
     property bool showForceArm:             _guidedActionsEnabled && !_vehicleArmed
     property bool showDisarm:               _guidedActionsEnabled && _vehicleArmed && !_vehicleFlying
     property bool showRTL:                  _guidedActionsEnabled && _vehicleArmed && _activeVehicle.guidedModeSupported && _vehicleFlying && !_vehicleInRTLMode
-    property bool showTakeoff:              _guidedActionsEnabled && _activeVehicle.takeoffVehicleSupported && !_vehicleFlying && _canTakeoff
+    //property bool showTakeoff:              _guidedActionsEnabled && _activeVehicle.takeoffVehicleSupported && !_vehicleFlying && _canTakeoff
+    property bool showTakeoff: _guidedActionsEnabled &&
+                             (_activeVehicle ? _activeVehicle.takeoffVehicleSupported : false) &&
+                             !_vehicleFlying &&
+                             _canTakeoff
     property bool showLand:                 _guidedActionsEnabled && _activeVehicle.guidedModeSupported && _vehicleArmed && !_activeVehicle.fixedWing && !_vehicleInLandMode
     property bool showStartMission:         _guidedActionsEnabled && _missionAvailable && !_missionActive && !_vehicleFlying && _canStartMission
     property bool showContinueMission:      _guidedActionsEnabled && _missionAvailable && !_missionActive && _vehicleArmed && _vehicleFlying && (_currentMissionIndex < _missionItemCount - 1)

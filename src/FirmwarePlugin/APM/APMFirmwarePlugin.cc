@@ -75,7 +75,8 @@ APMFirmwarePlugin::~APMFirmwarePlugin()
 
 AutoPilotPlugin* APMFirmwarePlugin::autopilotPlugin(Vehicle *vehicle) const
 {
-    return new APMAutoPilotPlugin(vehicle, vehicle);
+    return new APMAutoPilotPlugin(vehicle, vehicle);//通过返回裸指针，将新创建的 APMAutoPilotPlugin 对象的所有权转移给调用方
+    //需要调用方确保正确释放内存（在QGC中通常由Vehicle对象管理）
 }
 
 bool APMFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities) const
@@ -625,21 +626,37 @@ bool APMFirmwarePlugin::hasGripper(const Vehicle *vehicle) const
     return false;
 }
 
+
+//获取和定制飞行控制软件(QGroundControl)中工具指示器列表的方法，专门为APM(ArduPilot Mega)固件插件提供自定义指示器
+//继承和修改来定制飞行控制软件界面，同时保持基础功能的复用性
+//返回类型: const QVariantList & - 返回一个不可变的QVariant列表引用，包含所有工具指示器的QML文件路径
+//const Vehicle *vehicle - 当前连接的飞行器对象指针。
 const QVariantList &APMFirmwarePlugin::toolIndicators(const Vehicle *vehicle)
 {
-    if (_toolIndicatorList.isEmpty()) {
+    //检查是否是第一次调用
+    if (_toolIndicatorList.isEmpty())
+    {//只在第一次调用时初始化列表，后续调用直接返回缓存的结果，缓存模式: 使用成员变量_toolIndicatorList缓存结果，避免重复计算
         // First call the base class to get the standard QGC list
         _toolIndicatorList = FirmwarePlugin::toolIndicators(vehicle);
 
         // Find the generic flight mode indicator and replace with the custom one
-        for (int i = 0; i < _toolIndicatorList.size(); i++) {
-            if (_toolIndicatorList.at(i).toUrl().toString().contains("FlightModeIndicator.qml")) {
+        //基于px4的toolIndicators，先从px4加载的，在父类实现基础上进行定制化修改
+        //替换飞行模式指示器，查找包含"FlightModeIndicator.qml"的项，替换为APM专用的"APMFlightModeIndicator.qml"
+        for (int i = 0; i < _toolIndicatorList.size(); i++)
+        {
+            //字符串匹配使用简单的contains检查
+            if (_toolIndicatorList.at(i).toUrl().toString().contains("FlightModeIndicator.qml"))
+            {
+                //使用QUrl::fromUserInput创建QML文件URL
+                //使用QVariant::fromValue将URL包装为QVariant
                 _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/APM/Indicators/APMFlightModeIndicator.qml"));
                 break;
             }
         }
 
         // Find the generic battery indicator and replace with the custom one
+        //查找包含"BatteryIndicator.qml"的项
+        //替换为APM专用的"APMBatteryIndicator.qml"
         for (int i = 0; i < _toolIndicatorList.size(); i++) {
             if (_toolIndicatorList.at(i).toUrl().toString().contains("BatteryIndicator.qml")) {
                 _toolIndicatorList[i] = QVariant::fromValue(QUrl::fromUserInput("qrc:/APM/Indicators/APMBatteryIndicator.qml"));
@@ -648,6 +665,8 @@ const QVariantList &APMFirmwarePlugin::toolIndicators(const Vehicle *vehicle)
         }
 
         // Then add the forwarding support indicator
+        //添加转发支持指示器
+        //追加APM特有的"APMSupportForwardingIndicator.qml"
         _toolIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/APMSupportForwardingIndicator.qml")));
     }
 

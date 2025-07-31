@@ -237,6 +237,7 @@ QQmlApplicationEngine *QGCCorePlugin::createQmlApplicationEngine(QObject *parent
 {
     QQmlApplicationEngine *const qmlEngine = new QQmlApplicationEngine(parent);
     qmlEngine->addImportPath(QStringLiteral("qrc:/qml"));
+    qmlEngine->rootContext()->setContextProperty(QStringLiteral("hydrogenBatteryHandler"), HydrogenBatteryHandler::instance());
     qmlEngine->rootContext()->setContextProperty(QStringLiteral("joystickManager"), JoystickManager::instance());
     qmlEngine->rootContext()->setContextProperty(QStringLiteral("debugMessageModel"), AppMessages::getModel());
     qmlEngine->rootContext()->setContextProperty(QStringLiteral("logDownloadController"), LogDownloadController::instance());
@@ -285,6 +286,7 @@ void QGCCorePlugin::releaseVideoSink(void *sink)
 
 const QVariantList &QGCCorePlugin::toolBarIndicators()
 {
+    //这个函数定义了一个 QML 文件列表，每个 QML 文件是一个图标组件，会显示在顶部任务栏中。像 RTKGPSIndicator.qml 就是“RTK/GPS 状态图标”
     static const QVariantList toolBarIndicatorList = QVariantList(
         {
             QVariant::fromValue(QUrl::fromUserInput(QStringLiteral("qrc:/toolbar/RTKGPSIndicator.qml"))),
@@ -326,7 +328,7 @@ QString QGCCorePlugin::firstRunPromptResource(int id) const
     }
 }
 
-void QGCCorePlugin::_setShowTouchAreas(bool show)
+void QGCCorePlugin::_setShowTouchAreas(bool show)  //提供显示触碰区
 {
     if (show != _showTouchAreas) {
         _showTouchAreas = show;

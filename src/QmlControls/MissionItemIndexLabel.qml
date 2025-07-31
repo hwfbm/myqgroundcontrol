@@ -28,7 +28,17 @@ Canvas {
     property bool   showSequenceNumbers:    true
 
     property real   _width:             showGimbalYaw ? Math.max(_gimbalYawWidth, labelControl.visible ? labelControl.width : indicator.width) : (labelControl.visible ? labelControl.width : indicator.width)
-    property real   _height:            showGimbalYaw ? _gimbalYawWidth : (labelControl.visible ? labelControl.height : indicator.height)
+    //property real   _height:            showGimbalYaw ? _gimbalYawWidth : (labelControl.visible ? labelControl.height : indicator.height)
+    // 替换原有绑定
+    property real _height: {
+        if (showGimbalYaw) {
+            return _gimbalYawWidth;
+        } else if (labelControl.visible) {
+            return labelControl.implicitHeight; // 使用隐式高度
+        } else {
+            return indicator.implicitHeight;
+        }
+    }
     property real   _gimbalYawRadius:   ScreenTools.defaultFontPixelHeight
     property real   _gimbalYawWidth:    _gimbalYawRadius * 2
     property real   _smallRadiusRaw:    Math.ceil((ScreenTools.defaultFontPixelHeight * ScreenTools.smallFontPointRatio) / 2)

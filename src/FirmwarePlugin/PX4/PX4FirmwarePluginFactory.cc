@@ -27,9 +27,10 @@ QList<QGCMAVLink::FirmwareClass_t> PX4FirmwarePluginFactory::supportedFirmwareCl
 
 FirmwarePlugin* PX4FirmwarePluginFactory::firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE /*vehicleType*/)
 {
+    //统一插件架构
     if (autopilotType == MAV_AUTOPILOT_PX4) {
         if (!_pluginInstance) {
-            _pluginInstance = new PX4FirmwarePlugin();
+            _pluginInstance = new PX4FirmwarePlugin();  // 所有类型共用同一插件
         }
         return _pluginInstance;
     }

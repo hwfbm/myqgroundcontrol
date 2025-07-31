@@ -25,7 +25,7 @@ MouseArea {
 
     Rectangle {
         anchors.fill:   parent
-        border.color:   "red"
+        border.color:   "orange"
         border.width:   QGroundControl.corePlugin.showTouchAreas ? 3 : 0
         color:          "transparent"
     }

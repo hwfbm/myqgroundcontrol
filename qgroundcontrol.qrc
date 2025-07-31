@@ -32,6 +32,7 @@
         <file alias="AirLinkSettings.qml">src/Comms/AirLink/AirLinkSettings.qml</file>
         <file alias="AnalyzeView.qml">src/AnalyzeView/AnalyzeView.qml</file>
         <file alias="AppSettings.qml">src/UI/AppSettings.qml</file>
+        <file alias="ToolMenu.qml">src/UI/ToolMenu.qml</file>
         <file alias="BluetoothSettings.qml">src/UI/preferences/BluetoothSettings.qml</file>
         <file alias="CorridorScanEditor.qml">src/PlanView/CorridorScanEditor.qml</file>
         <file alias="RemoteIDSettings.qml">src/UI/preferences/RemoteIDSettings.qml</file>
@@ -351,6 +352,8 @@
         <file alias="Viewer3D/Models3D/Viewer3DVehicleItems.qml">src/Viewer3D/Viewer3DQml/Models3D/Viewer3DVehicleItems.qml</file>
         <file alias="Viewer3D/Viewer3DProgressBar.qml">src/Viewer3D/Viewer3DQml/Viewer3DProgressBar.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewTopRightPanel.qml">src/FlightDisplay/FlyViewTopRightPanel.qml</file>
+        <file alias="QGroundControl/Controls/HyBattery.qml">src/UI/toolbar/HyBattery.qml</file>
+        <file>src/UI/ToolMenu.qml</file>
     </qresource>
     <qresource prefix="/FirstRunPromptDialogs">
         <file alias="UnitsFirstRunPrompt.qml">src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml</file>
@@ -398,6 +401,7 @@
         <file alias="Units.SettingsGroup.json">src/Settings/Units.SettingsGroup.json</file>
         <file alias="USBBoardInfo.json">src/Comms/USBBoardInfo.json</file>
         <file alias="Vehicle/BatteryFact.json">src/Vehicle/FactGroups/BatteryFact.json</file>
+        <file alias="Vehicle/VehicleHydrogenBatteryFact.json">src/Vehicle/FactGroups/VehicleHydrogenBatteryFact.json</file>
         <file alias="Vehicle/ClockFact.json">src/Vehicle/FactGroups/ClockFact.json</file>
         <file alias="Vehicle/DistanceSensorFact.json">src/Vehicle/FactGroups/DistanceSensorFact.json</file>
         <file alias="Vehicle/EscStatusFactGroup.json">src/Vehicle/FactGroups/EscStatusFactGroup.json</file>
@@ -423,6 +427,7 @@
         <file alias="Viewer3D.SettingsGroup.json">src/Settings/Viewer3D.SettingsGroup.json</file>
         <file alias="GimbalController.SettingsGroup.json">src/Settings/GimbalController.SettingsGroup.json</file>
         <file alias="CameraMetaData.json">src/Camera/CameraMetaData.json</file>
+        <file>src/Vehicle/FactGroups/VehicleHydrogenBatteryFact.json</file>
     </qresource>
     <qresource prefix="/MockLink">
         <file alias="APMArduSubMockLink.params">src/Comms/MockLink/APMArduSubMockLink.params</file>

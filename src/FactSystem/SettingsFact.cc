@@ -31,10 +31,10 @@ SettingsFact::SettingsFact(const QString &settingsGroup, FactMetaData *metaData,
 {
     // qCDebug(SettingsFactLog) << Q_FUNC_INFO << this;
     //读取 QSettings（本地配置文件）
-    QSettings settings;
+    QSettings settings;   // 构造本地配置访问器
 
     if (!_settingsGroup.isEmpty()) {
-        settings.beginGroup(_settingsGroup);
+        settings.beginGroup(_settingsGroup);// 分组名，如 App、Battery 等
     }
 
     // Allow core plugin a chance to override the default value
@@ -53,7 +53,7 @@ SettingsFact::SettingsFact(const QString &settingsGroup, FactMetaData *metaData,
             QVariant typedValue;
             QString errorString;
             (void) metaData->convertAndValidateRaw(settings.value(_name, rawDefaultValue), true /* conertOnly */, typedValue, errorString);
-            _rawValue = typedValue;
+            _rawValue = typedValue;  // 是从配置文件读取的值
         } else {
             //如果设置项不可见，就直接强制写回默认值
             // Setting is not visible, force to default value always
@@ -88,6 +88,7 @@ const SettingsFact &SettingsFact::operator=(const SettingsFact &other)
     return *this;
 }
 
+//点击开关、输入数值等操作触发 rawValue 改变后写入配置的地方
 void SettingsFact::_rawValueChanged(const QVariant &value)
 {
     QSettings settings;
@@ -96,5 +97,5 @@ void SettingsFact::_rawValueChanged(const QVariant &value)
         settings.beginGroup(_settingsGroup);
     }
 
-    settings.setValue(_name, value);
+    settings.setValue(_name, value);//写入到 QSettings（= 写入配置文件）
 }

@@ -253,6 +253,12 @@ void QGCApplication::setLanguage()
         } else {
             qCWarning(QGCApplicationLog) << "Error loading json localization for" << _locale.name();
         }
+        if (_qgcTranslatorSourceCode.load(_locale, QLatin1String("qgc_source_"), "", ":/i18n")) {
+            qDebug() << "✅ 成功加载翻译文件 qgc_source_" << _locale.name();
+        } else {
+            qWarning() << "⚠️ 无法加载翻译文件 qgc_source_" << _locale.name();
+        }
+
     }
 
     if (_qmlAppEngine) {
@@ -449,6 +455,8 @@ void QGCApplication::_missingParamsDisplay()
 
 QObject *QGCApplication::_rootQmlObject()
 {
+
+
     if (_qmlAppEngine && _qmlAppEngine->rootObjects().size()) {
         return _qmlAppEngine->rootObjects()[0];
     }
@@ -456,18 +464,39 @@ QObject *QGCApplication::_rootQmlObject()
     return nullptr;
 }
 
+
+//整个 严重飞行器警报系统的核心接口
+//函数名必须和 QML 中的 function 保持一致
+//参数类型要用 QVariant 兼容（除非你自定义注册了类型）
+//如果不需要返回值，可以省略 Q_RETURN_ARG(...)：
 void QGCApplication::showCriticalVehicleMessage(const QString &message)
 {
     // PreArm messages are handled by Vehicle and shown in Map
+    //  // 忽略 PreArm 和 preflight 开头的提示（这些由 Map 显示）
     if (message.startsWith(QStringLiteral("PreArm")) || message.startsWith(QStringLiteral("preflight"), Qt::CaseInsensitive)) {
         return;
     }
 
-    QObject *const rootQmlObject = _rootQmlObject();
-    if (rootQmlObject && _showErrorsInToolbar) {
+    QObject *const rootQmlObject = _rootQmlObject(); // 获取 QML 根对象 。这是 QGCApplication 提供的指向 MainRootWindow.qml 的根对象
+    if (rootQmlObject && _showErrorsInToolbar)
+    {
         QVariant varReturn;
         QVariant varMessage = QVariant::fromValue(message);
-        QMetaObject::invokeMethod(rootQmlObject, "showCriticalVehicleMessage", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varMessage));
+        //在运行时调用 QML 中的同名函数
+        QMetaObject::invokeMethod(rootQmlObject, "showCriticalVehicleMessage", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varMessage));//Q_RETURN_ARG(QVariant, varReturn)：可选的，用于接收 QML 返回值（本例中没实际使用）
+        //Q_ARG(QVariant, varMessage)：传递 message 参数到 QML 里的 function showCriticalVehicleMessage(message)
+
+
+        // QMetaObject::invokeMethod(
+        //     QObject* obj,             // 调用目标对象（必须继承 QObject）
+        //     const char* methodName,   // 函数名（必须是 Q_INVOKABLE 或 QML 注册函数）
+        //     Qt::ConnectionType connType = Qt::AutoConnection, // 可选，默认自动
+        //     QGenericReturnArgument ret = QGenericReturnArgument(), // 可选返回值
+        //     QGenericArgument val0 = QGenericArgument(),  // 最多支持10个参数
+        //     ...
+        //     );
+
+
     } else if (runningUnitTests() || !_showErrorsInToolbar) {
         // Unit tests can run without UI
         qCDebug(QGCApplicationLog) << "QGCApplication::showCriticalVehicleMessage unittest" << message;

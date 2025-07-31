@@ -54,13 +54,14 @@ ColumnLayout {
             visible:            headingDescription !== ""
         }
     }
+    // "#9fa0e2"
 //绘制外部边框
     Rectangle {
         id:                 outerRect
         Layout.fillWidth:   true
         implicitWidth:      _contentLayout.implicitWidth + (showBorder ? _margins * 2 : 0)
         implicitHeight:     _contentLayout.implicitHeight + (showBorder ? _margins * 2: 0)
-        color:              "#9fa0e2"
+        color:             "transparent"
         border.color:       outerBorderColor
         border.width:       showBorder ? 1 : 0
         radius:             ScreenTools.defaultFontPixelHeight / 2

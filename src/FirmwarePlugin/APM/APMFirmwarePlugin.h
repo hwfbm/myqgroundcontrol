@@ -19,6 +19,8 @@
 
 Q_DECLARE_LOGGING_CATEGORY(APMFirmwarePluginLog)
 
+
+//飞控固件抽象：作为FirmwarePlugin的子类，代表对APM/Pixhawk固件的整体支持
 struct APMCustomMode
 {
     enum Mode : uint32_t {

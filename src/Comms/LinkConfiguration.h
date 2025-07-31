@@ -30,6 +30,7 @@ class LinkConfiguration : public QObject
     Q_PROPERTY(bool             highLatency     READ isHighLatency  WRITE setHighLatency    NOTIFY highLatencyChanged)
 
 public:
+    explicit LinkConfiguration(QObject *parent = nullptr);
     LinkConfiguration(const QString &name, QObject *parent = nullptr);
     LinkConfiguration(const LinkConfiguration *copy, QObject *parent = nullptr);
     virtual ~LinkConfiguration();

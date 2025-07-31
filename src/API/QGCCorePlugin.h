@@ -14,6 +14,7 @@
 #include <QtCore/QVariantList>
 
 #include "QGCPalette.h"
+#include "hydrogenBatteryHandler.h"
 
 class FactMetaData;
 class LinkInterface;
@@ -31,13 +32,21 @@ typedef struct __mavlink_message mavlink_message_t;
 
 Q_DECLARE_LOGGING_CATEGORY(QGCCorePluginLog)
 
+//应用程序全局行为
+//核心插件基类，承担着系统级定制和跨平台适配的关键角色
+// 系统级扩展点：允许定制 QGC 的核心行为（如 UI 风格、功能模块）
+// 跨平台适配层：处理不同平台（桌面/移动/嵌入式）的差异化需求
+// 企业定制入口：为商业版本提供品牌定制能力
+// 全栈可定制：从 UI 到核心逻辑
+// 优雅扩展：满足从社区版到企业版的差异化需求
+// 平台适配：统一处理桌面/移动端的交互差异
 class QGCCorePlugin : public QObject
 {
     Q_OBJECT
     Q_MOC_INCLUDE("QGCOptions.h")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_PROPERTY(bool showAdvancedUI                      READ showAdvancedUI                     WRITE _setShowAdvancedUI    NOTIFY showAdvancedUIChanged)
-    Q_PROPERTY(bool showTouchAreas                      READ showTouchAreas                     WRITE _setShowTouchAreas    NOTIFY showTouchAreasChanged)
+    Q_PROPERTY(bool showTouchAreas                      READ showTouchAreas                     WRITE _setShowTouchAreas    NOTIFY showTouchAreasChanged)//暴露触碰区
     Q_PROPERTY(int defaultSettings                      READ defaultSettings                                                CONSTANT)
     Q_PROPERTY(int offlineVehicleFirstRunPromptId       MEMBER kOfflineVehicleFirstRunPromptId                              CONSTANT)
     Q_PROPERTY(int unitsFirstRunPromptId                MEMBER kUnitsFirstRunPromptId                                       CONSTANT)
@@ -94,7 +103,7 @@ public:
     virtual QGeoPositionInfoSource *createPositionSource(QObject *parent) { Q_UNUSED(parent); return nullptr; }
 
     /// Allows a plugin to override the specified color name from the palette
-    virtual void paletteOverride(const QString &colorName, QGCPalette::PaletteColorInfo_t &colorInfo) { Q_UNUSED(colorName); Q_UNUSED(colorInfo); };
+    virtual void paletteOverride(const QString &colorName, QGCPalette::PaletteColorInfo_t &colorInfo) { Q_UNUSED(colorName); Q_UNUSED(colorInfo); }
 
     virtual void factValueGridCreateDefaultSettings(const QString &defaultSettingsGroup);
 
@@ -183,7 +192,7 @@ public:
 
     /// Returns the list of first run prompt ids which need to be displayed according to current settings
     Q_INVOKABLE QVariantList firstRunPromptsToShow();
-
+   //getter
     bool showTouchAreas() const { return _showTouchAreas; }
     bool showAdvancedUI() const { return _showAdvancedUI; }
 
@@ -203,6 +212,8 @@ protected:
     bool _showAdvancedUI = true;
 
 private:
+    //setter
+    //QML 中赋值 → C++ 自动调用 WRITE 指定的 setter！
     void _setShowTouchAreas(bool show);
     void _setShowAdvancedUI(bool show);
 

@@ -41,12 +41,16 @@ option(QGC_ENABLE_UVC "Enable UVC Devices" ON) # Qt6Multimedia_FOUND
 option(QGC_ENABLE_GST_VIDEOSTREAMING "Enable GStreamer Video Backend" ON) # GStreamer 视频流
 option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia Video Backend" OFF) # Qt6Multimedia_FOUND
 
+
+
+
 # MAVLink
 ##指定 MAVLink 协议库的源码仓库和固定版本（确保协议兼容性）
 # set(QGC_MAVLINK_GIT_REPO "https://github.com/mavlink/c_library_v2.git" CACHE STRING "URL to MAVLink Git Repo")
 # set(QGC_MAVLINK_GIT_TAG "7ea034366ee7f09f3991a5b82f51f0c259023b38" CACHE STRING "Tag of MAVLink Git Repo")
 set(QGC_MAVLINK_GIT_REPO "https://github.com/hwfbm/my_ibrary_v2.git" CACHE STRING "URL to MAVLink Git Repo")
-set(QGC_MAVLINK_GIT_TAG "master" CACHE STRING "Tag of MAVLink Git Repo")
+set(QGC_MAVLINK_GIT_TAG "4d80aaa8d3760a1803281b41516eb81ba13e70d0" CACHE STRING "Tag of MAVLink Git Repo")
+
 
 
 #允许用户排除对特定飞控（如 APM、PX4）的支持，减少二进制体积

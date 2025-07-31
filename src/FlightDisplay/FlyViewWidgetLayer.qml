@@ -70,6 +70,8 @@ Item {
         bottomEdgeRightInset:   virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.bottomEdgeRightInset : bottomRightRowLayout.bottomEdgeRightInset
     }
 
+
+
     FlyViewTopRightPanel {
         id:                     topRightPanel
         anchors.top:            parent.top

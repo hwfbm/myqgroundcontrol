@@ -8,14 +8,13 @@
  ****************************************************************************/
 
 #pragma once
-
+// #include <mavlink.h>
 #include "PX4/px4_custom_mode.h"
 #include "LinkInterface.h"
 #include "MAVLinkLib.h"
 #include "MockConfiguration.h"
 #include "MockLinkMissionItemHandler.h"
-#include "mavlink_custom.h"
-
+//#include "mavlink_custom.h"
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
@@ -166,6 +165,7 @@ private:
     void _sendSysStatus();
     void _sendBatteryStatus();
     void _sendHydrogenBatteryStatus();//我添加的mock battery
+    void _sendMockMessages();
     void _sendChunkedStatusText(uint16_t chunkId, bool missingChunks);
     void _sendStatusTextMessages();
     void _respondWithAutopilotVersion();
@@ -174,6 +174,11 @@ private:
     void _sendADSBVehicles();
     void _sendGeneralMetaData();
     void _sendRemoteIDArmStatus();
+
+
+    void sendMockErrorMessage(const QString& text, uint8_t severity = MAV_SEVERITY_CRITICAL);//紧急消息
+
+
 
     void _paramRequestListWorker();
     void _logDownloadWorker();
@@ -195,6 +200,24 @@ private:
     const bool _sendStatusText = false;
     const MockConfiguration::FailureMode_t _failureMode = MockConfiguration::FailNone;
     const uint8_t _vehicleSystemId = 0;
+
+
+
+    uint16_t bat_voltage;
+    uint16_t  servo_current;
+    uint16_t  stack_voltage;
+    uint16_t servo_voltage;
+    uint16_t bat_refuel_current;
+    uint16_t gas_tank_pressure;
+    int8_t  pcb_temp;
+    int8_t stack_temp;
+    uint8_t work_status;
+    uint8_t fault_status;
+    uint8_t self_check;
+    uint8_t hydroId;
+    uint16_t pipe_pressure;
+
+
     const double _vehicleLatitude = 0.0;
     const double _vehicleLongitude = 0.0;
     // These are just set for reporting the fields in _respondWithAutopilotVersion()

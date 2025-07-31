@@ -96,8 +96,8 @@
             "name": "hydroId",
             "shortDesc": "Battery hydroId",
             "type": "uint8",
-            "enumStrings": "电堆1,电堆2",
-            "enumValues": "0,1",
+            "enumStrings": "电堆1,电堆2,电堆3",
+            "enumValues": "0,1,2",
             "decimalPlaces": 0
         },
         {

@@ -22,9 +22,9 @@ Rectangle {
     height:     Math.min(maxHeight, toolStripColumn.height + (flickable.anchors.margins * 2))
     radius:     ScreenTools.defaultFontPixelWidth / 2
 
-    property alias  model:              repeater.model
-    property real   maxHeight           ///< Maximum height for control, determines whether text is hidden to make control shorter
-    property alias  title:              titleLabel.text
+    property alias  model:              repeater.model //数据源（绑定到Repeater）
+    property real   maxHeight         //动态高度  ///< Maximum height for control, determines whether text is hidden to make control shorter
+    property alias  title:              titleLabel.text//可选标题文本
     property var    fontSize:           ScreenTools.smallFontPointSize
 
     property var _dropPanel: dropPanel
@@ -70,6 +70,11 @@ Rectangle {
                 visible:                title != ""
             }
 
+            // 动态按钮系统
+            // 按钮特性：
+            // 统一宽高（正方形）
+            // 自适应字体大小
+            // 支持选中状态
             Repeater {
                 id: repeater
 
@@ -84,9 +89,15 @@ Rectangle {
                     dropPanel:          _dropPanel
                     onDropped: (index) => _root.dropped(index)
 
+                    // 这是在手动实现 单选按钮组 的逻辑：
+                    // 当某个按钮被选中时
+                    // 遍历所有其他按钮（通过 repeater.itemAt(i) 访问）
+                    // 取消它们的选中状态
+                    //通过父组件传递的index来操作
                     onCheckedChanged: {
                         // We deal with exclusive check state manually since usinug autoExclusive caused all sorts of crazt problems
                         if (checked) {
+                            //直接通过repeater.itemAt访问兄弟按钮
                             for (var i=0; i<repeater.count; i++) {
                                 if (i != index) {
                                     var button = repeater.itemAt(i)
@@ -102,7 +113,11 @@ Rectangle {
         }
     }
 
-    ToolStripDropPanel {
+    //下拉面板系统
+    //共享引用：所有按钮共用同一个下拉面板
+    //智能定位：通过mapToItem计算显示位置
+    ToolStripDropPanel
+    {
         id:         dropPanel
         toolStrip:  _root
     }

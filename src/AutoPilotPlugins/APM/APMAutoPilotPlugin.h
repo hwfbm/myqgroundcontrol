@@ -31,6 +31,7 @@ class Vehicle;
 
 Q_DECLARE_LOGGING_CATEGORY(APMAutoPilotPluginLog)
 
+//作为AutoPilotPlugin的子类，是地面站与APM飞控的核心交互中介
 /// This is the AutoPilotPlugin implementation for the MAV_AUTOPILOT_ARDUPILOT type.
 class APMAutoPilotPlugin : public AutoPilotPlugin
 {

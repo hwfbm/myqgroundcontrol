@@ -214,5 +214,17 @@
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
         <file alias="Viewer3D/City3DMapIcon.svg">src/Viewer3D/Images/city_3d_map_icon.svg</file>
+        <file alias="batteryself.svg">src/UI/toolbar/Images/Frame.svg</file>
+        <file alias="batteryout.svg">src/UI/toolbar/Images/batteryout.svg</file>
+        <file alias="mute.svg">src/UI/toolbar/Images/mute.svg</file>
+        <file alias="open.svg">src/UI/toolbar/Images/open.svg</file>
+        <file alias="lowbattery.svg">src/UI/toolbar/Images/lowbattery.svg</file>
+        <file alias="fly.svg">src/UI/toolbar/Images/fly.svg</file>
+        <file alias="signal.svg">src/UI/toolbar/Images/signal.svg</file>
+        <file alias="hd.svg">src/UI/toolbar/Images/hd.svg</file>
+        <file alias="batterylogo.svg">src/UI/toolbar/Images/batterylogo.svg</file>
+        <file alias="crama.svg">src/UI/toolbar/Images/crama.svg</file>
+        <file alias="common.svg">src/UI/toolbar/Images/common.svg</file>
+         <file alias="remote_control.svg">src/UI/toolbar/Images/remote_control.svg</file>
     </qresource>
 </RCC>

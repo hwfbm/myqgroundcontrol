@@ -37,6 +37,8 @@ QList<QGCMAVLink::FirmwareClass_t> APMFirmwarePluginFactory::supportedFirmwareCl
 
 FirmwarePlugin *APMFirmwarePluginFactory::firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType)
 {
+    // ArduPilot 为每种载具类型创建独立插件，ArduPilot 的 Copter/Plane/Rover 本质是不同的代码库
+    //使用成员变量缓存实例（_arduXxxPluginInstance），工厂生命周期内保持单例
     if (autopilotType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         switch (vehicleType) {
         case MAV_TYPE_QUADROTOR:
@@ -49,6 +51,7 @@ FirmwarePlugin *APMFirmwarePluginFactory::firmwarePluginForAutopilot(MAV_AUTOPIL
                 _arduCopterPluginInstance = new ArduCopterFirmwarePlugin(this);
             }
             return _arduCopterPluginInstance;
+            // VTOL 特殊处理，ArduPilot 中 VTOL 控制逻辑基于固定翼代码扩展，与多旋翼的插件不兼容
         case MAV_TYPE_VTOL_TAILSITTER_DUOROTOR:
         case MAV_TYPE_VTOL_TAILSITTER_QUADROTOR:
         case MAV_TYPE_VTOL_TILTROTOR:

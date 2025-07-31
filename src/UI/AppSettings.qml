@@ -19,17 +19,17 @@ import QGroundControl.ScreenTools
 
 Rectangle {
     id:     settingsView
-    color:  "#dd25ce"
-    gradient: Gradient {
-        GradientStop {
-            position: 0.15;
-            color: "#000000";
-        }
-        GradientStop {
-            position: 0.45;
-            color: "#ffffff";
-        }
-    }
+    color:  qgcPal.colorBlue
+    // gradient: Gradient {
+    //     GradientStop {
+    //         position: 0.15;
+    //         color: "#000000";
+    //     }
+    //     GradientStop {
+    //         position: 0.45;
+    //         color: "#ffffff";
+    //     }
+    // }
     z:      QGroundControl.zOrderTopMost
 
     readonly property real _defaultTextHeight:  ScreenTools.defaultFontPixelHeight
@@ -134,7 +134,7 @@ Rectangle {
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         width:                  1
-        color:                  qgcPal.windowShade
+        color:                  "black"/*qgcPal.windowShade*/
     }
 
     //-- Panel Contents
