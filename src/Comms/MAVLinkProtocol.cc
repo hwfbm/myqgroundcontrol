@@ -222,6 +222,9 @@ void MAVLinkProtocol::_updateCounters(uint8_t mavlinkChannel, const mavlink_mess
     _runningLossPercent[mavlinkChannel] = receiveLossPercent;
 }
 
+//消息转发
+//将消息发给其他模块
+//对外提供信号
 void MAVLinkProtocol::_forward(const mavlink_message_t &message)
 {
     if (message.msgid == MAVLINK_MSG_ID_SETUP_SIGNING) {
@@ -244,6 +247,8 @@ void MAVLinkProtocol::_forward(const mavlink_message_t &message)
 
 void MAVLinkProtocol::_forwardSupport(const mavlink_message_t &message)
 {
+    // 1. 【安全检查】如果是“设置加密签名”的消息，直接忽略。
+    //    这种消息非常敏感，包含加密密钥，绝对不能转发给别人！
     if (message.msgid == MAVLINK_MSG_ID_SETUP_SIGNING) {
         return;
     }

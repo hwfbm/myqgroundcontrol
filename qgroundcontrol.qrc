@@ -12,6 +12,7 @@
         <file alias="TelemetryRSSIIndicator.qml">src/UI/toolbar/TelemetryRSSIIndicator.qml</file>
         <file alias="APMSupportForwardingIndicator.qml">src/UI/toolbar/APMSupportForwardingIndicator.qml</file>
         <file alias="GimbalIndicator.qml">src/UI/toolbar/GimbalIndicator.qml</file>
+        <file alias="GimbalSetting.qml">src/UI/toolbar/GimbalSetting.qml</file>
     </qresource>
     <qresource prefix="/checklists">
         <file alias="DefaultChecklist.qml">src/FlightDisplay/DefaultChecklist.qml</file>
@@ -81,6 +82,7 @@
         <file alias="QGroundControl/Controls/AltModeDialog.qml">src/QmlControls/AltModeDialog.qml</file>
         <file alias="QGroundControl/Controls/AxisMonitor.qml">src/QmlControls/AxisMonitor.qml</file>
         <file alias="QGroundControl/Controls/BatteryIndicator.qml">src/UI/toolbar/BatteryIndicator.qml</file>
+         <file alias="QGroundControl/Controls/Batterysettingshow.qml">src/UI/toolbar/Batterysettingshow.qml</file>
         <file alias="QGroundControl/Controls/CameraCalcCamera.qml">src/PlanView/CameraCalcCamera.qml</file>
         <file alias="QGroundControl/Controls/CameraCalcGrid.qml">src/PlanView/CameraCalcGrid.qml</file>
         <file alias="QGroundControl/Controls/CameraSection.qml">src/PlanView/CameraSection.qml</file>
@@ -148,6 +150,7 @@
         <file alias="QGroundControl/Controls/QGCColoredImage.qml">src/QmlControls/QGCColoredImage.qml</file>
         <file alias="QGroundControl/Controls/QGCComboBox.qml">src/QmlControls/QGCComboBox.qml</file>
         <file alias="QGroundControl/Controls/QGCFileDialog.qml">src/QmlControls/QGCFileDialog.qml</file>
+        <file alias="QGroundControl/Controls/Leftbutton.qml">src/QmlControls/Leftbutton.qml</file>
         <file alias="QGroundControl/Controls/QGCFlickable.qml">src/QmlControls/QGCFlickable.qml</file>
         <file alias="QGroundControl/Controls/QGCFlickableScrollIndicator.qml">src/QmlControls/QGCFlickableScrollIndicator.qml</file>
         <file alias="QGroundControl/Controls/QGCGroupBox.qml">src/QmlControls/QGCGroupBox.qml</file>
@@ -177,6 +180,7 @@
         <file alias="QGroundControl/Controls/QGCTextField.qml">src/QmlControls/QGCTextField.qml</file>
         <file alias="QGroundControl/Controls/QGCToolBarButton.qml">src/QmlControls/QGCToolBarButton.qml</file>
         <file alias="QGroundControl/Controls/QGCToolInsets.qml">src/QmlControls/QGCToolInsets.qml</file>
+        <file alias="QGroundControl/Controls/QGCCard.qml">src/QmlControls/QGCCard.qml</file>
         <file alias="QGroundControl/Controls/qmldir">src/QmlControls/QGroundControl/Controls/qmldir</file>
         <file alias="QGroundControl/Controls/RallyPointEditorHeader.qml">src/PlanView/RallyPointEditorHeader.qml</file>
         <file alias="QGroundControl/Controls/RallyPointItemEditor.qml">src/PlanView/RallyPointItemEditor.qml</file>
@@ -353,7 +357,8 @@
         <file alias="Viewer3D/Viewer3DProgressBar.qml">src/Viewer3D/Viewer3DQml/Viewer3DProgressBar.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewTopRightPanel.qml">src/FlightDisplay/FlyViewTopRightPanel.qml</file>
         <file alias="QGroundControl/Controls/HyBattery.qml">src/UI/toolbar/HyBattery.qml</file>
-        <file>src/UI/ToolMenu.qml</file>
+        <file>src/QmlControls/Leftbutton.qml</file>
+
     </qresource>
     <qresource prefix="/FirstRunPromptDialogs">
         <file alias="UnitsFirstRunPrompt.qml">src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml</file>

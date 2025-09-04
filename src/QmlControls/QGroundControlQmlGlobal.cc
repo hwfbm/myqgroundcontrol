@@ -77,6 +77,7 @@ static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
 
 void QGroundControlQmlGlobal::registerQmlTypes()
 {
+    //ML 中注册一个不能被实例化的 C++ 类型 FactValueGrid，但可以在 QML 访问它里面的 Q_ENUM 枚举值
     qmlRegisterUncreatableType<FactValueGrid>           ("QGroundControl.Templates",             1, 0, "FactValueGrid",       "Reference only");
     qmlRegisterUncreatableType<FlightPathSegment>       ("QGroundControl",                       1, 0, "FlightPathSegment",   "Reference only");
     qmlRegisterUncreatableType<InstrumentValueData>     ("QGroundControl",                       1, 0, "InstrumentValueData", "Reference only");

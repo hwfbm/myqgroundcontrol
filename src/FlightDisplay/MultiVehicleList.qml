@@ -22,7 +22,7 @@ Item {
     property real   _margin:              ScreenTools.defaultFontPixelWidth / 2
     property real   _widgetHeight:        ScreenTools.defaultFontPixelHeight * 2
     property var    _guidedController:    globals.guidedControllerFlyView
-    property var    _activeVehicleColor:  "green"
+    property var    _activeVehicleColor:  "#3399ff"
     property var    _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
     property var    selectedVehicles:     QGroundControl.multiVehicleManager.selectedVehicles
 
@@ -116,6 +116,7 @@ Item {
         anchors.right:      parent.right
         anchors.top:        parent.top
         anchors.bottom:     parent.bottom
+        anchors.topMargin:  _margin+5
         spacing:            ScreenTools.defaultFontPixelHeight / 2
         orientation:        ListView.Vertical
         model:              QGroundControl.multiVehicleManager.vehicles
@@ -127,10 +128,11 @@ Item {
         delegate: Rectangle {
             width:          vehicleList.width
             height:         innerColumn.y + innerColumn.height + _margin
-            color:          QGroundControl.multiVehicleManager.activeVehicle == _vehicle ? _activeVehicleColor : qgcPal.button
+            color:          QGroundControl.multiVehicleManager.activeVehicle == _vehicle ? _activeVehicleColor :"#222222" /*qgcPal.button*/
             radius:         _margin
             border.width:   _vehicle && vehicleSelected(_vehicle.id) ? 2 : 0
-            border.color:   qgcPal.text
+            opacity:         0.8
+            border.color:  qgcPal.text
 
             property var    _vehicle:   object
 

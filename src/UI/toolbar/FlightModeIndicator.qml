@@ -20,36 +20,45 @@ import QGroundControl.FactSystem
 import QGroundControl.FactControls
 import QGroundControl.AutoPilotPlugin
 
+ColumnLayout {
+       Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+       property bool   showIndicator:          true
+       property var    expandedPageComponent
+       property bool   waitForParameters:      false
+        property real fontPointSize:    ScreenTools.largeFontPointSize*0.8
+
+       property var  activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
+       property bool allowEditMode:    true
+       property bool editMode:         false
 RowLayout {
     id:         control
     spacing:    0
+    anchors.verticalCenter: parent.verticalCenter
 
-    property bool   showIndicator:          true
-    property var    expandedPageComponent
-    property bool   waitForParameters:      false
 
-    property real fontPointSize:    ScreenTools.largeFontPointSize
-    property var  activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
-    property bool allowEditMode:    true
-    property bool editMode:         false
+
 
     RowLayout {
         Layout.fillWidth: true
 
         QGCColoredImage {
             id:         flightModeIcon
-            width:      ScreenTools.defaultFontPixelWidth * 3
-            height:     ScreenTools.defaultFontPixelHeight
+            Layout.alignment: Qt.AlignVCenter
+            width:      ScreenTools.defaultFontPixelWidth * 2
+            height:     width
             fillMode:   Image.PreserveAspectFit
             mipmap:     true
-            color:      qgcPal.text
-            source:     "/qmlimages/FlightModesComponentIcon.png"
+            color:     qgcPal.text
+            source:   "/qmlimages/flymode.svg" /* "/qmlimages/FlightModesComponentIcon.png"*/
         }
 
         QGCLabel {
             text:               activeVehicle ? activeVehicle.flightMode : qsTr("N/A", "No data to display")
+            color:"white"
             font.pointSize:     fontPointSize
-            Layout.alignment:   Qt.AlignCenter
+            Layout.alignment: Qt.AlignVCenter
+            width:      ScreenTools.defaultFontPixelWidth * 3
+             height: ScreenTools.defaultFontPixelHeight  // 固定高度
 
             MouseArea {
                 anchors.fill:   parent
@@ -57,6 +66,7 @@ RowLayout {
             }
         }
     }
+
 
     Component {
         id: drawerComponent
@@ -86,7 +96,7 @@ RowLayout {
             property var    activeVehicle:            QGroundControl.multiVehicleManager.activeVehicle
             property var    flightModeSettings:       QGroundControl.settingsManager.flightModeSettings
             property var    hiddenFlightModesFact:    null
-            property var    hiddenFlightModesList:    [] 
+            property var    hiddenFlightModesList:    []
 
             Component.onCompleted: {
                 // Hidden flight modes are classified by firmware and vehicle class
@@ -231,4 +241,5 @@ RowLayout {
             }
         }
     }
+}
 }

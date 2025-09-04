@@ -18,7 +18,7 @@ import QGroundControl.ScreenTools
 
 Button {
     id:             control
-    padding:        ScreenTools.defaultFontPixelWidth * 0.75
+    padding:        ScreenTools.defaultFontPixelWidth * 0.55
     hoverEnabled:   !ScreenTools.isMobile
     autoExclusive:  true
     icon.color:     textColor

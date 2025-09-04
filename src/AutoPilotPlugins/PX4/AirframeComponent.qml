@@ -19,6 +19,7 @@ import QGroundControl.Controls
 import QGroundControl.Controllers
 import QGroundControl.ScreenTools
 
+//设置机架
 SetupPage {
     id:             airframePage
     pageComponent:  (controller && controller.showCustomConfigPanel) ? customFrame : pageComponent

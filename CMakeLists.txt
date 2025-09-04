@@ -736,6 +736,7 @@ find_package(Qt6
         TextToSpeech
         Widgets
         Xml
+        Mqtt
     OPTIONAL_COMPONENTS
         Bluetooth
         Charts
@@ -745,11 +746,68 @@ find_package(Qt6
         Quick3DTools
         SerialPort
         Test
+
 )
+# if (ANDROID)
+#     set(QT_FEATURE_icns OFF CACHE BOOL "Disable ICNS plugin for Android" FORCE)
+# endif()
+# if (ANDROID)
+#     find_package(Qt6 ${QT_MINIMUM_VERSION} REQUIRED
+#         COMPONENTS
+#             Concurrent
+#             Core
+#             Gui
+#             Location
+#             Multimedia
+#             Network
+#             OpenGL
+#             Positioning
+#             Qml
+#             QmlIntegration
+#             Quick
+#             QuickControls2
+#             QuickWidgets
+#             Sensors
+#             Sql
+#             Svg
+#             TextToSpeech
+#             Widgets
+#             Xml
+#     )
+# else()
+#     find_package(Qt6 ${QT_MINIMUM_VERSION} REQUIRED
+#         COMPONENTS
+#             Concurrent
+#             Core
+#             Core5Compat
+#             Gui
+#             Location
+#             Multimedia
+#             Network
+#             OpenGL
+#             Positioning
+#             Qml
+#             QmlIntegration
+#             Quick
+#             QuickControls2
+#             QuickWidgets
+#             Sensors
+#             Sql
+#             Svg
+#             TextToSpeech
+#             Widgets
+#             Xml
+#     )
+# endif()
+
 
 
 if(LINUX)
     find_package(Qt6 ${QT_MINIMUM_VERSION} COMPONENTS WaylandClient)
+find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core)
 endif()
 
 # Set extra standard project setup options for Qt 6.7.0 and above
@@ -851,9 +909,18 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
     ${QGC_RESOURCES}
     src/MAVLink/LibEvents/mavlink_custom.h
     hydrogenbatteryhandler.h hydrogenbatteryhandler.cpp
+
+
     #src/Vehicle/FactGroups/vehiclehydrogenbatteryfactgroup.h src/Vehicle/FactGroups/vehiclehydrogenbatteryfactgroup.cpp
 )
 
+
+target_link_libraries(QGroundControl PRIVATE Qt6::Core)
+target_link_libraries(QGroundControl PRIVATE Qt6::Mqtt)
+target_link_libraries(QGroundControl PRIVATE Qt6::Core)
+
+# target_link_libraries(QGroundControl PRIVATE Qt6::Core)
+# target_link_libraries(QGroundControl PRIVATE Qt6::Core)
 target_compile_definitions(${CMAKE_PROJECT_NAME}
     PRIVATE
         QGC_APP_NAME="${QGC_APP_NAME}"

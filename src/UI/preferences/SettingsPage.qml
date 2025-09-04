@@ -34,7 +34,7 @@ Item {
         ColumnLayout {
             id:         mainLayout
             x:          Math.max(0, root.width / 2 - width / 2)
-            width:      Math.max(implicitWidth, ScreenTools.defaultFontPixelWidth * 50)
+            width:      Math.max(implicitWidth, ScreenTools.defaultFontPixelWidth * 20)
             spacing:    ScreenTools.defaultFontPixelHeight
         }
     }

@@ -20,16 +20,17 @@ import QGroundControl.Palette
 import QGroundControl.ScreenTools
 
 
+//于右上角的多无人机控制面板（Multi-Vehicle Panel）。这个面板允许用户在有多个无人机连接时进行统一操作，例如“选择所有无人机”、“一键起飞”、“一键暂停任务”等功能
 Rectangle {
     id:             topRightPanel
     width:          contentWidth
     height:         Math.max(contentHeight, minimumHeight)
-    color:          qgcPal.toolbarBackground
+    color:          Qt.rgba(0, 0, 0, 0.65)/*qgcPal.toolbarBackground*/
     radius:         ScreenTools.defaultFontPixelHeight / 2
     visible:        !QGroundControl.videoManager.fullScreen && _multipleVehicles && _settingEnableMVPanel
     clip:           true
 
-    property bool _settingEnableMVPanel:    QGroundControl.settingsManager.appSettings.enableMultiVehiclePanel.value
+    property bool  _settingEnableMVPanel:    QGroundControl.settingsManager.appSettings.enableMultiVehiclePanel.value
     property bool  _multipleVehicles:       QGroundControl.multiVehicleManager.vehicles.count > 1
     property var   vehicles:                QGroundControl.multiVehicleManager.vehicles
     property var   selectedVehicles:        QGroundControl.multiVehicleManager.selectedVehicles
@@ -59,7 +60,7 @@ Rectangle {
                     selectedVehicles.get(i).id
                 ).sort((a, b) => a - b)
                 .join(", ")
-                return qsTr("Selected: ") + ids
+                return qsTr("选择: ") + ids
             }
         }
 
@@ -71,7 +72,7 @@ Rectangle {
 
             Rectangle {
                 anchors.fill: parent
-                visible:      topRightPanel.height === maximumHeight
+                visible:     true// topRightPanel.height === maximumHeight//当 topRightPanel 展开到最大高度时才显示这个背景效果
 
                 Rectangle {
                     anchors.left:       parent.left
@@ -84,11 +85,16 @@ Rectangle {
 
                 gradient: Gradient {
                     orientation: Gradient.Vertical
-                    GradientStop { position: 0.00; color: topRightPanel.color }
+                    // GradientStop { position: 0.00; color: "#A6C8FF" }    // 顶部淡蓝
+                    // GradientStop { position: 0.05; color: "transparent" }
+                    // GradientStop { position: 0.95; color: "transparent" }
+                    // GradientStop { position: 1.00; color: "#A6C8FF" }    // 底部淡蓝
+
+                    GradientStop { position: 0.00; color:topRightPanel.color }
                     GradientStop { position: 0.05; color: "transparent" }
 
                     GradientStop { position: 0.95; color: "transparent" }
-                    GradientStop { position: 1.00; color: topRightPanel.color }
+                    GradientStop { position: 1.00; color:topRightPanel.color }
                 }
 
                 Rectangle {
@@ -132,7 +138,7 @@ Rectangle {
                         implicitWidth:          Math.max(selectionRowLayout.width, actionRowLayout.width) + ScreenTools.defaultFontPixelHeight * 4
 
                         QGCLabel {
-                            text:               qsTr("Multi Vehicle Selection")
+                            text:               qsTr("多飞行器选择")
                             Layout.alignment:   Qt.AlignHCenter
                         }
 
@@ -141,13 +147,13 @@ Rectangle {
                             Layout.alignment:   Qt.AlignHCenter
 
                             QGCButton {
-                                text:                  qsTr("Select All")
+                                text:                  qsTr("选择所有")
                                 enabled:               multiVehicleList.selectedVehicles && multiVehicleList.selectedVehicles.count !== QGroundControl.multiVehicleManager.vehicles.count
                                 onClicked:             multiVehicleList.selectAll()
                             }
 
                             QGCButton {
-                                text:                  qsTr("Deselect All")
+                                text:                  qsTr("放弃选择所有")
                                 enabled:               multiVehicleList.selectedVehicles && multiVehicleList.selectedVehicles.count > 0
                                 onClicked:             multiVehicleList.deselectAll()
                             }
@@ -165,7 +171,7 @@ Rectangle {
                             Layout.alignment:  Qt.AlignHCenter
 
                             QGCButton {
-                                text:                  qsTr("Arm")
+                                text:                  qsTr("解锁")
                                 enabled:               multiVehicleList.armAvailable()
                                 onClicked:             _guidedController.confirmAction(_guidedController.actionMVArm)
                                 Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 2.75
@@ -174,7 +180,7 @@ Rectangle {
                             }
 
                             QGCButton {
-                                text:                  qsTr("Disarm")
+                                text:                  qsTr("上锁")
                                 enabled:               multiVehicleList.disarmAvailable()
                                 onClicked:             _guidedController.confirmAction(_guidedController.actionMVDisarm)
                                 Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 2.75
@@ -183,7 +189,7 @@ Rectangle {
                             }
 
                             QGCButton {
-                                text:                  qsTr("Start")
+                                text:                  qsTr("开始")
                                 enabled:               multiVehicleList.startAvailable()
                                 onClicked:             _guidedController.confirmAction(_guidedController.actionMVStartMission)
                                 Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 2.75
@@ -192,7 +198,7 @@ Rectangle {
                             }
 
                             QGCButton {
-                                text:                  qsTr("Pause")
+                                text:                  qsTr("暂停")
                                 enabled:               multiVehicleList.pauseAvailable()
                                 onClicked:             _guidedController.confirmAction(_guidedController.actionMVPause)
                                 Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 2.75
@@ -230,20 +236,26 @@ Rectangle {
                 } // Page 2
             } // QGCSwipeView
 
+            //用于分页显示的控件，通常在滑动页面（比如 SwipeView）下方出现，用来显示当前是第几页、总共有多少页，类似于 App 引导页底部的小圆点导航
             QGCPageIndicator {
                 id:                       pageIndicator
-                count:                    swipePages.count
+                count:                    swipePages.count// 总页数
                 currentIndex:             swipePages.currentIndex
                 anchors.bottom:           parent.bottom
+
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.margins:          ScreenTools.defaultFontPixelHeight / 4
 
+                //控制小圆点样式
                 delegate: Rectangle {
                     height:    ScreenTools.defaultFontPixelHeight  / 2
                     width:     height
                     radius:    width / 2
-                    color:     model.index === pageIndicator.currentIndex ? qgcPal.text : qgcPal.button
+                    //如果当前小圆点是当前页：使用 activeColor（比如高亮的颜色）
+                    //否则：使用 inactiveColor（比如半透明灰色）
+                    color:     model.index === pageIndicator.currentIndex ? "#2196F3" : "#E0E0E0"//model.index === pageIndicator.currentIndex ? qgcPal.text : qgcPal.button
                     opacity:   model.index === pageIndicator.currentIndex ? 0.9 : 0.3
+                     border.color: model.index === pageIndicator.currentIndex ? "#1976D2" : "transparent"
                 }
             }
         }

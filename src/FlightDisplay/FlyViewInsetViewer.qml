@@ -24,7 +24,7 @@ import QGroundControl.FlightDisplay
 import QGroundControl.ScreenTools
 import QGroundControl.FlightMap
 
-
+//小部件
 // This is the ui overlay layer for the widgets/tools for Fly View
 Item {
     id: _root
@@ -187,7 +187,7 @@ Item {
         width: _root.width - insetsToView.leftEdgeCenterInset - insetsToView.rightEdgeCenterInset
         height: _root.height - insetsToView.topEdgeCenterInset - insetsToView.bottomEdgeCenterInset
         color: "transparent"
-        border.color: "yellow"
+        border.color: "blue"
         border.width: 1
         radius: 0
     }

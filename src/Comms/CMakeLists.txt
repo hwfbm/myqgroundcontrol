@@ -19,6 +19,11 @@ target_sources(${CMAKE_PROJECT_NAME}
         TCPLink.h
         UDPLink.cc
         UDPLink.h
+        mqttlink.h
+        mqttlink.cpp
+        mavlinktojson.h
+        mavlinktojson.cpp
+
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

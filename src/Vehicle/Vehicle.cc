@@ -58,7 +58,8 @@
 #include "GimbalController.h"
 #include "MavlinkSettings.h"
 
-
+#include "mqttlink.h"
+#include "mavlinkToJson.h"
 
 #ifdef QGC_UTM_ADAPTER
 #include "UTMSPVehicle.h"
@@ -136,9 +137,19 @@ Vehicle::Vehicle(LinkInterface*             link,
 
 
     , _terrainProtocolHandler       (new TerrainProtocolHandler(this, &_terrainFactGroup, this))
-    ,_batteryFactGroup(new VehicleBatteryFactGroup(0,this))
+   // ,_batteryFactGroup(new VehicleBatteryFactGroup(0,this))
 // , _hydrogenbatteryFactGroupListModel(this)
 {
+
+    // auto converter = new MavlinkToJson(this);
+    // auto publisher = new Mqttlink(this);
+
+    // Vehicle 信号连接到 converter
+    //connect(this, &Vehicle::_mavlinkMessageReceived, converter, &MavlinkToJson::handleMavlinkMessage);
+
+    // converter 信号连接到 publisher
+    //connect(converter, &MavlinkToJson::jsonReady, publisher, &Mqttlink::publishJson);
+
     connect(JoystickManager::instance(), &JoystickManager::activeJoystickChanged, this, &Vehicle::_loadJoystickSettings);
     connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &Vehicle::_activeVehicleChanged);
 
@@ -256,6 +267,15 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     }
 
     _commonInit();
+    // auto converter = new MavlinkToJson(this);
+    // auto publisher = new Mqttlink(this);
+
+    // Vehicle 信号连接到 converter
+   // connect(this, &Vehicle::_mavlinkMessageReceived, converter, &MavlinkToJson::handleMavlinkMessage);
+
+    // converter 信号连接到 publisher
+    //connect(converter, &MavlinkToJson::jsonReady, publisher, &Mqttlink::publishJson);
+
 
     connect(SettingsManager::instance()->appSettings()->offlineEditingCruiseSpeed(),   &Fact::rawValueChanged, this, &Vehicle::_offlineCruiseSpeedSettingChanged);
     connect(SettingsManager::instance()->appSettings()->offlineEditingHoverSpeed(),    &Fact::rawValueChanged, this, &Vehicle::_offlineHoverSpeedSettingChanged);
@@ -584,8 +604,8 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     _waitForMavlinkMessageMessageReceivedHandler(message);
 
     // Battery fact groups are created dynamically as new batteries are discovered随着新电池的发现，电池事实组会动态创建
-    //VehicleBatteryFactGroup::handleMessageForFactGroupCreation(this, message);
-    VehicleHydrogenBatteryFactGroup::handleMessageForFactGroupCreation(this, message);
+    VehicleBatteryFactGroup::handleMessageForFactGroupCreation(this, message);//原生battery
+    VehicleHydrogenBatteryFactGroup::handleMessageForFactGroupCreation(this, message);//氢能battery
 
     // Let the fact groups take a whack at the mavlink traffic
     //所有继承 QGCFactGroup 的模块统一加入 _factGroups 容器，然后在 _mavlinkMessageReceived() 中统一调用 factGroup->handleMessage()；
@@ -617,7 +637,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     //     break;
     case MAVLINK_MSG_ID_BATTERY_STATUS:
         _handleBatteryStatus(message);
-        qDebug() << "[Vehicle] 收到MAVLINK_MSG_ID_BATTERY_STATUS的 msgid = " << message.msgid;
+       // qDebug() << "[Vehicle] 收到MAVLINK_MSG_ID_BATTERY_STATUS的 msgid = " << message.msgid;
         break;
     // case MAVLINK_MSG_ID_HYDROGEN_BATTERY:
     //     qDebug() << "[Vehicle] 收到我的HYDROGEN_BATTERY的 msgid = " << message.msgid;
@@ -856,11 +876,13 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
     mavlink_global_position_int_t globalPositionInt;
     mavlink_msg_global_position_int_decode(&message, &globalPositionInt);
 
+     // 如果还没有 altitude message，就先用 relative_alt/alt 填充
     if (!_altitudeMessageAvailable) {
-        _altitudeRelativeFact.setRawValue(globalPositionInt.relative_alt / 1000.0);
+        _altitudeRelativeFact.setRawValue(globalPositionInt.relative_alt / 1000.0);//mm → m
         _altitudeAMSLFact.setRawValue(globalPositionInt.alt / 1000.0);
     }
 
+    // ArduPilot 特性：有时 GPS 信号丢失时，lat/lon = 0/0，但 alt 仍然有用
     // ArduPilot sends bogus GLOBAL_POSITION_INT messages with lat/lat 0/0 even when it has no gps signal
     // Apparently, this is in order to transport relative altitude information.
     if (globalPositionInt.lat == 0 && globalPositionInt.lon == 0) {
@@ -868,6 +890,8 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
     }
 
     _globalPositionIntMessageAvailable = true;
+    // 经纬度：degE7 → 度，小数度
+    // 高度：mm → m
     QGeoCoordinate newPosition(globalPositionInt.lat  / (double)1E7, globalPositionInt.lon / (double)1E7, globalPositionInt.alt  / 1000.0);
     if (newPosition != _coordinate) {
         _coordinate = newPosition;
@@ -1463,8 +1487,13 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
 
     mavlink_msg_heartbeat_decode(&message, &heartbeat);
 
-    bool newArmed = heartbeat.base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY;
+    //ARMED 判断
+    //用 base_mode 的 bit 标志来判断是否上锁
+    //APM 有特例：如果 ARMING_REQUIRE=0，需要额外靠 SYS_STATUS 来确认
 
+    bool newArmed = heartbeat.base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY;
+    //ArduPilot firmare 在 ARMING_REQUIRE=0 时有一个奇怪的情况。这意味着车辆始终处于布防状态，但电机却没有真正通电，直到按下安全按钮。正因为如此，我们不能依靠心跳来告诉我们真实的武装（和危险）国家。
+    //相反，我们必须依靠SYS_STATUS告诉我们电机已启用。
     // ArduPilot firmare has a strange case when ARMING_REQUIRE=0. This means the vehicle is always armed but the motors are not
     // really powered up until the safety button is pressed. Because of this we can't depend on the heartbeat to tell us the true
     // armed (and dangerous) state. We must instead rely on SYS_STATUS telling us that the motors are enabled.
@@ -1483,6 +1512,7 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
         if (_base_mode != 0 || _custom_mode != 0){
             // Vehicle is initialized with _base_mode=0 and _custom_mode=0. Don't pass this to flightMode() since it will complain about
             // bad modes while unit testing.
+            //然后调用 flightMode() 解释成字符串
             previousFlightMode = flightMode();
         }
         _base_mode   = heartbeat.base_mode;

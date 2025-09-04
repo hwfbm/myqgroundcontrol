@@ -1,23 +1,3 @@
-<svg width="42" height="66" viewBox="0 0 42 66" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="12" y="1" width="18" height="7" rx="0.5" stroke="black" stroke-width="2"/>
-<rect x="1" y="8" width="40" height="57" rx="4" stroke="black" stroke-width="2"/>
-<g filter="url(#filter0_d_250_36)">
-<rect x="7" y="14" width="28" height="45" rx="3" stroke="black" stroke-width="2" shape-rendering="crispEdges"/>
-</g>
-<rect x="7" y="49" width="28" height="10" rx="3" fill="#FF0000" stroke="black" stroke-width="2"/>
-<path d="M18.0194 18H24C24 18 24 28.2786 21.6078 37.5782C21.4634 38.1394 19.9427 38.1418 19.8136 37.5782C17.6828 28.2786 18.0194 18 18.0194 18Z" fill="#EEFF00" fill-opacity="0.77"/>
-<circle cx="21" cy="43" r="3" fill="#C7D410"/>
-<defs>
-<filter id="filter0_d_250_36" x="6" y="13" width="30" height="50.7" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-<feFlood flood-opacity="0" result="BackgroundImageFix"/>
-<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-<feMorphology radius="2" operator="erode" in="SourceAlpha" result="effect1_dropShadow_250_36"/>
-<feOffset dy="4"/>
-<feGaussianBlur stdDeviation="0.85"/>
-<feComposite in2="hardAlpha" operator="out"/>
-<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
-<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_250_36"/>
-<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_250_36" result="shape"/>
-</filter>
-</defs>
+<svg width="37" height="71" viewBox="0 0 37 71" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 62.125C0 64.4788 0.97455 66.7362 2.70926 68.4006C4.44397 70.065 6.79675 71 9.25 71H27.75C30.2033 71 32.556 70.065 34.2907 68.4006C36.0254 66.7362 37 64.4788 37 62.125L37 17.75C37 15.3962 36.0254 13.1388 34.2907 11.4744C32.556 9.81004 30.2033 8.875 27.75 8.875L9.25 8.875C6.79675 8.875 4.44397 9.81004 2.70926 11.4744C0.97455 13.1388 0 15.3962 0 17.75L0 62.125ZM4.625 17.75C4.625 16.5731 5.11228 15.4444 5.97963 14.6122C6.84699 13.78 8.02337 13.3125 9.25 13.3125L27.75 13.3125C28.9766 13.3125 30.153 13.78 31.0204 14.6122C31.8877 15.4444 32.375 16.5731 32.375 17.75L32.375 62.125C32.375 63.3019 31.8877 64.4306 31.0204 65.2628C30.153 66.095 28.9766 66.5625 27.75 66.5625H9.25C8.02337 66.5625 6.84699 66.095 5.97963 65.2628C5.11228 64.4306 4.625 63.3019 4.625 62.125L4.625 17.75ZM18.5 0C20.3399 0 22.1045 0.701279 23.4056 1.94957C24.7066 3.19786 25.4375 4.8909 25.4375 6.65625H11.5625C11.5625 4.8909 12.2934 3.19786 13.5944 1.94957C14.8955 0.701279 16.6601 0 18.5 0Z" fill="#FDFDFD"/>
 </svg>

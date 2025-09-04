@@ -19,483 +19,355 @@ import QGroundControl.FactSystem
 import QGroundControl.FactControls
 import QGroundControl.AutoPilotPlugin
 import MAVLink
-//import "."
-//-------------------------------------------------------------------------
-//-- Battery Indicator
-// 实时显示电池状态：电压、百分比或两者同时显示
-// 支持多电池：通过 Repeater 动态生成每个电池的视觉指示
-// 交互功能：点击弹出详细电池信息面板
-// 阈值警告：根据用户设置的阈值（threshold1/threshold2）改变颜色提示
-Item {
-    id:             control
-    anchors.top:    parent.top
-    anchors.bottom: parent.bottom
-    width:          batteryIndicatorRow.width
 
+Item {
+    id: control
+    height: parent.height   // 只跟 Toolbar 高度对齐，不拉伸上下
+    anchors.verticalCenter: parent.verticalCenter
+    width:batteryRow.width
     property bool       showIndicator:      true//是否显示电池指示器（可通过配置关闭）
     property bool       waitForParameters:  false   // 是否等待飞控参数加载完成后再显示 UI
-    property Component  expandedPageComponent //Component 是 QML 的一个 可重用 UI 模板，类似于一个“未实例化的 QML 对象定义”，可以在运行时动态创建（类似 new 一个对象）
-    //动态加载不同的 QML 页面（如弹窗、配置页）
-    // 延迟实例化（优化性能，避免初始化时加载所有 UI）
-    // 结合 Loader 动态切换界面
+    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle//当前活动的无人机对象，返回当前激活的无人机（通过 multiVehicleManager 获取），vehicle类
 
-    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle//当前活动的无人机对象，返回当前激活的无人机（通过 multiVehicleManager 获取），vehicle类
-    property var    _batterySettings:   QGroundControl.settingsManager.batteryIndicatorSettings//电池显示相关的用户设置（如显示模式、警告阈值）
-    property Fact   _indicatorDisplay:  _batterySettings.valueDisplay//_indicatorDisplay 决定显示内容
-    property bool   _showPercentage:    _indicatorDisplay.rawValue === 0  //是否显示百分比（根据 valueDisplay 设置）
-    property bool   _showVoltage:       _indicatorDisplay.rawValue === 1 // 1=电压
-    property bool   _showBoth:          _indicatorDisplay.rawValue === 2  // 2=电压+百分比
-
-    // Properties to hold the thresholds用户配置的电量警告阈值（用于触发颜色变化）
-    //当电池电量低于 threshold2 时显示红色警告，低于 threshold1 显示黄色警告。
+    //电池设置参数
+    //property Fact   _indicatorDisplay:  _batterySettings.valueDisplay//_indicatorDisplay 决定显示内容
+    property var _batterySettings: QGroundControl.settingsManager.batteryIndicatorSettings
     property int threshold1: _batterySettings.threshold1.rawValue
-    property int threshold2: _batterySettings.threshold2.rawValue   
-    Component.onCompleted: {
-       // console.log("🚀 hydrogenBatteries:", control._activeVehicle.hydrogenBatteries);
+    property int threshold2: _batterySettings.threshold2.rawValue
+
+    property Component  expandedPageComponent //展开面板，放设置
+    QtObject {
+        id: batteryUtils
+
+        // 计算总电压，单位 V
+        function totalVoltage(vehicle) {
+            if (!vehicle) return 0;
+            let total = 0;
+
+            // 遍历锂电池
+            if (vehicle.batteries) {
+                for (let i = 0; i < vehicle.batteries.count; i++) {
+                    let b = vehicle.batteries.get(i)
+                    if (b && b.voltage && !isNaN(b.voltage.rawValue)) {
+                        total += b.voltage.rawValue / 1000;
+                    }
+                }
+            }
+
+            // 遍历氢电池
+            if (vehicle.hydrogenBatteries) {
+                for (let i = 0; i < vehicle.hydrogenBatteries.count; i++) {
+                    let b = vehicle.hydrogenBatteries.get(i)
+                    if (b && b.voltage && !isNaN(b.voltage.rawValue)) {
+                        total += b.voltage.rawValue / 1000;
+                    }
+                }
+            }
+
+            return total;
+        }
+
+        // 计算平均 SOC
+        function averageSOC(vehicle) {
+            if (!vehicle) return "0";//如果车辆对象不存在，直接返回字符串"0"
+            let socTotal = 0;//用于累加所有电池的SOC值
+            let count = 0;//统计有效电池的数量
+
+            if (vehicle.batteries) {
+                for (let i = 0; i < vehicle.batteries.count; i++) //遍历所有电池（通过vehicle.batteries.count获取数量）
+                {
+                    let b = vehicle.batteries.get(i)//vehicle.batteries.get(i)获取单个电池对象
+                    //若电池对象存在 (b)，有percentRemaining属性且percentRemaining.rawValue是有效数字 (!isNaN)
+                    if (b && b.percentRemaining && !isNaN(b.percentRemaining.rawValue))
+                    {
+                        socTotal += b.percentRemaining.rawValue;//如果有效，多个电池对象累加SOC值并计数
+                        count++;
+                    }
+                }
+            }
+
+            if (vehicle.hydrogenBatteries) {
+                for (let i = 0; i < vehicle.hydrogenBatteries.count; i++) {
+                    let b = vehicle.hydrogenBatteries.get(i)
+                    if (b && b.percentRemaining && !isNaN(b.percentRemaining.rawValue)) {
+                        socTotal += b.percentRemaining.rawValue;
+                        count++;
+                    }
+                }
+            }
+
+
+            //三元条件运算：条件：count > 0（是否有有效电池）
+            //真值：计算平均值并取整 (socTotal / count).toFixed(0)
+            //假值：返回"n/a"（Not Available）
+            return count > 0 ? (socTotal / count).toFixed(0) : "n/a";
+        }
     }
 
 
     Row {
-        id:             batteryIndicatorRow
-        anchors.top:    parent.top
-        anchors.bottom: parent.bottom
-        //动态显示多个电池的状态（如双电池系统）
-        //使用 Repeater 根据飞控报告的电池数量生成对应的可视化组件
-        //object 是 Repeater 为每个迭代项自动提供的模型数据：若 model 是数组（如 _activeVehicle.batteries），object 是当前遍历的数组元素（电池对象）。若 model 是整数（如 model: 5），object 是 undefined（此时通常用 index）
-        Repeater {
-            // model: control._activeVehicle ? control._activeVehicle.batteries : 0 //绑定到当前活动飞行器（_activeVehicle）的电池列表，若无则返回 0（不生成任何项），飞控报告的电池列表（如双电系统的电池1/电池2）
-            model: control._activeVehicle ? control._activeVehicle.hydrogenBatteries : 0
+        id: batteryRow
+        spacing: 5
+        anchors.verticalCenter: parent.verticalCenter
+
+
+       // Repeater {
+            //合并锂电 + 氢电
+            //如果没有 _activeVehicle，model 就是空数组，如果 batteries 是 null/undefined，就用 []
+            //.concat(_activeVehicle.hydrogenBatteries || []) → 拼接氢电池数组
+            //只要有 vehicle，就会把「锂电数组 + 氢电数组」合并，交给 Repeater
+            // model: (_activeVehicle ? (_activeVehicle.batteries || []).concat(_activeVehicle.hydrogenBatteries || []) : [])
+
+            // Loader {
+            //     sourceComponent: batteryIcon
+            //     property var batteryItem: object
+            // }
+        //}
 
 
 
-            Loader {
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
-                sourceComponent:    batteryVisual   //动态加载每个电池的视觉组件
-                Component.onCompleted: {
-                    console.log("⚡ hydrogenBatteries.count =", control._activeVehicle.hydrogenBatteries.count)
+        // Repeater {
+        //         model: _activeVehicle ? _activeVehicle.batteries : 0
+                Loader {
+                    sourceComponent: batteryVisual
+                   // property var batteryLithium: modelData  // QML Object
+                    //onLoaded: console.log("Lithium:", batteryLithium.voltage.rawValue)
                 }
-                //property var battery: object //将 Repeater 迭代的电池对象（object）传递给子组件
-                // 将当前项的数据传给 battery
-                       property var battery: object
-            }
-        }
+            //}
+
+            // Repeater {
+            //     model: _activeVehicle ? _activeVehicle.hydrogenBatteries : 0
+            //     Loader {
+            //         sourceComponent: batteryVisual
+            //         property var batteryHydro+gen: modelData // QML Object
+            //         onLoaded: console.log("Hydrogen:", batteryHydrogen.voltage.rawValue)
+            //     }
+            // }
+
+
+        // 总览显示总电压/平均电量
 
     }
+
     MouseArea {
-        anchors.fill:   parent
-        onClicked: {
-            //点击电池区域时，调用主窗口的 showIndicatorDrawer 方法，弹出详情面板
-            mainWindow.showIndicatorDrawer(batteryPopup, control) //弹出的电池详情面板（定义为 ToolIndicatorPage），showIndicatorDrawer主窗口的抽屉式面板显示方法
-        }
+        anchors.fill: parent
+        onClicked: mainWindow.showIndicatorDrawer(batteryPopup, control)
     }
 
-    Timer {
-        interval: 1000; running: true; repeat: true
-        onTriggered: {
-           // console.log("QML 中氢电池数量：", control._activeVehicle?.hydrogenBatteries?.count)
-        }
-    }
-
-
-    Component {
-        id: batteryPopup
-
-        ToolIndicatorPage {
-            showExpand:         expandedComponent ? true : false  // 根据是否存在扩展内容（expandedComponent）决定是否显示展开按钮，显示展开按钮
-            waitForParameters:  control.waitForParameters //绑定到外部控制器的参数等待状态（可能用于加载动画）
-            contentComponent:   batteryContentComponent   // 面板主内容（如电池概要信息）
-            expandedComponent:  batteryExpandedComponent  // 展开后的详细内容（如电池历史曲线）
-        }
-    }
-
-    
-    //通过颜色、图标和文本动态反映电池的健康状态
+    // 单块电池图标组件
     Component {
         id: batteryVisual
-
         Row {
-            anchors.top:    parent.top
-            anchors.bottom: parent.bottom
-            spacing: 10
-            //明确区分五种电池状态
-            
-            //动态颜色逻辑
-            // function getBatteryColor() {
-            //     switch (battery.chargeState.rawValue) {
-            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_OK:
-            //             if (!isNaN(battery.percentRemaining.rawValue)) {
-            //                 if (battery.percentRemaining.rawValue > threshold1) {
-            //                     return qgcPal.colorGreen // >阈值1：绿色
-            //                 } else if (battery.percentRemaining.rawValue > threshold2) {
-            //                     return qgcPal.colorYellowGreen // 阈值1~2：黄绿
-            //                 } else {
-            //                     return qgcPal.colorYellow // <阈值2：黄色
-            //                 }
-            //             } else {
-            //                 return qgcPal.text
-            //             }
-            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_LOW:
-            //             return qgcPal.colorOrange // 低电量：橙色
-            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_CRITICAL:
-            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_EMERGENCY:
-            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_FAILED:
-            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_UNHEALTHY:
-            //             return qgcPal.colorRed  // 紧急状态：红色
-            //         default:
-            //             return qgcPal.text  // 默认文本色
-            //     }
+            spacing:  ScreenTools.defaultFontPixelWidth*0.5
+           // anchors.right: divider2.left
+            anchors.verticalCenter: parent.verticalCenter   // 垂直居中
+            anchors.rightMargin: ScreenTools.defaultFontPixelWidth*2
+
+            //总电压
+            // Text {
+            //     text: qsTr("Total V: %1").arg(batteryUtils.totalVoltage(control._activeVehicle).toFixed(2))
+            // color:"white"
+            // font.pixelSize: ScreenTools.defaultFontPixelHeight * 0.8
+            // verticalAlignment: Label.AlignVCenter
             // }
 
-            // 颜色逻辑：基于 fault_status
-                    function getBatteryColor() {
-                        const fault = battery.faultStatus.rawValue
-                        if (fault === 0) {
-                            return qgcPal.colorGreen
-                        } else if (fault & 0x01 || fault & 0x02) {
-                            return qgcPal.colorYellow
-                        } else {
-                            return qgcPal.colorRed
-                        }
-                    }
 
+            //电池动画与展示
+            property real displayedPercent: 0
 
-            // //动态图标选择
-            // // 每种状态有专属 SVG 图标（如紧急状态显示感叹号）
-            // // 图标颜色与 getBatteryColor() 同步变化
-            // function getBatterySvgSource() {
-            //     switch (battery.chargeState.rawValue) {
-            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_OK:
-            //             if (!isNaN(battery.percentRemaining.rawValue)) {
-            //                 if (battery.percentRemaining.rawValue > threshold1) {
-            //                     return "/qmlimages/BatteryGreen.svg"
-            //                 } else if (battery.percentRemaining.rawValue > threshold2) {
-            //                     return "/qmlimages/BatteryYellowGreen.svg"
-            //                 } else {
-            //                     return "/qmlimages/BatteryYellow.svg"
-            //                 }
-            //             }
-            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_LOW:
-            //             return "/qmlimages/BatteryOrange.svg" // Low with orange svg
-            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_CRITICAL:
-            //             return "/qmlimages/BatteryCritical.svg" // Critical with red svg
-            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_EMERGENCY:
-            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_FAILED:
-            //         case MAVLink.MAV_BATTERY_CHARGE_STATE_UNHEALTHY:
-            //             return "/qmlimages/BatteryEMERGENCY.svg" // Exclamation mark
-            //         default:
-            //             return "/qmlimages/Battery.svg" // Fallback if percentage is unavailable
-            //     }
-            // }
-                    // 图标逻辑：根据工作状态或故障
-                           function getBatterySvgSource() {
-                               const fault = battery.faultStatus.rawValue
-                               if (fault === 0) {
-                                   return "qrc:/qmlimages/batteryself.svg"
-                               } else if (fault & 0x01 || fault & 0x02) {
-                                   return "/qmlimages/lowbattery.svg"
-                               } else {
-                                   return "/qmlimages/BatteryEMERGENCY.svg"
-                               }
-                           }
-
-
-            // 文本生成函数
-            // function getBatteryPercentageText() {
-            //     if (!isNaN(battery.percentRemaining.rawValue)) {
-            //         if (battery.percentRemaining.rawValue > 98.9)//电量 >98.9% 显示 "100%"（避免 99.99% 等不直观数值）
-            //         {
-            //             return qsTr("100%")
-            //         } else {
-            //             return battery.percentRemaining.valueString + battery.percentRemaining.units //无百分比数据时回退到电压或状态文本
-            //         }
-            //     } else if (!isNaN(battery.voltage.rawValue)) {
-            //         return battery.voltage.valueString + battery.voltage.units
-            //     } else if (battery.chargeState.rawValue !== MAVLink.MAV_BATTERY_CHARGE_STATE_UNDEFINED) {
-            //         return battery.chargeState.enumStringValue
-            //     }
-            //     return qsTr("n/a")
-            // }
-
-                           // 显示电堆电压或状态
-                                  function getBatteryStatusText() {
-                                      if (!isNaN(battery.stackVoltage.rawValue)) {
-                                          return battery.stackVoltage.valueString + battery.stackVoltage.units
-                                      } else {
-                                          return qsTr("No Voltage")
-                                      }
-                                  }
-
-                                  // Image {
-                                  //           source: getBatterySvgSource()
-                                  //           width: 32
-                                  //           height: 32
-                                  //           fillMode: Image.PreserveAspectFit
-                                  //           color: getBatteryColor()
-                                  //       }
-
-                                  // Column {
-                                  //             spacing: 2
-                                  //             Text {
-                                  //                 font.pixelSize: 14
-                                  //                 color: getBatteryColor()
-                                  //                 text: qsTr("Stack: ") + getBatteryStatusText()
-                                  //             }
-                                  //             Text {
-                                  //                 font.pixelSize: 12
-                                  //                 color: qgcPal.text
-                                  //                 text: qsTr("Temp: ") + battery.stack_temp.valueString + battery.stack_temp.units
-                                  //             }
-                                  //             Text {
-                                  //                 font.pixelSize: 12
-                                  //                 color: qgcPal.text
-                                  //                 text: qsTr("ID: ") + battery.id.rawValue
-                                  //             }
-                                  //         }
-            // //电压值带单位（如 "24.3V"
-            // function getBatteryVoltageText() {
-            //     if (!isNaN(battery.voltage.rawValue)) {
-            //         return battery.voltage.valueString + battery.voltage.units
-            //     } else if (battery.chargeState.rawValue !== MAVLink.MAV_BATTERY_CHARGE_STATE_UNDEFINED) {
-            //         return battery.chargeState.enumStringValue
-            //     }
-            //     return qsTr("n/a") //无数据时显示状态或 "n/a"
-            // }
-           //QGCColoredImage 组件。这是 QGroundControl 自定义封装的 Image 派生控件，专用于：颜色染色（通过 color 属性，自动缩放适配，保持一致的 UI 风格
-            QGCColoredImage {
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
-                width:              height
-                sourceSize.width:   width  // 按需缩放
-                source:             getBatterySvgSource()  //// 绑定图标路径  
-                fillMode:           Image.PreserveAspectFit // // 保持图标比例
-                color:              getBatteryColor() // 绑定颜色
+            // 平滑动画
+            Behavior on displayedPercent {
+                NumberAnimation { duration: 400; easing.type: Easing.InOutCubic }
             }
 
-            //智能显示控制：ColumnLayout：一个布局容器，用于垂直排列子元素。
-           // ColumnLayout {
-           //      id:                     batteryInfoColumn
-           //      anchors.top:            parent.top
-           //      anchors.bottom:         parent.bottom
-           //      spacing:                0
+            Item {
+                id: batteryicon
 
-           //      //通过 _showBoth、_showPercentage 和 _showVoltage 的值动态控制显示内容
-           //      //显示电池百分比
-           //      QGCLabel {
-           //          Layout.alignment:       Qt.AlignHCenter
-           //          verticalAlignment:      Text.AlignVCenter
-           //          color:                  qgcPal.text
-           //          text:                   getBatteryPercentageText()
-           //          font.pointSize:         _showBoth ? ScreenTools.defaultFontPointSize : ScreenTools.mediumFontPointSize// 根据用户设置显示/隐藏
-           //          visible:                _showBoth || _showPercentage
-           //      }
-           //     //显示电池电压
-           //      QGCLabel {
-           //          Layout.alignment:       Qt.AlignHCenter
-           //          font.pointSize:         _showBoth ? ScreenTools.defaultFontPointSize : ScreenTools.mediumFontPointSize
-           //          color:                  qgcPal.text
-           //          text:                   getBatteryVoltageText()
-           //          visible:                _showBoth || _showVoltage
-           //      }
-           //  }
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: height * 0.8  // 竖版电池的宽高比
 
-           ColumnLayout {
-                id:                     batteryInfoColumn
-                anchors.top:            parent.top
-                anchors.bottom:         parent.bottom
-                spacing:                0
+                // 电池主体
+                Rectangle {
+                    id: batteryBody
+                    anchors {
+                        top: parent.top
+                        horizontalCenter: parent.horizontalCenter
+                        verticalCenter: parent.verticalCenter
+                    }
+                    width: parent.width * 0.9    // 主体宽度为外框的80%
+                    height: parent.height * 0.8  // 主体高度为外框的90%
+                    color: "transparent"
+                    border {
+                        color: "white"
+                        width: Math.max(1, parent.width * 0.05)  // 根据尺寸动态调整边框粗细
+                    }
+                    radius: width * 0.15  // 圆角随尺寸比例变化
 
-                //通过 _showBoth、_showPercentage 和 _showVoltage 的值动态控制显示内容
-                //显示电池百分比
-                QGCLabel {
-                    Layout.alignment:       Qt.AlignHCenter
-                    verticalAlignment:      Text.AlignVCenter
-                    color:                  qgcPal.text
-                    text:                   getBatteryStatusText()
-                    font.pointSize:         _showBoth ? ScreenTools.defaultFontPointSize : ScreenTools.mediumFontPointSize// 根据用户设置显示/隐藏
-                    visible:                _showBoth || _showPercentage
+                    // 电量填充（从底部向上增长）
+                    Rectangle {
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            bottom: parent.bottom
+                            margins: parent.border.width + 1  // 内边距略大于边框
+                        }
+                        height: (parent.height - (anchors.margins * 2)) * (displayedPercent / 100)
+                        color: {
+                            if (displayedPercent > 70) return "#ADFF2F";
+                            if (displayedPercent > 30) return "#FFCC00";
+                            return "#FF6B6B";
+                        }
+                        opacity: 0.8
+                        radius: parent.radius * 0.5  // 内圆角为外圆角的一半
+                    }
                 }
-               //显示电池电压
-                // QGCLabel {
-                //     Layout.alignment:       Qt.AlignHCenter
-                //     font.pointSize:         _showBoth ? ScreenTools.defaultFontPointSize : ScreenTools.mediumFontPointSize
-                //     color:                  qgcPal.text
-                //     text:                   getBatteryVoltageText()
-                //     visible:                _showBoth || _showVoltage
+
+                // 电池正极（在顶部，尺寸随外框比例调整）
+                Rectangle {
+                    anchors {
+                        bottom: batteryBody.top
+                        horizontalCenter: batteryBody.horizontalCenter
+                       // verticalCenter: parent.verticalCenter
+
+                    }
+                    width: batteryBody.width * 0.3  // 正极宽度为主体宽度的40%
+                    height: parent.height * 0.1    // 正极高度为外框高度的5%
+                    color: batteryBody.border.color
+                    radius: height * 0.2  // 半圆形正极
+                }
+
+                // 电量百分比文本（自适应字体大小z）
+                // Text {
+                //     // anchors.centerIn: batteryBody
+                //        anchors.verticalCenter: batteryBody.verticalCenter
+                //       anchors.horizontalCenter: batteryBody.horizontalCenter
+                //     text: Math.round(displayedPercent)// + "%"//四舍五入
+                //     color: displayedPercent > 70 ? "black" :"white"
+                //     font.pixelSize:ScreenTools.defaultFontPixelHeight * 0.45	 // 字体大小随电池尺寸变化
+                //     font.bold: true
                 // }
             }
+            //剩余电量
+        QGCLabel {
+            id:remainBattery
+
+               text: {
+                        if (!_activeVehicle)
+                            return "n/a";
+
+                        let totalPercent = 0;
+                        let cellCount = 0;
+
+                        if (_activeVehicle.batteries) {
+                            for (let i=0; i<_activeVehicle.batteries.count; i++) {
+                                let b = _activeVehicle.batteries.get(i);
+                                if (b && b.percentRemaining && !isNaN(b.percentRemaining.rawValue)) {
+                                    totalPercent += b.percentRemaining.rawValue;
+                                    cellCount++;
+                                }
+                            }
+                        }
+
+                        // if (_activeVehicle.hydrogenBatteries) {
+                        //     for (let i=0; i<_activeVehicle.hydrogenBatteries.count; i++) {
+                        //         let b = _activeVehicle.hydrogenBatteries.get(i);
+                        //         if (b && b.percentRemaining && !isNaN(b.percentRemaining.rawValue)) {
+                        //             totalPercent += b.percentRemaining.rawValue;
+                        //             cellCount++;
+                        //         }
+                        //     }
+                        // }
+                           displayedPercent = Math.min(totalPercent, 100)  // 避免超过 100%
+
+                        return qsTr("(%1块)").arg(cellCount);
+                        //return qsTr("%1% (%2块)").arg(totalPercent.toFixed(0)).arg(cellCount);
+                    }/* qsTr("%1%").arg(batteryUtils.averageSOC(control._activeVehicle))*/
+             color:"white"
+             font.pixelSize: ScreenTools.defaultFontPixelHeight * 0.8
+             //verticalAlignment: Label.AlignVCenter
+
+
+              }
         }
     }
-    // 电池详细信息面板 的 QML 实现，用于展示单个或多个电池的全面状态数据
-    //根据数据可用性自动隐藏无效项
-    //分组显示电压、温度、消耗量等关键参数
-    //所有文本使用 qsTr() 封装以便翻译
-    //数据驱动的动态UI生成
+
+    // 详细面板
+    Component {
+        id: batteryPopup
+        ToolIndicatorPage {
+            showExpand: true
+            //expanded: false
+            waitForParameters:  control.waitForParameters //绑定到外部控制器的参数等待状态（可能用于加载动画）
+            contentComponent: batteryContentComponent
+            expandedComponent:  batteryExpandedComponent//展开设置面板
+        }
+    }
+
     Component {
         id: batteryContentComponent
-
         ColumnLayout {
-            spacing: ScreenTools.defaultFontPixelHeight / 2
+            spacing: 2
+            width: ScreenTools.defaultFontPixelWidth * 20  // 增加宽度以显示更多内容
+            height: width
+            Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 15
 
-            // 检测组件定义
-            Component {
-                id: batteryValuesAvailableComponent
 
-                //使用 !isNaN() 判断数值是否有效
-                //对枚举类型检查是否等于 UNDEFINED 值
-                //QtObject：轻量级非可视化对象，仅用于封装属性逻辑
-                //集中管理电池数据的有效性状态，供其他组件（如 UI）查询
-                //所有属性均绑定到 battery 对象的原始值（rawValue），当 battery 数据更新时，这些属性自动重新计算
-                QtObject {
-                    //property bool functionAvailable:         battery.function.rawValue !== MAVLink.MAV_BATTERY_FUNCTION_UNKNOWN //判断电池功能是否已知
-                    //property bool showFunction:              functionAvailable && battery.function.rawValue != MAVLink.MAV_BATTERY_FUNCTION_ALL //判断是否显示电池功能
-                    //isNaN()：JavaScript 函数，若值非数字返回 true
-                    property bool temperatureAvailable:      !isNaN(battery.stackTemp.rawValue) //判断电池温度数据是否有效
-                    property bool currentAvailable:          !isNaN(battery.servoCurrent.rawValue) //判断电机电流数据是否有效
-                    property bool bat_refuel_currentAvailable:      !isNaN(battery.batRefuelCurrent.rawValue)//判断电池补能电流是否有效
-                    //property bool timeRemainingAvailable:    !isNaN(battery.timeRemaining.rawValue)//判断电池剩余时间数据是否有效
-                    //property bool percentRemainingAvailable: !isNaN(battery.percentRemaining.rawValue) //判断电池剩余百分比数据是否有效
-                    //property bool chargeStateAvailable:      battery.chargeState.rawValue !== MAVLink.MAV_BATTERY_CHARGE_STATE_UNDEFINED //判断电池充电状态是否已定义
+            Repeater {
+                model: _activeVehicle && _activeVehicle.batteries ? _activeVehicle.batteries : 0
+               //因为model是QmlObjectListModel类型，可迭代对象容器，object指代其中一个对象
+                delegate: SettingsGroupLayout {
+                    id: batteryGroup
+                    property var battery: object   // 当前电池对象
+
+                    heading: qsTr("锂电池 %1").arg(battery.id ? battery.id.valueString : "N/A")
+                    contentSpacing: 2
+                    showDividers: true
+
+                    GridLayout {
+                        columns: 2
+                        columnSpacing: 2
+                        rowSpacing: 3
+
+                        // 电压
+                        LabelledLabel {
+                            label: qsTr("电压:")
+                            labelText: battery.voltage ? battery.voltage.valueString + " " + battery.voltage.units : "N/A"
+                        }
+
+                        // 电量
+                        LabelledLabel {
+                            label: qsTr("电量:")
+                            labelText: battery.percentRemaining ? battery.percentRemaining.valueString + " " + battery.percentRemaining.units : "N/A"
+                        }
+                        // 电流
+                        LabelledLabel {
+                            label: qsTr("电流:")
+                            labelText: battery.current ? battery.current.valueString + " " + battery.current.units : "N/A"
+                        }
+                        // 温度
+                        LabelledLabel {
+                            label: qsTr("温度:")
+                            labelText: battery.temperature ? battery.temperature.valueString + " " + battery.temperature.units : "N/A"
+                        }
+                    }
                 }
             }
 
 
+            // 如果没有电池数据时的提示
+            QGCLabel {
+                text: qsTr("No battery data available")
+                visible: !_activeVehicle || (_activeVehicle.batteries === 0 && _activeVehicle.hydrogenBatteries === 0)
 
-            //Repeater据 model 中的数据数量，动态实例化其内部的 SettingsGroupLayout 模板。若 batteries 包含 2 个电池，则生成 2 个独立的 SettingsGroupLayout
-    //当你使用 Repeater + model（比如是一个数组）时，每次迭代会自动提供当前项作为上下文变量 modelData
-            //而在 QML 里，modelData 会自动作为每个迭代子项的默认 object 属性注入进去，如果你没有显示声明 object，它也会变成隐式属性，子项可以直接用
-            Repeater {
-                model: _activeVehicle ? _activeVehicle.hydrogenBatteries : 0//数据驱动源，这里绑定到当前活动飞行器的电池列表 _activeVehicle.batteries，空模型安全处理
-                //每次 Repeater 迭代时，modelData 是当前的 battery 对象
-                //如果无活动飞行器（_activeVehicle 为 null），则设置为 0 表示不生成任何项
-
-                //在 Repeater 中，每次迭代会隐式注入 modelData 给子组件，并把它设为默认的 object 属性 —— 所以你在 SettingsGroupLayout 和 LabelledLabel 中使用 object.xxx 是成立的，它等于当前 battery
-                
-
-              SettingsGroupLayout {
-                    // property var object: modelData   // ✅ 绑定当前迭代项
-                    heading:        qsTr("氢电池 %1").arg(_activeVehicle.hydrogenBatteries.length === 1 ? qsTr("Status") : object.hydroId.rawValue)//单电池时显示 "Battery Status"，多电池时显示 "Battery 1"、"Battery 2"
-                    headingDescription: "以下数据来自自定义 HYDROGEN_BATTERY 消息"
-                    contentSpacing: 0 //保持简洁，紧凑布局
-                    showDividers:   false
-
-                    property var batteryValuesAvailable: batteryValuesAvailableLoader.item//结果存储在 batteryValuesAvailableLoader.item 中供后续使用
-                    //通过 Loader 动态加载检测逻辑
-
-
-                    Loader {// 加载检测组件
-                        id: batteryValuesAvailableLoader
-                        sourceComponent:    batteryValuesAvailableComponent
-                        property var battery: object//// 传递当前电池对象
-                    }
-
-
-                    Component.onCompleted: {
-                        console.log("当前 object 是：", object)  // 打印出电池对象
-                    }
-
-                    //Repeater 适用于静态/预处理好的数据模型，不适合用于绑定具体对象字段
-                    GridLayout {
-                            columns: 4
-                            rowSpacing: 10
-                            columnSpacing: 20
-                            Layout.fillWidth: true
-
-                            //对称布局，左侧标签 + 右侧数值
-
-                            LabelledLabel {
-                                label:  qsTr("电池电压")
-                                labelText:  object.batVoltage.valueString + " " + object.batVoltage.units
-                                visible:true
-                                //visible:    batteryValuesAvailable.chargeStateAvailable//动态可见性，仅当数据有效时显示
-                            }
-
-                            LabelledLabel {
-                                label:      qsTr("电机电流")
-                                labelText:  object.servoCurrent.valueString + " " + object.servoCurrent.units
-                                visible:    true
-                            }
-
-                            LabelledLabel {
-                                label:      qsTr("电堆电压")
-                                labelText:  object.stackVoltage.valueString + " " + object.stackVoltage.units//单位自动附加双引号，如 "24.3 V"
-                                visible:    true
-                            }
-
-                            LabelledLabel {
-                                label:      qsTr("电机电压")
-                                labelText:  object.servoVoltage.valueString + " " + object.servoVoltage.units
-                            }
-
-                            LabelledLabel {
-                                label:      qsTr("电池补能电流")
-                                labelText:  object.batRefuelCurrent.valueString + " " + object.batRefuelCurrent.units
-                                visible:    true
-                            }
-
-                            LabelledLabel {
-                                label:      qsTr("气罐压力")
-                                labelText:  object.gasTankPressure.valueString + " " + object.gasTankPressure.units
-                                visible:    true
-                            }
-
-                            // LabelledLabel {
-                            //     label:      qsTr("Function")
-                            //     labelText:  object.function.enumStringValue
-                            //     visible:    batteryValuesAvailable.showFunction
-                            // }
-                            LabelledLabel {
-                                label:      qsTr("管道压力")
-                                labelText:  object.pipePressure.valueString + " " + object.pipePressure.units
-                                visible:    true
-                            }
-                            LabelledLabel {
-                                label:      qsTr("主板温度")
-                                labelText:  object.pcbTemp.valueString + " " + object.pcbTemp.units
-                                visible:    true
-                            }
-                            LabelledLabel {
-                                label:      qsTr("电堆温度")
-                                labelText:  object.stackTemp.valueString + " " + object.stackTemp.units
-                                visible:    true
-                            }
-                            LabelledLabel {
-                                label:      qsTr("设备状态")
-                                labelText:  object.workStatus.valueString
-                                visible:    true
-                            }
-                            LabelledLabel {
-                                label:      qsTr("报警状态")
-                                labelText:  object.faultStatus.valueString
-                                visible:    true
-                            }
-                            LabelledLabel {
-                                label:      qsTr("自检状态")
-                                labelText: object.selfCheck.enumStringValue
-                                visible:    true
-                            }
-                            LabelledLabel {
-                                label:      qsTr("id")
-                                labelText:  object.hydroId.enumStringValue
-                                visible:    true
-                            }
-                            // HyBattery {
-                                //     //anchors.fill: parent
-                                // }
-
-                        }
-                    }
+                horizontalAlignment: Text.AlignHCenter
+                Layout.fillWidth: true
             }
         }
     }
 
-                        
-    //Component定义了一个 QML 组件，可以被动态加载和使用，使用 Component 封装，是为了延迟加载（通常配合 Loader 使用）
-     //电池设置扩展面板 的 QML 实现，主要用于配置电池显示参数和警告阈值
-     // 显示模式配置：选择显示百分比、电压或两者
-     // 阈值颜色管理：设置电量警告阈值（threshold1/threshold2）
-     // 状态颜色预览：直观展示不同电量状态对应的颜色/图标
-     // 高级电源配置：跳转到车辆电源管理界面（需高级权限）
+
+
     Component {
         id: batteryExpandedComponent
       //ColumnLayout：一个垂直布局容器，用于排列子元素
@@ -508,22 +380,23 @@ Item {
             //控制器类，用于管理 QGC 中的 Fact（参数绑定对象），帮助 UI 控件获取或修改设置项的值
             FactPanelController { id: controller }
 
-            
+
             //SettingsGroupLayout：一个布局，用于分组显示设置
             SettingsGroupLayout {
                 //设置组的标题为 "Battery Display"
                 heading:            qsTr("Battery Display")
                 Layout.fillWidth:   true
             //显示模式选择，LabelledFactComboBox：自定义的一个带标签的下拉选择框，用于选择电池的显示模式（如百分比、电压等）
-             LabelledFactComboBox {
-                    id:             editModeCheckBox
-                    label:          qsTr("Value") //根据 Fact 的元数据生成下拉选项（0=百分比, 1=电压, 2=两者）。显示的标签文本为 "Value"
-                    fact:           _fact  //直接关联到设置管理器的 valueDisplay 属性，fact,_fact用来缓存从 settingsManager 获取的设置
+             //设置显示什么数值在logo
+            // LabelledFactComboBox {
+             //        id:             editModeCheckBox
+             //        label:          qsTr("Value") //根据 Fact 的元数据生成下拉选项（0=百分比, 1=电压, 2=两者）。显示的标签文本为 "Value"
+             //        fact:           _fact  //直接关联到设置管理器的 valueDisplay 属性，fact,_fact用来缓存从 settingsManager 获取的设置
 
-                    //绑定到 QGroundControl.settingsManager.batteryIndicatorSettings.valueDisplay，这可能是一个枚举值，用于选择显示模式（如百分比、电压或两者）
-                    visible:        _fact.visible
-                    property Fact _fact: QGroundControl.settingsManager.batteryIndicatorSettings.valueDisplay
-                }
+             //        //绑定到 QGroundControl.settingsManager.batteryIndicatorSettings.valueDisplay，这可能是一个枚举值，用于选择显示模式（如百分比、电压或两者）
+             //        visible:        _fact.visible
+             //        property Fact _fact: QGroundControl.settingsManager.batteryIndicatorSettings.valueDisplay
+             //    }
 
                 ColumnLayout {
                     QGCLabel { text: qsTr("Coloring") }
@@ -537,7 +410,7 @@ Item {
                             spacing: ScreenTools.defaultFontPixelWidth * 0.05  // Tighter spacing for icon and label
                             QGCColoredImage {
                                 source: "/qmlimages/BatteryGreen.svg"
-                                width: ScreenTools.defaultFontPixelWidth * 6
+                                width: ScreenTools.defaultFontPixelWidth * 3
                                 height: width
                                 fillMode: Image.PreserveAspectFit
                                 color: qgcPal.colorGreen
@@ -550,17 +423,17 @@ Item {
                             spacing: ScreenTools.defaultFontPixelWidth * 0.05  // Tighter spacing for icon and field
                             QGCColoredImage {
                                 source: "/qmlimages/BatteryYellowGreen.svg"
-                                width: ScreenTools.defaultFontPixelWidth * 6
+                                width: ScreenTools.defaultFontPixelWidth *3
                                 height: width
                                 fillMode: Image.PreserveAspectFit
                                 color: qgcPal.colorYellowGreen
                             }
-                            //阈值配置 
+                            //阈值配置
                             FactTextField {
                                 id: threshold1Field
                                 fact: _batterySettings.threshold1//输入验证：自动限制为整数输入
-                                implicitWidth: ScreenTools.defaultFontPixelWidth * 6 // 输入框固定宽度
-                                height: ScreenTools.defaultFontPixelHeight * 1.5
+                                implicitWidth: ScreenTools.defaultFontPixelWidth *5 // 输入框固定宽度
+                                height: ScreenTools.defaultFontPixelHeight //* 1.5
                                 enabled: fact.visible
                                 onEditingFinished: {
                                     // Validate and set the new threshold value
@@ -574,7 +447,7 @@ Item {
                             spacing: ScreenTools.defaultFontPixelWidth * 0.05  // Tighter spacing for icon and field根据屏幕 DPI 自动调整，确保在不同设备上显示一致，// 极小的元素间距
                             QGCColoredImage {
                                 source: "/qmlimages/BatteryYellow.svg"
-                                width: ScreenTools.defaultFontPixelWidth * 6
+                                width: ScreenTools.defaultFontPixelWidth * 3
                                 height: width
                                 fillMode: Image.PreserveAspectFit
                                 color: qgcPal.colorYellow
@@ -582,12 +455,12 @@ Item {
                             //设置阈值较低的报警条件
                             FactTextField {
                                 fact: _batterySettings.threshold2
-                                implicitWidth: ScreenTools.defaultFontPixelWidth * 6
-                                height: ScreenTools.defaultFontPixelHeight * 1.5
+                                implicitWidth: ScreenTools.defaultFontPixelWidth * 5
+                                height: ScreenTools.defaultFontPixelHeight /** 1.5*/
                                 enabled: fact.visible
                                 onEditingFinished: {
                                     // Validate and set the new threshold value
-                                    _batterySettings.setThreshold2(parseInt(text));                                
+                                    _batterySettings.setThreshold2(parseInt(text));
                                 }
                             }
                         }
@@ -598,7 +471,7 @@ Item {
                             spacing: ScreenTools.defaultFontPixelWidth * 0.05  // Tighter spacing for icon and label
                             QGCColoredImage {
                                 source: "/qmlimages/BatteryOrange.svg"
-                                width: ScreenTools.defaultFontPixelWidth * 6
+                                width: ScreenTools.defaultFontPixelWidth *3
                                 height: width
                                 fillMode: Image.PreserveAspectFit
                                 color: qgcPal.colorOrange //从 qgcPalette 获取一致的主题色
@@ -611,7 +484,7 @@ Item {
                             spacing: ScreenTools.defaultFontPixelWidth * 0.05  // Tighter spacing for icon and label
                             QGCColoredImage {
                                 source: "/qmlimages/BatteryCritical.svg"
-                                width: ScreenTools.defaultFontPixelWidth * 6
+                                width: ScreenTools.defaultFontPixelWidth * 3
                                 height: width
                                 fillMode: Image.PreserveAspectFit
                                 color: qgcPal.colorRed
@@ -633,7 +506,7 @@ Item {
                 visible: _activeVehicle.autopilotPlugin.knownVehicleComponentAvailable(AutoPilotPlugin.KnownPowerVehicleComponent) &&
                             QGroundControl.corePlugin.showAdvancedUI//仅当同时满足时显示，普通用户无法访问高级电源配置
 
-                
+
                 // 高级功能入口
                 //这个区域只有在两个条件满足时才显示
                      //当前载具的自动驾驶插件支持“电源配置”组件。
@@ -647,9 +520,8 @@ Item {
                         mainWindow.showKnownVehicleComponentConfigPage(AutoPilotPlugin.KnownPowerVehicleComponent)
                         mainWindow.closeIndicatorDrawer()
                     }
-                }                
+                }
             }
         }
     }
 }
-

@@ -39,7 +39,7 @@ RowLayout {
     //当 labelPreferredWidth = -1 时：宽度由文本内容决定，当 labelPreferredWidth > 0 时：强制固定宽度（可能截断文本）
     QGCLabel {
         id:                     _label
-        color: "lightgray"
+        color: "white"
         Layout.preferredWidth:  labelPreferredWidth
     }
 }

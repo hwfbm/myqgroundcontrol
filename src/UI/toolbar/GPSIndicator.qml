@@ -42,9 +42,10 @@ Item {
                 id:                     gpsLabel
                 rotation:               90
                 text:                   qsTr("RTK")
+                font.pointSize:ScreenTools.largeFontPointSize*0.4
                 color:                  qgcPal.buttonText
                 anchors.verticalCenter: parent.verticalCenter
-                visible:                _rtkConnected
+                visible:               true// _rtkConnected
             }
 
             QGCColoredImage {
@@ -69,12 +70,14 @@ Item {
             QGCLabel {
                 anchors.horizontalCenter:   hdopValue.horizontalCenter
                 color:              qgcPal.buttonText
+                font.pointSize:ScreenTools.largeFontPointSize*0.5
                 text:               _activeVehicle ? _activeVehicle.gps.count.valueString : ""
             }
 
             QGCLabel {
                 id:     hdopValue
                 color:  qgcPal.buttonText
+                font.pointSize:ScreenTools.largeFontPointSize*0.5
                 text:   _activeVehicle ? _activeVehicle.gps.hdop.value.toFixed(1) : ""
             }
         }

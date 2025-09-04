@@ -26,6 +26,10 @@
         <file alias="JoystickBezel.png">resources/JoystickBezel.png</file>
         <file alias="JoystickBezelLight.png">resources/JoystickBezelLight.png</file>
         <file alias="land.svg">resources/land.svg</file>
+
+<file alias="land-self.svg">resources/land-self.svg</file>
+<file alias="take_backmy.svg">resources/take_backmy.svg</file>
+
         <file alias="layout-bottom.svg">resources/layout-bottom.svg</file>
         <file alias="layout-right.svg">resources/layout-right.svg</file>
         <file alias="LockClosed.svg">resources/LockClosed.svg</file>
@@ -46,6 +50,7 @@
         <file alias="SplashScreen">resources/SplashScreen.png</file>
         <file alias="Stop.svg">resources/Stop.svg</file>
         <file alias="takeoff.svg">resources/takeoff.svg</file>
+            <file alias="take_offmy.svg">resources/take_offmy.svg</file>
         <file alias="terrain.svg">resources/terrain.svg</file>
         <file alias="TrashDelete.svg">resources/TrashDelete.svg</file>
         <file alias="VehicleMessages.png">resources/VehicleMessages.png</file>
@@ -61,6 +66,9 @@
         <file alias="GripperRelease.svg">resources/GripperRelease.svg</file>
         <file alias="GripperGrab.svg">resources/GripperGrab.svg</file>
         <file alias="qgroundcontrol.ico">resources/icons/qgroundcontrol.ico</file>
+        <file alias="logofinal.ico">resources/icons/logofinal.ico</file>
+        <file alias="logofinal.png">resources/icons/logofinal.png</file>
+         <file alias="openpng.png">resources/openpng.png</file>
     </qresource>
     <qresource prefix="/res/firmware">
         <file alias="3drradio.png">resources/firmware/3drradio.png</file>

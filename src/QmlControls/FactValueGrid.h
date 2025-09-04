@@ -17,6 +17,13 @@
 
 class InstrumentValueData;
 
+//继承自 QQuickItem，意味着它是一个 QML 组件，可以直接在 QML 界面中使用
+// 设计目标是展示多个“参数数据列”与“行”，类似于“仪表盘参数值网格”。
+// 支持用户自定义行列（添加/删除行列）。
+// 支持“默认设置”和“用户设置”的分离，方便参数布局的持久化和还原。
+// 作为父类，可以被具体的横向或纵向布局类继承（比如 HorizontalFactValueGrid）
+
+
 class FactValueGrid : public QQuickItem
 {
     Q_OBJECT
@@ -31,7 +38,7 @@ public:
         MediumFontSize,
         LargeFontSize,
     };
-    Q_ENUMS(FontSize)
+    Q_ENUMS(FontSize)//想让 QML 使用 FactValueGrid::FontSize.Large
 
     // defaultSettingsGroup:
     //  This is the setting group name for default settings which are used when the user has not modified anything from the default setup. These settings will be overwritten
@@ -51,14 +58,14 @@ public:
     Q_PROPERTY(FontSize             fontSize                        READ fontSize                       WRITE setFontSize   NOTIFY fontSizeChanged)
     Q_PROPERTY(QStringList          fontSizeNames                   MEMBER _fontSizeNames                                   CONSTANT)
 
-    Q_INVOKABLE void                resetToDefaults (void);
-    Q_INVOKABLE QmlObjectListModel* appendColumn    (void);
+    Q_INVOKABLE void                resetToDefaults (void);//恢复默认配置，丢弃用户修改。
+    Q_INVOKABLE QmlObjectListModel* appendColumn    (void); //添加和删除一列
     Q_INVOKABLE void                deleteLastColumn(void);
-    Q_INVOKABLE void                appendRow       (void);
+    Q_INVOKABLE void                appendRow       (void);//添加和删除一行
     Q_INVOKABLE void                deleteLastRow   (void);
 
-    QmlObjectListModel*         columns     (void) const { return _columns; }
-    FontSize                    fontSize    (void) const { return _fontSize; }
+    QmlObjectListModel*         columns     (void) const { return _columns; }//_columns 是一个 QmlObjectListModel，即一个可以被 QML 访问和绑定的对象列表模型。每个元素（列）可能也是一个包含多个数据项（行）的集合
+    FontSize                    fontSize    (void) const { return _fontSize; }//提供多种字体大小选项，方便 UI 适配不同设备和用户偏好
     QStringList                 iconNames   (void) const { return _iconNames; }
     QGCMAVLink::VehicleClass_t  vehicleClass(void) const { return _vehicleClass; }
 
@@ -84,12 +91,12 @@ protected:
     Q_DISABLE_COPY(FactValueGrid)
 
     QGCMAVLink::VehicleClass_t  _vehicleClass           = QGCMAVLink::VehicleClassGeneric;
-    QString                     _defaultSettingsGroup;                                      // Settings group to read from if the user has not modified from the default settings
-    QString                     _userSettingsGroup;                                         // Settings group to read from for user modified settings
-    FontSize                    _fontSize               = DefaultFontSize;
+    QString                     _defaultSettingsGroup;    //	默认设置组名，未被用户修改时生效的默认配置                                  // Settings group to read from if the user has not modified from the default settings
+    QString                     _userSettingsGroup;   //用户自定义的设置组名，用于保存和读取用户的界面布局设置                                      // Settings group to read from for user modified settings
+    FontSize                    _fontSize               = DefaultFontSize;//枚举字体大小，用于控制字体显示大小
     bool                        _preventSaveSettings    = false;
-    QmlObjectListModel*         _columns                = nullptr;
-    int                         _rowCount               = 0;
+    QmlObjectListModel*         _columns                = nullptr; //表示参数列的列表，每个元素代表一列参数（每列可能包含多个数据项）
+    int                         _rowCount               = 0;//当前表格的行数
 
 private slots:
     void _offlineVehicleTypeChanged(void);
@@ -128,4 +135,5 @@ private:
 
 QML_DECLARE_TYPE(FactValueGrid)
 
-Q_DECLARE_METATYPE(FactValueGrid::FontSize)
+Q_DECLARE_METATYPE(FactValueGrid::FontSize)//是 Qt 提供的一个宏，用于将 C++ 类型注册为 Qt 的 元类型（Meta-Type）
+//这个能把 FontSize 枚举封装进 QVariant，或用于信号槽参数

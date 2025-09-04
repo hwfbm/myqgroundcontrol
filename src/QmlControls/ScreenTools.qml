@@ -107,12 +107,12 @@ Item {
     property real minTouchPixels:                   0   ///< Minimum touch size in pixels (calculatedd from minTouchMillimeters and realPixelDensity)
 
     // The implicit heights/widths for our custom control set
-    property real implicitButtonWidth:              Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0))
-    property real implicitButtonHeight:             Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
+    property real implicitButtonWidth:              Math.round(defaultFontPixelWidth *  (isMobile ? 4.0 : 4.0))
+    property real implicitButtonHeight:             Math.round(defaultFontPixelHeight * (isMobile ? 1.4: 1.4))
     property real implicitCheckBoxHeight:           Math.round(defaultFontPixelHeight * (isMobile ? 1.2 : 1.0))
     property real implicitRadioButtonHeight:        implicitCheckBoxHeight
-    property real implicitTextFieldWidth:           defaultFontPixelWidth * 13
-    property real implicitTextFieldHeight:          Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
+    property real implicitTextFieldWidth:           defaultFontPixelWidth * 5
+    property real implicitTextFieldHeight:          Math.round(defaultFontPixelHeight *0.5* (isMobile ? 2.0 : 1.6))
     property real implicitComboBoxHeight:           Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
     property real implicitComboBoxWidth:            Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0))
     property real comboBoxPadding:                  defaultFontPixelWidth
@@ -168,7 +168,7 @@ Item {
             // If using physical sizing takes up too much of the vertical real estate fall back to font based sizing
             minTouchPixels      = defaultFontPixelHeight * 3
         }
-        toolbarHeight           = defaultFontPixelHeight * 3
+        toolbarHeight           = defaultFontPixelHeight * 2.5
         toolbarHeight           = toolbarHeight * QGroundControl.corePlugin.options.toolbarHeightMultiplier
     }
 

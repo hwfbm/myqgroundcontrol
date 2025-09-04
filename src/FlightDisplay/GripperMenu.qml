@@ -13,8 +13,9 @@ import QGroundControl.Palette
 import QGroundControl.Vehicle
 import QGroundControl.FlightMap
 
+// 弹出对话框（Popup Dialog），用于控制机械臂或抓取器（Gripper）的抓取/释放动作
 QGCPopupDialog {
-    title: "Select one action"
+    title: "选择一个动作"
     property var  acceptFunction:     null
     buttons:  Dialog.Cancel
 
@@ -34,9 +35,9 @@ QGCPopupDialog {
     RowLayout {
         QGCColumnButton {
             id: grabButton
-            text:                   "Grab"
+            text:                   "抓取"
             iconSource:             "/res/GripperGrab.svg"
-            font.pointSize:         ScreenTools.defaultFontPointSize * 3.5
+            font.pointSize:         ScreenTools.defaultFontPointSize //* 3.5
             backRadius:             width / 40
             heightFactor:           0.75
             Layout.preferredHeight: releaseButton.height
@@ -50,12 +51,12 @@ QGCPopupDialog {
 
         QGCColumnButton {
             id: releaseButton
-            text:                   "Release"
+            text:                   "松开"
             iconSource:             "/res/GripperRelease.svg"
-            font.pointSize:         ScreenTools.defaultFontPointSize * 3.5
+            font.pointSize:         ScreenTools.defaultFontPointSize //* 3.5
             backRadius:             width / 40
             heightFactor:           0.75
-            Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 27
+            Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 10
             Layout.preferredHeight: Layout.preferredWidth / 1.20
 
             onClicked: {

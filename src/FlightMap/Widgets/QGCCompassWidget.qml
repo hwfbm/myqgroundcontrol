@@ -15,6 +15,8 @@ import QGroundControl.ScreenTools
 import QGroundControl.Vehicle
 import QGroundControl.Palette
 
+
+//这段 QML 是 QGroundControl（开源无人机地面站）的一个组件，用来 绘制罗盘（Compass），也就是在飞行视图中显示无人机当前的航向、朝向返航点、下一航点等信息的圆形罗盘控件
 Rectangle {
     id:     root
     width:  size
@@ -24,6 +26,7 @@ Rectangle {
     border.color:   qgcPal.text
     border.width:   usedByMultipleVehicleList ? 1 : 0
     opacity:        vehicle && usedByMultipleVehicleList && !vehicle.armed ? 0.5 : 1
+    z:                      QGroundControl.zOrderWidgets
 
     property real size:                         _defaultSize
     property var  vehicle:                      null

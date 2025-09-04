@@ -71,39 +71,53 @@ Item {
     }
 
 
-
+//多无人机
     FlyViewTopRightPanel {
         id:                     topRightPanel
         anchors.top:            parent.top
         anchors.right:          parent.right
-        anchors.topMargin:      _layoutMargin
-        anchors.rightMargin:    _layoutMargin
+        anchors.topMargin:     ScreenTools.toolbarHeight+10//在toolbar之下
+        anchors.rightMargin: topRightColumnLayout.width// _layoutMargin
         maximumHeight:          parent.height - (bottomRightRowLayout.height + _margins * 5)
-
+ //z:                      QGroundControl.zOrderWidgets
         property real topEdgeRightInset:    height + _layoutMargin
         property real rightEdgeTopInset:    width + _layoutMargin
         property real rightEdgeCenterInset: rightEdgeTopInset
     }
 
+
+    //相机按钮等
     FlyViewTopRightColumnLayout {
         id:                 topRightColumnLayout
-        anchors.margins:    _layoutMargin
-        anchors.top:        parent.top
-        anchors.bottom:     bottomRightRowLayout.top
-        anchors.right:      parent.right
+        // anchors.margins:    _layoutMargin
+        // anchors.top:        parent.top
+        // anchors.bottom:     bottomRightRowLayout.top
+        // anchors.right:      parent.right
+
+        anchors.leftMargin:     _toolsMargin + parentToolInsets.leftEdgeCenterInset
+        anchors.topMargin:      _toolsMargin + parentToolInsets.topEdgeLeftInset
+        anchors.right:           parent.right
+       // anchors.top:            parent.top
+        height:              parent.height * 0.3
+        anchors.verticalCenter: parent.verticalCenter
+        z:                      QGroundControl.zOrderWidgets
+
+
         spacing:            _layoutSpacing
-        visible:           !topRightPanel.visible
+        visible:           true//!topRightPanel.visible
 
         property real topEdgeRightInset:    childrenRect.height + _layoutMargin
         property real rightEdgeTopInset:    width + _layoutMargin
         property real rightEdgeCenterInset: rightEdgeTopInset
     }
 
+    //仪表盘和数值显示
     FlyViewBottomRightRowLayout {
         id:                 bottomRightRowLayout
         anchors.margins:    _layoutMargin
         anchors.bottom:     parent.bottom
-        anchors.right:      parent.right
+        //anchors.right:      parent.right
+        anchors.horizontalCenter: parent.horizontalCenter
         spacing:            _layoutSpacing
 
         property real bottomEdgeRightInset:     height + _layoutMargin
@@ -111,21 +125,37 @@ Item {
         property real rightEdgeBottomInset:     width + _layoutMargin
     }
 
+    //飞行任务完成后弹出提示框
     FlyViewMissionCompleteDialog {
         missionController:      _missionController
         geoFenceController:     _geoFenceController
         rallyPointController:   _rallyPointController
     }
 
+
+    //是 QGroundControl 中用于执行 确认操作（比如紧急停止或引导命令）时的滑动确认组件。它叫做一个 "滑动确认对话框"
     GuidedActionConfirm {
-        anchors.margins:            _toolsMargin
-        anchors.top:                parent.top
-        anchors.horizontalCenter:   parent.horizontalCenter
+        // anchors.margins:            _toolsMargin
+        // anchors.top:                parent.top
+        // anchors.horizontalCenter:   parent.horizontalCenter
+        anchors.centerIn:         parent
+
         z:                          QGroundControl.zOrderTopMost
         guidedController:           _guidedController
         guidedValueSlider:          _guidedValueSlider
         utmspSliderTrigger:         utmspActTrigger
     }
+    // GuidedActionConfirm {
+    //     id: guidedActionConfirm
+    //     anchors.horizontalCenter: parent.horizontalCenter
+    //     anchors.bottom: parent.bottom
+    //     z: QGroundControl.zOrderTopMost
+
+    //     // guidedController: _guidedController
+    //     // guidedValueSlider: _guidedValueSlider
+    //     //utmspSliderTrigger: utmspActTrigger
+    // }
+
 
     //-- Virtual Joystick
     Loader {
@@ -172,16 +202,21 @@ Item {
         }
     }
 
+    //起飞等按钮
     FlyViewToolStrip {
         id:                     toolStrip
         anchors.leftMargin:     _toolsMargin + parentToolInsets.leftEdgeCenterInset
         anchors.topMargin:      _toolsMargin + parentToolInsets.topEdgeLeftInset
         anchors.left:           parent.left
-        anchors.top:            parent.top
+       // anchors.top:            parent.top
+        anchors.verticalCenter: parent.verticalCenter
         z:                      QGroundControl.zOrderWidgets
         maxHeight:              parent.height - y - parentToolInsets.bottomEdgeLeftInset - _toolsMargin
+        // maxHeight:              parent.height * 0.25
+         width: ScreenTools.defaultFontPixelHeight *3//parent.height * 0.1
         visible:                !QGroundControl.videoManager.fullScreen
 
+        //起飞前检查清单
         onDisplayPreFlightChecklist: {
             if (!preFlightChecklistLoader.active) {
                 preFlightChecklistLoader.active = true
@@ -194,12 +229,17 @@ Item {
         property real leftEdgeCenterInset:  leftEdgeTopInset
     }
 
+    //机器臂抓取,to do?
     GripperMenu {
         id: gripperOptions
+        // visible:true
     }
 
     VehicleWarnings {
-        anchors.centerIn:   parent
+        //anchors.centerIn:   parent
+        anchors.horizontalCenter: parent.horizontalCenter  // 水平居中
+        anchors.top: parent.top
+           anchors.topMargin:50    // 顶部对齐到 toolbar 底部
         z:                  QGroundControl.zOrderTopMost
     }
 

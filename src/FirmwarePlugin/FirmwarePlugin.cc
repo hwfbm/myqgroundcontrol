@@ -55,18 +55,18 @@ QString FirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode) cons
     };
 
     static constexpr Bit2Name rgBit2Name[] = {
-        { MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, "Manual" },
-        { MAV_MODE_FLAG_STABILIZE_ENABLED, "Stabilize" },
-        { MAV_MODE_FLAG_GUIDED_ENABLED, "Guided" },
-        { MAV_MODE_FLAG_AUTO_ENABLED, "Auto" },
-        { MAV_MODE_FLAG_TEST_ENABLED, "Test" },
+        { MAV_MODE_FLAG_MANUAL_INPUT_ENABLED, "手动" },
+        { MAV_MODE_FLAG_STABILIZE_ENABLED, "稳定" },
+        { MAV_MODE_FLAG_GUIDED_ENABLED, "引导" },
+        { MAV_MODE_FLAG_AUTO_ENABLED, "自动" },
+        { MAV_MODE_FLAG_TEST_ENABLED, "测试" },
     };
 
     QString flightMode;
     if (base_mode == 0) {
         flightMode = "PreFlight";
     } else if (base_mode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED) {
-        flightMode = _modeEnumToString.value(custom_mode, QString("Custom:0x%1").arg(custom_mode, 0, 16));
+        flightMode = _modeEnumToString.value(custom_mode, QString("自定:0x%1").arg(custom_mode, 0, 16));
     } else {
         for (size_t i = 0; std::size(rgBit2Name); i++) {
             if (base_mode & rgBit2Name[i].baseModeBit) {
@@ -201,11 +201,11 @@ const QVariantList &FirmwarePlugin::toolIndicators(const Vehicle*)
         _toolIndicatorList = QVariantList({
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/FlightModeIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/VehicleGPSIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/TelemetryRSSIIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/TelemetryRSSIIndicator.qml")),/*数传信号*/
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")),/*遥控器信号*/
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/BatteryIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RemoteIDIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GimbalIndicator.qml")),
+            //QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RemoteIDIndicator.qml")),/*远程id*/
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GimbalIndicator.qml")),/*云台（Gimbal）指示器和控制面板*/
         });
     }
 

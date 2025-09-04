@@ -12,6 +12,15 @@
 #include <QtCore/QObject>
 #include <QtQml/QQmlComponent>
 
+//类是 QGroundControl 项目中用于 控制工具栏按钮行为 的模型类,核心功能是为工具栏上的图标按钮（ToolStrip）提供一组 属性、状态管理、点击响应 等功能
+// 在 QML 代码中，按钮是这样绑定这个类的对象的：
+//ToolStripAction {
+// text: "Settings"
+// iconSource: "/res/icons/settings.svg"
+// checkable: true
+// dropPanelComponent: settingsPanelComponent
+// }然后工具栏会通过这个对象来决定按钮是否显示、图标是哪个、是否可选、是否已选、点击时弹出哪个页面
+
 class ToolStripAction : public QObject
 {
     Q_OBJECT
@@ -22,30 +31,30 @@ public:
     Q_PROPERTY(bool             enabled             READ enabled                WRITE setEnabled                NOTIFY enabledChanged)
     Q_PROPERTY(bool             visible             READ visible                WRITE setVisible                NOTIFY visibleChanged)
     Q_PROPERTY(bool             checkable           READ checkable              WRITE setCheckable              NOTIFY checkableChanged)
-    Q_PROPERTY(bool             checked             READ checked                WRITE setChecked                NOTIFY checkedChanged)
+    Q_PROPERTY(bool             checked             READ checked                WRITE setChecked                NOTIFY checkedChanged)//是否是一个“可勾选”的按钮（比如切换模式）
     Q_PROPERTY(bool             showAlternateIcon   READ showAlternateIcon      WRITE setShowAlternateIcon      NOTIFY showAlternateIconChanged)
     Q_PROPERTY(bool             biColorIcon         READ biColorIcon            WRITE setbiColorIcon            NOTIFY biColorIconChanged)
     Q_PROPERTY(bool             fullColorIcon       READ fullColorIcon          WRITE setfullColorIcon          NOTIFY fullColorIconChanged)   
     Q_PROPERTY(bool             nonExclusive        READ nonExclusive           WRITE setNonExclusive           NOTIFY nonExclusiveChanged)   
     Q_PROPERTY(int              toolStripIndex      READ toolStripIndex         WRITE setToolStripIndex         NOTIFY toolStripIndexChanged)
-    Q_PROPERTY(QString          text                READ text                   WRITE setText                   NOTIFY textChanged)
-    Q_PROPERTY(QString          iconSource          READ iconSource             WRITE setIconSource             NOTIFY iconSourceChanged)
-    Q_PROPERTY(QString          alternateIconSource READ alternateIconSource    WRITE setAlternateIconSource    NOTIFY alternateIconSourceChanged)
+    Q_PROPERTY(QString          text                READ text                   WRITE setText                   NOTIFY textChanged) //按钮的文字（可用于 tooltip 或辅助说明）
+    Q_PROPERTY(QString          iconSource          READ iconSource             WRITE setIconSource             NOTIFY iconSourceChanged)  //图标路径
+    Q_PROPERTY(QString          alternateIconSource READ alternateIconSource    WRITE setAlternateIconSource    NOTIFY alternateIconSourceChanged)//替代图标路径，用于状态切换时
     Q_PROPERTY(QQmlComponent*   dropPanelComponent  READ dropPanelComponent     WRITE setDropPanelComponent     NOTIFY dropPanelComponentChanged)
 
     bool            enabled             (void) const { return _enabled; }
     bool            visible             (void) const { return _visible; }
     bool            checkable           (void) const { return _checkable; }
     bool            checked             (void) const { return _checked; }
-    bool            showAlternateIcon   (void) const { return _showAlternateIcon; }
-    bool            biColorIcon         (void) const { return _biColorIcon; }
-    bool            fullColorIcon       (void) const { return _fullColorIcon; }
-    bool            nonExclusive        (void) const { return _nonExclusive; }
-    int             toolStripIndex      (void) const { return _toolStripIndex; }
+    bool            showAlternateIcon   (void) const { return _showAlternateIcon; } //	是否显示备用图标
+    bool            biColorIcon         (void) const { return _biColorIcon; }//	控制图标的着色方案（单色 / 全色）
+    bool            fullColorIcon       (void) const { return _fullColorIcon; }// 全色）
+    bool            nonExclusive        (void) const { return _nonExclusive; }//是否是非互斥的按钮（多个可同时按下）
+    int             toolStripIndex      (void) const { return _toolStripIndex; }//在工具栏中的排序位置
     QString         text                (void) const { return _text; }
     QString         iconSource          (void) const { return _iconSource; }
     QString         alternateIconSource (void) const { return _alternateIconSource; }
-    QQmlComponent* dropPanelComponent   (void) const { return _dropPanelComponent; }
+    QQmlComponent* dropPanelComponent   (void) const { return _dropPanelComponent; }//	点击按钮时弹出的面板组件（一个 QML 页面）
 
     void setEnabled             (bool enabled);
     void setVisible             (bool visible);
@@ -74,7 +83,9 @@ signals:
     void textChanged                (QString text);
     void iconSourceChanged          (QString iconSource);
     void alternateIconSourceChanged (QString alternateIconSource);
-    void triggered                  (QObject* source);
+    void triggered                  (QObject* source);//按钮被点击时触发的信号
+
+
     void dropPanelComponentChanged  (void);
 
 protected:

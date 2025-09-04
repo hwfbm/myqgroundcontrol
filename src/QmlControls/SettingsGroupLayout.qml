@@ -21,7 +21,7 @@ ColumnLayout {
     property alias contentSpacing: _contentLayout.spacing //创建了一个别名 contentSpacing，它指向 _contentLayout 的 spacing 属性，用于设置或获取布局中的间距
 
     //property string defaultBorderColor  : QGroundControl.globalPalette.groupBorder //定义了默认的边框颜色
-    property string defaultBorderColor  :  "yellow" //定义了默认的边框颜色
+    property string defaultBorderColor  :  "#888888"//"yellow" //定义了默认的边框颜色
     property string outerBorderColor    : defaultBorderColor //定义了外部边框的颜色，默认值为 defaultBorderColor
 
     property string heading //定义了标题文本
@@ -76,7 +76,7 @@ ColumnLayout {
           //每个分隔线是一个 Rectangle，其 y 坐标基于 _contentLayout 中子项的位置
             Rectangle {
                 x:                  showBorder ? _margins : 0//// 是否有边框？有则缩进，否则贴左
-                y:                  _contentItem.y + _contentItem.height + _margins + (showBorder ? _margins : 0)
+                y:                  _contentItem.y + _contentItem.height + _margins+ (showBorder ? _margins : 0)
                 width:              parent.width - (showBorder ? _margins * 2 : 0)
                 height:             1
                 color:              QGroundControl.globalPalette.groupBorder
@@ -94,7 +94,7 @@ ColumnLayout {
             x:                  showBorder ? _margins : 0
             y:                  showBorder ? _margins : 0
             width:              parent.width - (showBorder ? _margins * 2 : 0)
-            spacing:            _margins * 2
+            spacing:            _margins/* * 2*/
         }
     }
 }

@@ -40,6 +40,7 @@ public:
     void run10HzTasks();
     void run500HzTasks();
     void sendStatusTextMessages();
+    void _sendGimbalStatus();//发送mock的gimble消息
 
     bool shouldSendStatusText() const { return _sendStatusText; }
 

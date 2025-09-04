@@ -7,6 +7,7 @@ AppMessages                             1.0 AppMessages.qml
 AutotuneUI                              1.0 AutotuneUI.qml
 AxisMonitor                             1.0 AxisMonitor.qml
 BatteryIndicator                        1.0 BatteryIndicator.qml
+Batterysettingshow                      1.0 Batterysettingshow.qml
 CameraCalcCamera                        1.0 CameraCalcCamera.qml
 CameraCalcGrid                          1.0 CameraCalcGrid.qml
 CameraSection                           1.0 CameraSection.qml
@@ -67,6 +68,7 @@ PreFlightCheckGroup                     1.0 PreFlightCheckGroup.qml
 PreFlightCheckList                      1.0 PreFlightCheckList.qml
 PreFlightCheckModel                     1.0 PreFlightCheckModel.qml
 QGCButton                               1.0 QGCButton.qml
+Leftbutton                              1.0 Leftbutton.qml
 QGCCheckBox                             1.0 QGCCheckBox.qml
 QGCCheckBoxSlider                       1.0 QGCCheckBoxSlider.qml
 QGCColoredImage                         1.0 QGCColoredImage.qml
@@ -131,3 +133,4 @@ VehicleMessageList                      1.0 VehicleMessageList.qml
 VehicleRotationCal                      1.0 VehicleRotationCal.qml
 VehicleSummaryRow                       1.0 VehicleSummaryRow.qml
 HyBattery                               1.0 HyBattery.qml
+QGCCard                                 1.0 QGCCard.qml

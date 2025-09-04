@@ -243,7 +243,7 @@ Popup {
         y:              mainLayout.y - _contentMargin
         width:          mainLayout.width + _contentMargin * 2
         height:         mainLayout.height + _contentMargin * 2
-        color:          _qgcPal.windowShade
+        color:          Qt.rgba(0, 0, 0, 0.65)//_qgcPal.windowShade
         radius:         root.padding / 2
         border.width:   1
         border.color:   _qgcPal.windowShadeLight
@@ -291,7 +291,9 @@ Popup {
             Layout.fillWidth:       true
             Layout.preferredWidth:  Math.min(maxAvailableWidth, totalContentWidth)
             Layout.preferredHeight: Math.min(maxAvailableHeight, totalContentHeight)
-            color:                  _qgcPal.window
+            color:                 Qt.rgba(0, 0, 0, 0.65) /* _qgcPal.window*/
+            border.color:  "#888888"
+            radius:         root.padding / 2
 
             //real 是一个数据类型，表示一个浮点数，property real 用于定义一个浮点数类型的属性
             property real maxAvailableWidth:    mainWindow.width - _contentMargin * 4

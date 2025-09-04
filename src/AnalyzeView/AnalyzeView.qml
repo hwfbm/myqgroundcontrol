@@ -19,7 +19,7 @@ import QGroundControl.ScreenTools
 
 Rectangle {
     id:     _root
-    color:  "blue"
+    color:  qgcPal.windowShade
     z:      QGroundControl.zOrderTopMost
 
     signal popout()
@@ -42,6 +42,7 @@ Rectangle {
         anchors.bottom:     parent.bottom
         anchors.leftMargin: _horizontalMargin
         anchors.left:       parent.left
+         //anchors.right:       parent.right
         contentHeight:      buttonColumn.height
         flickableDirection: Flickable.VerticalFlick
         clip:               true
@@ -61,15 +62,27 @@ Rectangle {
                 onValueChanged: buttonColumn.reflowWidths()
             }
 
+            // function reflowWidths() {
+            //     buttonColumn._maxButtonWidth = 0
+            //     for (var i = 0; i < children.length; i++) {
+            //         buttonColumn._maxButtonWidth = Math.max(buttonColumn._maxButtonWidth, children[i].width)
+            //     }
+            //     for (var j = 0; j < children.length; j++) {
+            //         children[j].width = buttonColumn._maxButtonWidth
+            //     }
+            // }
             function reflowWidths() {
-                buttonColumn._maxButtonWidth = 0
-                for (var i = 0; i < children.length; i++) {
-                    buttonColumn._maxButtonWidth = Math.max(buttonColumn._maxButtonWidth, children[i].width)
+                _maxButtonWidth = 0
+                for (var i = 0; i < buttonRepeater.count; i++) {
+                    var item = buttonRepeater.itemAt(i)
+                    if (item) _maxButtonWidth = Math.max(_maxButtonWidth, item.implicitWidth)
                 }
-                for (var j = 0; j < children.length; j++) {
-                    children[j].width = buttonColumn._maxButtonWidth
+                for (var j = 0; j < buttonRepeater.count; j++) {
+                    var item = buttonRepeater.itemAt(j)
+                    if (item) item.width = _maxButtonWidth
                 }
             }
+
 
             Repeater {
                 id:     buttonRepeater
@@ -102,7 +115,7 @@ Rectangle {
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         width:                  1
-        color:                  qgcPal.windowShade
+        color:                  qgcPal.window
     }
 
     Loader {

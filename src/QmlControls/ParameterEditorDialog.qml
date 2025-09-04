@@ -26,11 +26,12 @@ QGCPopupDialog {
 
     buttons:    Dialog.Save | (validate ? 0 : Dialog.Cancel)
 
-    property Fact   fact
-    property bool   showRCToParam:  false
-    property bool   validate:       false
-    property string validateValue
-    property bool   setFocus:       true    ///< true: focus is set to text field on display, false: focus not set (works around strange virtual keyboard bug with FactValueSlider
+    //输入参数
+    property Fact   fact// 要编辑的参数对象
+    property bool   showRCToParam:  false  // 是否显示RC到参数映射选项
+    property bool   validate:       false // 是否为验证模式
+    property string validateValue  // 验证时的值
+    property bool   setFocus:       true   // 是否自动聚焦到输入框 ///< true: focus is set to text field on display, false: focus not set (works around strange virtual keyboard bug with FactValueSlider
 
     property real   _editFieldWidth:            ScreenTools.defaultFontPixelWidth * 20
     property bool   _longDescriptionAvailable:  fact.longDescription != ""
@@ -39,31 +40,40 @@ QGCPopupDialog {
     property bool   _allowDefaultReset:         fact.defaultValueAvailable
     property bool   _showCombo:                 fact.enumStrings.length !== 0 && fact.bitmaskStrings.length === 0 && !validate
 
+
+    //专门用于参数编辑的业务逻辑控制器
     ParameterEditorController { id: controller; }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
+    //对话框接受处理
     onAccepted: {
+        //// 处理位掩码值
         if (bitmaskColumn.visible && !manualEntry.checked) {
             fact.value = bitmaskValue();
             fact.valueChanged(fact.value)
         } else if (factCombo.visible && !manualEntry.checked) {
             fact.enumIndex = factCombo.currentIndex
-        } else {
+        } /// 验证通过，设置值
+        else {
             var errorString = fact.validate(valueField.text, forceSave.checked)
             if (errorString === "") {
                 fact.value = valueField.text
                 fact.valueChanged(fact.value)
             } else {
+                //// 显示错误
                 validationError.text = errorString
                 if (_allowForceSave) {
                     forceSave.visible = true
                 }
+                //// 阻止关闭
                 preventClose = true
             }
         }
     }
 
+
+    //// 按位或运算
     function bitmaskValue() {
         var value = 0;
         for (var i = 0; i < fact.bitmaskValues.length; ++i) {
@@ -75,22 +85,27 @@ QGCPopupDialog {
         return value
     }
 
+    //组件初始化
     Component.onCompleted: {
         if (validate) {
+            // 验证模式使用传入的值
             valueField.text = validateValue
             validationError.text = fact.validate(validateValue, false /* convertOnly */)
             if (_allowForceSave) {
                 forceSave.visible = true
             }
         } else {
+            // 编辑模式使用当前值
             valueField.text = fact.valueString
         }
     }
 
+    //界面布局组件
     ColumnLayout {
         width:      Math.min(mainWindow.width * .75, Math.max(ScreenTools.defaultFontPixelWidth * 60, editRow.width))
         spacing:    globals.defaultTextHeight
 
+        //错误显示
         QGCLabel {
             id:                 validationError
             Layout.fillWidth:   true
@@ -99,10 +114,11 @@ QGCPopupDialog {
             visible:            text !== ""
         }
 
+
         RowLayout {
             id:         editRow
             spacing:    ScreenTools.defaultFontPixelWidth
-
+            // 文本输入框
             QGCTextField {
                 id:                 valueField
                 width:              _editFieldWidth
@@ -115,6 +131,7 @@ QGCPopupDialog {
                 visible:            !_showCombo || validate || manualEntry.checked
             }
 
+            // 枚举选择框
             QGCComboBox {
                 id:             factCombo
                 width:          _editFieldWidth
@@ -138,6 +155,7 @@ QGCPopupDialog {
                 }
             }
 
+            // 重置按钮
             QGCButton {
                 visible:    _allowDefaultReset
                 text:       qsTr("Reset To Default")
@@ -150,6 +168,7 @@ QGCPopupDialog {
             }
         }
 
+        //位掩码选择器
         Column {
             id:         bitmaskColumn
             spacing:    ScreenTools.defaultFontPixelHeight / 2
@@ -161,8 +180,10 @@ QGCPopupDialog {
 
                 delegate : QGCCheckBox {
                     text : modelData
+                    // 按位与检查
                     checked : fact.value & fact.bitmaskValues[index]
 
+                    // 更新文本显示
                     onClicked: {
                         valueField.text = bitmaskValue()
                     }
@@ -170,6 +191,7 @@ QGCPopupDialog {
             }
         }
 
+        // 简短描述
         QGCLabel {
             Layout.fillWidth:   true
             wrapMode:           Text.WordWrap
@@ -177,6 +199,7 @@ QGCPopupDialog {
             text:               fact.shortDescription
         }
 
+        // 详细描述
         QGCLabel {
             id:                 longDescriptionLabel
             Layout.fillWidth:   true
@@ -185,6 +208,7 @@ QGCPopupDialog {
             text:               fact.longDescription
         }
 
+        //参数范围信息
         Row {
             spacing: ScreenTools.defaultFontPixelWidth
 
@@ -204,17 +228,19 @@ QGCPopupDialog {
                 visible:    _allowDefaultReset
             }
         }
-
+      // 需要车辆重启
         QGCLabel {
             visible:    fact.vehicleRebootRequired
             text:       qsTr("Vehicle reboot required after change")
         }
 
+
+        // 需要应用重启
         QGCLabel {
             visible:    fact.qgcRebootRequired
             text:       qsTr("Application restart required after change")
         }
-
+        // 飞行中修改警告
         QGCLabel {
             Layout.fillWidth:   true
             wrapMode:   Text.WordWrap
@@ -223,18 +249,20 @@ QGCPopupDialog {
             visible:    fact.componentId != -1
         }
 
+         // 强制保存（危险！）
         QGCCheckBox {
             id:         forceSave
             visible:    false
             text:       qsTr("Force save (dangerous!)")
         }
 
+         // 显示高级设置
         QGCCheckBox {
             id:         _advanced
             text:       qsTr("Advanced settings")
             visible:    showRCToParam || factCombo.visible || bitmaskColumn.visible
         }
-
+        // 手动输入模式
         // Checkbox to allow manual entry of enumerated or bitmask parameters
         QGCCheckBox {
             id:         manualEntry
@@ -246,6 +274,7 @@ QGCPopupDialog {
             }
         }
 
+        // RC到参数映射
         QGCButton {
             text:       qsTr("Set RC to Param")
             visible:    _advanced.checked && !validate && showRCToParam
@@ -253,6 +282,7 @@ QGCPopupDialog {
         }
     } // Column
 
+    //RC到参数映射对话框
     Component {
         id: rcToParamDialog
 

@@ -769,6 +769,13 @@ LogReplayLink *LinkManager::startLogReplay(const QString &logFile)
     return nullptr;
 }
 
+bool LinkManager::_isSerialPortConnected() const
+{
+    // 这里写实际判断串口是否连接的逻辑
+    // 如果还没有逻辑，可以先写成返回false，避免报错：
+    return false;
+}
+
 void LinkManager::_createDynamicForwardLink(const char *linkName, const QString &hostName)
 {
     UDPConfiguration* const udpConfig = new UDPConfiguration(linkName);

@@ -16,9 +16,10 @@ import QGroundControl.Vehicle
 import QGroundControl.Controls
 import QGroundControl.Palette
 
+//经纬度等信息数值条
 Item {
     id:             control
-    implicitWidth:  mainLayout.width + (_toolsMargin * 2)
+    implicitWidth: mainLayout.width + (_toolsMargin * 2)
     implicitHeight: mainLayout.height + (_toolsMargin * 2)
 
     property real extraWidth: 0 ///< Extra width to add to the background rectangle
@@ -27,7 +28,7 @@ Item {
         id:         backgroundRect
         width:      control.width + extraWidth
         height:     control.height
-        color:      qgcPal.window
+        color:     Qt.rgba(0, 0, 0, 0.65)/* qgcPal.window*/
         radius:     ScreenTools.defaultFontPixelWidth / 2
         opacity:    0.75
     }
@@ -37,6 +38,8 @@ Item {
         anchors.margins:    _toolsMargin
         anchors.bottom:     parent.bottom
         anchors.left:       parent.left
+        // width: parent.width * 0.3   // 或者根据需求设置百分比
+        //    height: ScreenTools.defaultFontPixelHeight * 5
 
         RowLayout {
             visible: valueArea.settingsUnlocked
@@ -47,7 +50,7 @@ Item {
                 width:              ScreenTools.minTouchPixels * 0.75
                 height:             width
                 sourceSize.width:   width
-                color:              qgcPal.text
+                color:            qgcPal.text
                 fillMode:           Image.PreserveAspectFit
 
                 QGCMouseArea {
@@ -57,8 +60,10 @@ Item {
             }
         }
 
+        //真正显示各个数值的组件，它内部会动态创建各个数据格子
         HorizontalFactValueGrid {
             id:                     valueArea
+
             userSettingsGroup:      telemetryBarUserSettingsGroup
             defaultSettingsGroup:   telemetryBarDefaultSettingsGroup
         }

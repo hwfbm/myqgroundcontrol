@@ -17,6 +17,7 @@ import QGroundControl.Controls
 import QGroundControl.Palette
 import QGroundControl.UTMSP
 
+// //这段 QML 是 QGroundControl 中用于执行 确认操作（比如紧急停止或引导命令）时的滑动确认组件。它叫做一个 "滑动确认对话框"，
 Rectangle {
     id:         _root
     width:      ScreenTools.defaultFontPixelWidth * 35
@@ -163,3 +164,67 @@ Rectangle {
     }
 }
 
+// Item {
+//     id: root
+//     visible: false
+
+//     // 提供原有接口兼容性
+//     function show() { root.visible = true }
+//     function hide() { root.visible = false }
+
+//     Rectangle {
+//         id: circularButton
+//         width: 100
+//         height: 100
+//         radius: width / 2
+//         color: "#444"
+
+//         // 填充圈
+//         Canvas {
+//             id: progressCircle
+//             anchors.fill: parent
+//             onPaint: {
+//                 var ctx = getContext("2d")
+//                 ctx.clearRect(0, 0, width, height)
+//                 ctx.beginPath()
+//                 ctx.arc(width/2, height/2, width/2 - 5, -Math.PI/2, -Math.PI/2 + progress * 2 * Math.PI)
+//                 ctx.lineWidth = 10
+//                 ctx.strokeStyle = "green"
+//                 ctx.stroke()
+//             }
+
+//             property real progress: 0.0
+
+//             Timer {
+//                 id: holdTimer
+//                 interval: 50
+//                 running: false
+//                 repeat: true
+//                 onTriggered: {
+//                     if (progressCircle.progress >= 1.0) {
+//                         holdTimer.stop()
+//                         root.hide()
+//                         guidedActionsController.confirmAction()  // 或其他触发函数
+//                     } else {
+//                         progressCircle.progress += 0.05
+//                         progressCircle.requestPaint()
+//                     }
+//                 }
+//             }
+
+//             MouseArea {
+//                 anchors.fill: parent
+//                 onPressed: {
+//                     progressCircle.progress = 0
+//                     progressCircle.requestPaint()
+//                     holdTimer.start()
+//                 }
+//                 onReleased: {
+//                     holdTimer.stop()
+//                     progressCircle.progress = 0
+//                     progressCircle.requestPaint()
+//                 }
+//             }
+//         }
+//     }
+// }

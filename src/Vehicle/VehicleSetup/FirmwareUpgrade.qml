@@ -436,7 +436,6 @@ SetupPage {
                 textFormat:         TextEdit.RichText
                 text:               _singleFirmwareMode ? welcomeTextSingle : welcomeText
                 color:              qgcPal.text
-
                 background: Rectangle {
                     color: qgcPal.windowShade
                 }

@@ -70,6 +70,9 @@
 #include "VehicleComponent.h"
 #include "VideoManager.h"
 
+#include "Mqttlink.h"
+#include "MavlinkToJson.h"
+
 #ifndef QGC_DISABLE_MAVLINK_INSPECTOR
 #include "MAVLinkInspectorController.h"
 #endif
@@ -106,6 +109,31 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting)
     : QApplication(argc, argv)
     , _runningUnitTests(unitTesting)
 {
+
+    // 初始化 MQTT 单例
+    _mqtt = Mqttlink::instance();  // 单例会自动连接服务器
+
+    // connect(qgcApp()->mqtt(), &Mqttlink::mqttMessageReceived,
+    //         this, [](const QString &topic, const QJsonObject &json){
+    //             qDebug() << "收到消息" << topic << json;
+    //         });
+    // this->mqtt()->subscribeTopic("uav/factory-01/uav-1001", 1);
+
+    // 全局唯一 MAVLinkProtocol 已经是单例
+    MAVLinkProtocol* proto = MAVLinkProtocol::instance();
+
+    // 创建 MavlinkToJson 实例
+    MavlinkToJson* mav2json = new MavlinkToJson(this);
+
+    // 设置上下文（可选，从配置文件或 Vehicle 里读取）
+    mav2json->setContext("factory-01", "uav-1001", "station", "1.0.1");
+
+    // 连接信号
+    QObject::connect(proto, &MAVLinkProtocol::messageReceived,
+                     mav2json, &MavlinkToJson::handleMessage);
+
+
+
     _msecsElapsedTime.start();
 
     // Setup for network proxy support
@@ -153,7 +181,8 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting)
     setOrganizationDomain(QGC_ORG_DOMAIN);
     setApplicationVersion(QString(QGC_APP_VERSION_STR));
 #ifdef Q_OS_LINUX
-    setWindowIcon(QIcon(":/res/qgroundcontrol.ico"));
+    //setWindowIcon(QIcon(":/res/qgroundcontrol.ico"));
+    setWindowIcon(QIcon(":/res/logofinal.ico"));
 #endif
 
     // Set settings format
@@ -207,6 +236,7 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting)
 
     // We need to set language as early as possible prior to loading on JSON files.
     setLanguage();
+
 
 #ifndef QGC_DAILY_BUILD
     _checkForNewVersion();
@@ -818,3 +848,11 @@ QString QGCApplication::bigSizeMBToString(quint64 size_MB)
     }
     return result;
 }
+
+
+Mqttlink* QGCApplication::QGCApplication::mqtt()
+{
+    return _mqtt;
+}
+
+

@@ -7,6 +7,8 @@ import QGroundControl.Controls
 import QGroundControl.Controllers
 import QGroundControl.Palette
 
+
+//机架总结
 Item {
     anchors.fill:       parent
 

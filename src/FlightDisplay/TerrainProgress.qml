@@ -18,7 +18,8 @@ import QGroundControl.Palette
 
 Rectangle {
     implicitHeight: mainLayout.height + (_margins * 2)
-    visible:        false
+   // width:Height
+    visible:        /*true//*/false
     color:          qgcPal.window
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
@@ -79,8 +80,8 @@ Rectangle {
             Rectangle {
                 anchors.top:    parent.top
                 anchors.bottom: parent.bottom
-                color:          "green"
-                width:         parent.width * _pctComplete
+                color:          "#2196F3"
+                width:         parent.width //* _pctComplete
 
                 QGCLabel {
                     anchors.centerIn:   parent

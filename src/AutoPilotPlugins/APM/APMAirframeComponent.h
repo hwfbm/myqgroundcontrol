@@ -28,6 +28,7 @@ public:
     bool requiresSetup() const final { return _requiresFrameSetup; }
     bool setupComplete() const final;
     QUrl setupSource() const final { return (_requiresFrameSetup ? QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMAirframeComponent.qml")) : QUrl()); }
+    //表示函数返回 一个 QUrl 对象，QUrl 在 Qt 中表示一个 URL，可以是文件路径、网络地址，或者资源路径（qrc:/）
     QUrl summaryQmlSource() const final { return (_requiresFrameSetup ? QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMAirframeComponentSummary.qml")) : QUrl()); }
 
 private:

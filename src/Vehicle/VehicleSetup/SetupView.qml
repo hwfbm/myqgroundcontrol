@@ -20,7 +20,7 @@ import QGroundControl.MultiVehicleManager
 
 Rectangle {
     id:     setupView
-    color:  qgcPal.window
+    color:  "transparent"//qgcPal.windowShade
     border.color: "#00ffffff"
     z:      QGroundControl.zOrderTopMost
 
@@ -35,8 +35,10 @@ Rectangle {
     readonly property real      _buttonWidth:       _defaultTextWidth * 18
     readonly property string    _armedVehicleText:  qsTr("This operation cannot be performed while the vehicle is armed.")
 
+    //当前飞控是否解锁
     property bool   _vehicleArmed:                  QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.armed : false
     property string _messagePanelText:              qsTr("missing message panel text")
+   //当前飞控参数是否完整
     property bool   _fullParameterVehicleAvailable: QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && !QGroundControl.multiVehicleManager.activeVehicle.parameterManager.missingParameters
     property var    _corePlugin:                    QGroundControl.corePlugin
 
@@ -46,6 +48,7 @@ Rectangle {
         }
     }
 
+    //展示概述界面，连接和未连接有区别
     function _showSummaryPanel() {
         if (_fullParameterVehicleAvailable) {
             if (QGroundControl.multiVehicleManager.activeVehicle.autopilotPlugin.vehicleComponents.length === 0) {
@@ -96,6 +99,7 @@ Rectangle {
         }
     }
 
+    //展示概述界面
     Component.onCompleted: _showSummaryPanel()
 
     Connections {
@@ -107,6 +111,8 @@ Rectangle {
         }
     }
 
+    //在以下情况下显示/重新加载“摘要”面板：
+    //一辆新车出现，摘要面板已显示，活动车辆消失，活动车辆消失，我们不在固件面板上。
     Connections {
         target: QGroundControl.multiVehicleManager
         onParameterReadyVehicleAvailableChanged: {
@@ -120,7 +126,7 @@ Rectangle {
             }
         }
     }
-
+//用于右侧面板不同状态显示提示信息
     Component {
         id: noComponentsVehicleSummaryComponent
         Rectangle {

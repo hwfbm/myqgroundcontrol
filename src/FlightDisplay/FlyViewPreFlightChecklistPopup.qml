@@ -16,6 +16,11 @@ import QGroundControl.Vehicle
 import QGroundControl.Controls
 
 /// Popup container for preflight checklists
+//起飞前检查清单
+// 当前有激活的 Vehicle。
+// 设置中启用了 checklist（useChecklist）。
+// checklist 未完成（checkListState !== Vehicle.CheckListPassed）。
+// 强制启用 checklist（enforceChecklist = true）。
 QGCPopupDialog {
     id:         _root
     title:      qsTr("Pre-Flight Checklist")
@@ -52,6 +57,7 @@ QGCPopupDialog {
         }
     }
 
+    //加载 checklist 页面
     Loader {
         id:     checkList
         source: QGroundControl.corePlugin.options.preFlightChecklistUrl

@@ -5,13 +5,13 @@
 [
 {
     "name":              "EnableOnScreenControl",
-    "shortDesc":         "Enable on Screen Camera Control",
+    "shortDesc":         "启用屏幕摄像头控制",
     "type":              "bool",
     "default":           false
 },
 {
     "name":              "ControlType",
-    "shortDesc":         "Type of on-screen control",
+    "shortDesc":         "屏幕控制类型",
     "type":              "uint32",
     "enumStrings":       "Click to point, click and drag",
     "enumValues":        "0, 1",
@@ -19,46 +19,46 @@
 },
 {
     "name":              "CameraVFov",
-    "shortDesc":         "Vertical camera field of view",
+    "shortDesc":         "垂直相机视野",
     "type":              "uint32",
     "default":           70,
     "units":             "deg"
 },
 {
     "name":              "CameraHFov",
-    "shortDesc":         "Horizontal camera field of view",
+    "shortDesc":         "水平相机视野",
     "type":              "uint32",
     "default":           70,
     "units":             "deg"
 },
 {
     "name":              "CameraSlideSpeed",
-    "shortDesc":         "Maximum gimbal speed on click and drag (deg/sec)",
+    "shortDesc":         "单击和拖动时的最大云台速度（度/秒）",
     "type":              "uint32",
     "default":           30,
     "units":             "deg/s"
 },
 {
     "name":              "showAzimuthIndicatorOnMap",
-    "shortDesc":         "Show gimbal Azimuth indicator over vehicle icon in map",
+    "shortDesc":         "在地图上的车辆图标上显示万向节方位角指示器",
     "type":              "bool",
     "default":           true
 },
 {
     "name":              "toolbarIndicatorShowAzimuth",
-    "shortDesc":         "Show Azimuth instead of local yaw on top toolbar gimbal indicator",
+    "shortDesc":         "在顶部工具栏万向节指示器上显示方位角而不是局部偏航",
     "type":              "bool",
     "default":           true
 },
 {
     "name":              "toolbarIndicatorShowAcquireReleaseControl",
-    "shortDesc":         "Show Azimuth Acquire/release buttons in the gimbal buttons panel",
+    "shortDesc":         "在云台按钮面板中显示方位角 采集/释放 按钮",
     "type":              "bool",
     "default":           false
 },
 {
     "name":              "joystickButtonsSpeed",
-    "shortDesc":         "Rate used for joystick button control (deg/sec)",
+    "shortDesc":         "用于纵杆按钮控制的速率（度/秒）",
     "longDesc":          "When a joystick button is set to gimbal left/right/up/down, it will send this rate when pressed, and it will stop moving when button is released",
     "type":              "uint32",
     "default":           20,

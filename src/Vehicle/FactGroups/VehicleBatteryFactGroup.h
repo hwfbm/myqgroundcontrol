@@ -29,20 +29,6 @@ public:
     VehicleBatteryFactGroup(uint8_t batteryId, QObject* parent = nullptr); //初始化所有 Fact 成员并设置初始值，batteryId 表示电池ID，parent 为父QObject
 
     //这些声明使得 QML 可以访问 C++ 中的 Fact 成员。每个属性都是只读的(CONSTANT)，通过对应的访问函数获取
-    Q_PROPERTY(Fact* batVoltage         READ batVoltage         CONSTANT)
-    Q_PROPERTY(Fact* servoCurrent       READ servoCurrent       CONSTANT)
-    Q_PROPERTY(Fact* stackVoltage       READ stackVoltage       CONSTANT)
-    Q_PROPERTY(Fact* servoVoltage       READ servoVoltage       CONSTANT)
-    Q_PROPERTY(Fact* batRefuelCurrent   READ batRefuelCurrent   CONSTANT)
-    Q_PROPERTY(Fact* gasTankPressure    READ gasTankPressure    CONSTANT)
-    Q_PROPERTY(Fact* pipePressure       READ pipePressure       CONSTANT)
-    Q_PROPERTY(Fact* pcbTemp            READ pcbTemp            CONSTANT)
-    Q_PROPERTY(Fact* stackTemp          READ stackTemp          CONSTANT)
-    Q_PROPERTY(Fact* workStatus         READ workStatus         CONSTANT)
-    Q_PROPERTY(Fact* faultStatus        READ faultStatus        CONSTANT)
-    Q_PROPERTY(Fact* selfCheck          READ selfCheck          CONSTANT)
-    Q_PROPERTY(Fact* hydroId            READ hydroId            CONSTANT)
-
     Q_PROPERTY(Fact* id                 READ id                 CONSTANT)
     Q_PROPERTY(Fact* function           READ function           CONSTANT)
     Q_PROPERTY(Fact* type               READ type               CONSTANT)
@@ -57,7 +43,8 @@ public:
     Q_PROPERTY(Fact* instantPower       READ instantPower       CONSTANT)
 
 
-
+    //属性访问函数
+    //这些函数提供了对各个 Fact 成员的访问接口
     Fact* id                        () { return &_batteryIdFact; }
     Fact* function                  () { return &_batteryFunctionFact; }
     Fact* type                      () { return &_batteryTypeFact; }
@@ -71,21 +58,8 @@ public:
     Fact* timeRemainingStr          () { return &_timeRemainingStrFact; }
     Fact* chargeState               () { return &_chargeStateFact; }
 
-    //属性访问函数
-    //这些函数提供了对各个 Fact 成员的访问接口
-    Fact* batVoltage        () { return &_batVoltageFact; }
-    Fact* servoCurrent      () { return &_servoCurrentFact; }
-    Fact* stackVoltage      () { return &_stackVoltageFact; }
-    Fact* servoVoltage      () { return &_servoVoltageFact; }
-    Fact* batRefuelCurrent  () { return &_batRefuelCurrentFact; }
-    Fact* gasTankPressure   () { return &_gasTankPressureFact; }
-    Fact* pipePressure      () { return &_pipePressureFact; }
-    Fact* pcbTemp           () { return &_pcbTempFact; }
-    Fact* stackTemp         () { return &_stackTempFact; }
-    Fact* workStatus        () { return &_workStatusFact; }
-    Fact* faultStatus       () { return &_faultStatusFact; }
-    Fact* selfCheck         () { return &_selfCheckFact; }
-    Fact* hydroId           () { return &_idFact; } // 用于表示氢电池ID
+
+
 
     /// Creates a new fact group for the battery id as needed and updates the Vehicle with it
     //参数：vehicle 为车辆对象，message 为 MAVLink 消息
@@ -106,24 +80,10 @@ private:
     static void                     _handleHighLatency          (Vehicle* vehicle, mavlink_message_t& message); //处理高延迟链路消息
     static void                     _handleHighLatency2         (Vehicle* vehicle, mavlink_message_t& message); //处理高延迟链路2消息
     static void                     _handleBatteryStatus        (Vehicle* vehicle, mavlink_message_t& message); //处理电池状态消息
-    static void _handleHydrogenBattery(Vehicle* vehicle, mavlink_message_t& message);
+
     static VehicleBatteryFactGroup* _findOrAddBatteryGroupById  (Vehicle* vehicle, uint8_t batteryId);//电池组查找/添加函数，根据电池ID查找或创建新的电池事实组
 
     static const char* _batteryFactGroupNamePrefix; //电池事实组名称前缀
-
-    const QString _batVoltageFactName        = QStringLiteral("batVoltage");
-    const QString _servoCurrentFactName      = QStringLiteral("servoCurrent");
-    const QString _stackVoltageFactName      = QStringLiteral("stackVoltage");
-    const QString _servoVoltageFactName      = QStringLiteral("servoVoltage");
-    const QString _batRefuelCurrentFactName  = QStringLiteral("batRefuelCurrent");
-    const QString _gasTankPressureFactName   = QStringLiteral("gasTankPressure");
-    const QString _pipePressureFactName      = QStringLiteral("pipePressure");
-    const QString _pcbTempFactName           = QStringLiteral("pcbTemp");
-    const QString _stackTempFactName         = QStringLiteral("stackTemp");
-    const QString _workStatusFactName        = QStringLiteral("workStatus");
-    const QString _faultStatusFactName       = QStringLiteral("faultStatus");
-    const QString _selfCheckFactName         = QStringLiteral("selfCheck");
-    const QString _hydroIdFactName           = QStringLiteral("hydroId");
 
     const QString _batteryIdFactName             = QStringLiteral("id");
     const QString _batteryFunctionFactName       = QStringLiteral("batteryFunction");
@@ -138,7 +98,7 @@ private:
     const QString _timeRemainingStrFactName      = QStringLiteral("timeRemainingStr");
     const QString _chargeStateFactName           = QStringLiteral("chargeState");
 
-
+    //对应上述每个名称都有一个 Fact 成员变量，用于存储具体值
     Fact            _batteryIdFact;
     Fact            _batteryFunctionFact;
     Fact            _batteryTypeFact;
@@ -151,19 +111,6 @@ private:
     Fact            _timeRemainingStrFact;
     Fact            _chargeStateFact;
     Fact            _instantPowerFact;
-    //对应上述每个名称都有一个 Fact 成员变量，用于存储具体值
-    Fact _batVoltageFact;
-    Fact _servoCurrentFact;
-    Fact _stackVoltageFact;
-    Fact _servoVoltageFact;
-    Fact _batRefuelCurrentFact;
-    Fact _gasTankPressureFact;
-    Fact _pipePressureFact;
-    Fact _pcbTempFact;
-    Fact _stackTempFact;
-    Fact _workStatusFact;
-    Fact _faultStatusFact;
-    Fact _selfCheckFact;
-    Fact _idFact;
+
 
 };

@@ -159,6 +159,8 @@ void ArduCopterFirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeLi
 
 }
 
+//这个函数把 ArduPilot 自定义的 custom_mode 值 映射到 QGC 内部枚举
+//例如 custom_mode = 3 可能映射成 APMCopterMode::GUIDED
 uint32_t ArduCopterFirmwarePlugin::_convertToCustomFlightModeEnum(uint32_t val) const
 {
     switch (val) {

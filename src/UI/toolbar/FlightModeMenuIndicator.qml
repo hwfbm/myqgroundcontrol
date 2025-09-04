@@ -18,7 +18,9 @@ import QGroundControl.ScreenTools
 import QGroundControl.Palette
 import QGroundControl.FactSystem
 import QGroundControl.FactControls
-
+//好像没实际用上
+//飞行模式显示和切换的 UI 组件
+//在工具栏上显示当前飞机的 飞行模式图标 和 文字（比如 Stabilize、Loiter、RTL 等）,点击这个区域会弹出一个 侧边 Drawer 面板
 RowLayout {
     id:     _root
     spacing: 0
@@ -33,7 +35,7 @@ RowLayout {
     property Fact   _precisionLandingFact:  controller.getParameterFact(-1, "RTL_PLD_MD", false)
 
     FactPanelController { id: controller }
-
+//显示飞行模式图标 (QGCColoredImage) 和文字 (QGCLabel)
     RowLayout {
         id:         rowLayout
         spacing:    0
@@ -79,8 +81,8 @@ RowLayout {
         closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
         background: Rectangle {
-            color:      QGroundControl.globalPalette.window
-            opacity:    0.75
+            color:     "Qt.rgba(0, 0, 0, 0.65)"// QGroundControl.globalPalette.window
+            //opacity:    0.75
         }
 
         Row {

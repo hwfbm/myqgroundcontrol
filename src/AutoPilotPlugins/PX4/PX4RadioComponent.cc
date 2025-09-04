@@ -58,7 +58,7 @@ QStringList PX4RadioComponent::setupCompleteChangedTriggerList(void) const
 {
     return {"COM_RC_IN_MODE", "RC_MAP_ROLL", "RC_MAP_PITCH", "RC_MAP_YAW", "RC_MAP_THROTTLE"};
 }
-
+//遥控器界面
 QUrl PX4RadioComponent::setupSource(void) const
 {
     return QUrl::fromUserInput("qrc:/qml/RadioComponent.qml");

@@ -14,12 +14,14 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightDisplay
 
+//底部展示遥测数据条（TelemetryValuesBar）和仪表面板（FlyViewInstrumentPanel）
+//数据条内容可自定义
 RowLayout {
-    TelemetryValuesBar {
-        Layout.alignment:   Qt.AlignBottom
-        extraWidth:         instrumentPanel.extraValuesWidth
-    }
-
+    // TelemetryValuesBar {
+    //     Layout.alignment:   Qt.AlignBottom
+    //     extraWidth:         instrumentPanel.extraValuesWidth
+    // }
+//仪表面板
     FlyViewInstrumentPanel {
         id:         instrumentPanel
         visible:    QGroundControl.corePlugin.options.flyView.showInstrumentPanel && _showSingleVehicleUI

@@ -61,6 +61,7 @@
         <file alias="attitudePointer.svg">src/FlightMap/Images/attitudePointer.svg</file>
         <file alias="AwarenessAircraft.svg">src/FlightMap/Images/AwarenessAircraft.svg</file>
         <file alias="Battery.svg">src/UI/toolbar/Images/Battery.svg</file>
+         <file alias="batteryin.svg">src/UI/toolbar/Images/batteryin.svg</file>
         <file alias="BatteryGreen.svg">src/UI/toolbar/Images/BatteryGreen.svg</file>
         <file alias="BatteryYellowGreen.svg">src/UI/toolbar/Images/BatteryYellowGreen.svg</file>
         <file alias="BatteryYellow.svg">src/UI/toolbar/Images/BatteryYellow.svg</file>
@@ -89,6 +90,7 @@
         <file alias="FirmwareUpgradeIcon.png">src/Vehicle/VehicleSetup/FirmwareUpgradeIcon.png</file>
         <file alias="FollowComponentIcon.png">src/AutoPilotPlugins/Common/Images/FlightModesComponentIcon.png</file>
         <file alias="FlightModesComponentIcon.png">src/AutoPilotPlugins/Common/Images/FlightModesComponentIcon.png</file>
+        <file alias="flymode.svg">src/AutoPilotPlugins/Common/Images/flymode.svg</file>
         <file alias="FloatingWindow.svg">src/AnalyzeView/FloatingWindow.svg</file>
         <file alias="Frames/BlueROV1.png">src/AutoPilotPlugins/APM/Images/bluerov-frame.png</file>
         <file alias="Frames/SimpleROV-3.png">src/AutoPilotPlugins/APM/Images/simple3-frame.png</file>
@@ -191,6 +193,7 @@
         <file alias="subMenuButtonImage.png">resources/CogWheels.png</file>
         <file alias="subVehicleArrowOpaque.png">src/FlightMap/Images/sub.png</file>
         <file alias="TelemRSSI.svg">src/UI/toolbar/Images/TelemRSSI.svg</file>
+        <file alias="datachange.svg">src/UI/toolbar/Images/datachange.svg</file>
         <file alias="TrackingIcon.svg">src/UI/toolbar/Images/TrackingIcon.svg</file>
         <file alias="TuningComponentIcon.png">src/AutoPilotPlugins/Common/Images/TuningComponentIcon.png</file>
         <file alias="vehicleArrowOpaque.svg">src/FlightMap/Images/vehicleArrowOpaque.svg</file>
@@ -215,6 +218,7 @@
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
         <file alias="Viewer3D/City3DMapIcon.svg">src/Viewer3D/Images/city_3d_map_icon.svg</file>
         <file alias="batteryself.svg">src/UI/toolbar/Images/Frame.svg</file>
+        <file alias="remote_battery.svg">src/UI/toolbar/Images/remote_battery.svg</file>
         <file alias="batteryout.svg">src/UI/toolbar/Images/batteryout.svg</file>
         <file alias="mute.svg">src/UI/toolbar/Images/mute.svg</file>
         <file alias="open.svg">src/UI/toolbar/Images/open.svg</file>
@@ -225,6 +229,12 @@
         <file alias="batterylogo.svg">src/UI/toolbar/Images/batterylogo.svg</file>
         <file alias="crama.svg">src/UI/toolbar/Images/crama.svg</file>
         <file alias="common.svg">src/UI/toolbar/Images/common.svg</file>
-         <file alias="remote_control.svg">src/UI/toolbar/Images/remote_control.svg</file>
+        <file alias="remote_control.svg">src/UI/toolbar/Images/remote_control.svg</file>
+        <file alias="wait-vedio.jpg">src/UI/toolbar/Images/wait-vedio.jpg</file>
+        <file alias="hlogo.png">src/UI/toolbar/Images/hlogo.png</file>
+        <file alias="hitlogo.png">src/UI/toolbar/Images/hitlogo.png</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>src/UI/toolbar/Images/batteryin.svg</file>
     </qresource>
 </RCC>

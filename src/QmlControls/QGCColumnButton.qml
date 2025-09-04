@@ -13,11 +13,11 @@ QGCButton {
         width:          control.width
         height:         control.height
         radius:         backRadius
-        border.width:   showBorder ? 1 : 0
-        border.color:   qgcPal.buttonText
-        color:          _showHighlight ?
-                            qgcPal.buttonHighlight :
-                            (primary ? qgcPal.primaryButton : qgcPal.button)
+       // border.width:   showBorder ? 1 : 0
+       // border.color:   qgcPal.buttonText
+        color:  "transparent"       /* _showHighlight ?
+                          qgcPal.buttonHighlight :
+                            (primary ? qgcPal.primaryButton : qgcPal.button)*/
     }
 
     contentItem: Item {
@@ -33,7 +33,7 @@ QGCButton {
                 Layout.maximumHeight:   parent.height - textLabelContainer.height
                 Layout.alignment:       control.text !== "" ? Qt.AlignTop : Qt.AlignHCenter | Qt.AlignVCenter
                 source:                 control.iconSource
-                color:                  qgcPal.text
+                color:                  (control.pressed || control.hovered) ? "#ADFF2F" : "transparent"/* qgcPal.text*/
                 fillMode:               Image.PreserveAspectFit
                 sourceSize.height:      height
                 sourceSize.width:       width
@@ -51,7 +51,8 @@ QGCButton {
                     text:                       control.text
                     font.family:                control.font.family
                     font.pointSize:             control.font.pointSize
-                    color:                      _showHighlight ? qgcPal.buttonHighlightText : (primary ? qgcPal.primaryButtonText : qgcPal.buttonText)
+                   // color:                      _showHighlight ? qgcPal.buttonHighlightText : (primary ? qgcPal.primaryButtonText : qgcPal.buttonText)
+                    color:         (control.pressed || control.hovered) ? "#ADFF2F" :(primary ? qgcPal.primaryButtonText : qgcPal.buttonText)
                     anchors.baseline:           iconSource !== "" ? parent.bottom : undefined
                     anchors.centerIn:           iconSource === "" ? parent : undefined   
                     anchors.horizontalCenter:   parent.horizontalCenter

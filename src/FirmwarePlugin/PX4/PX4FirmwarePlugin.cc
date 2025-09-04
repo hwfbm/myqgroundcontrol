@@ -32,24 +32,24 @@ PX4FirmwarePluginInstanceData::PX4FirmwarePluginInstanceData(QObject* parent)
 }
 
 PX4FirmwarePlugin::PX4FirmwarePlugin()
-    : _manualFlightMode     (tr("Manual"))
-    , _acroFlightMode       (tr("Acro"))
-    , _stabilizedFlightMode (tr("Stabilized"))
-    , _rattitudeFlightMode  (tr("Rattitude"))
-    , _altCtlFlightMode     (tr("Altitude"))
-    , _posCtlFlightMode     (tr("Position"))
-    , _offboardFlightMode   (tr("Offboard"))
-    , _readyFlightMode      (tr("Ready"))
-    , _takeoffFlightMode    (tr("Takeoff"))
-    , _holdFlightMode       (tr("Hold"))
-    , _missionFlightMode    (tr("Mission"))
-    , _rtlFlightMode        (tr("Return"))
-    , _landingFlightMode    (tr("Land"))
-    , _preclandFlightMode   (tr("Precision Land"))
-    , _rtgsFlightMode       (tr("Return to Groundstation"))
-    , _followMeFlightMode   (tr("Follow Me"))
-    , _simpleFlightMode     (tr("Simple"))
-    , _orbitFlightMode      (tr("Orbit"))
+    : _manualFlightMode     (tr("手动模式"))
+    , _acroFlightMode       (tr("特技模式"))
+    , _stabilizedFlightMode (tr("自稳模式"))
+    , _rattitudeFlightMode  (tr("半自稳模式"))
+    , _altCtlFlightMode     (tr("高度模式"))
+    , _posCtlFlightMode     (tr("位置模式"))
+    , _offboardFlightMode   (tr("外部控制模式"))
+    , _readyFlightMode      (tr("准备"))
+    , _takeoffFlightMode    (tr("起飞"))
+    , _holdFlightMode       (tr("高度保持"))
+    , _missionFlightMode    (tr("自主任务"))
+    , _rtlFlightMode        (tr("返回"))
+    , _landingFlightMode    (tr("着陆"))
+    , _preclandFlightMode   (tr("精确着陆"))
+    , _rtgsFlightMode       (tr("返回地面站"))
+    , _followMeFlightMode   (tr("跟随"))
+    , _simpleFlightMode     (tr("简单模式"))
+    , _orbitFlightMode      (tr("轨道模式"))
 {
     qmlRegisterType<PX4SimpleFlightModesController>     ("QGroundControl.Controllers", 1, 0, "PX4SimpleFlightModesController");
     qmlRegisterType<AirframeComponentController>        ("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
@@ -130,10 +130,10 @@ QStringList PX4FirmwarePlugin::flightModes(Vehicle* vehicle) const
 
 QString PX4FirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode) const
 {
-    QString flightMode = "Unknown";
+    QString flightMode = "未知";
 
     if (base_mode & MAV_MODE_FLAG_CUSTOM_MODE_ENABLED) {
-        return _modeEnumToString.value(custom_mode, tr("Unknown %1:%2").arg(base_mode).arg(custom_mode));
+        return _modeEnumToString.value(custom_mode, tr("未知 %1:%2").arg(base_mode).arg(custom_mode));
     }
 
     return flightMode;

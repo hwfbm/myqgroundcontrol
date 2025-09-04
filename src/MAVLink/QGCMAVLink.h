@@ -14,7 +14,7 @@
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "MAVLinkLib.h"
+#include "MAVLinkLib.h"//在这里引入了mavlink
 
 Q_DECLARE_LOGGING_CATEGORY(QGCMAVLinkLog)
 // Q_DECLARE_METATYPE(mavlink_message_t)

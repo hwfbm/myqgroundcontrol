@@ -1759,7 +1759,7 @@
       <extracomment>.QGC.MetaData.Facts[valueDisplay].enumStrings, </extracomment>
       <location filename="../src/Settings/BatteryIndicator.SettingsGroup.json"/>
       <source>Percentage,Voltage,Percentage and Voltage</source>
-      <translation type="unfinished">Percentage,Voltage,Percentage and Voltage</translation>
+      <translation type="unfinished">百分比,电压,百分比和电压</translation>
     </message>
   </context>
   <context>

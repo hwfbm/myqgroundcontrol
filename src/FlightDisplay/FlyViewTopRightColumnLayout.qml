@@ -17,12 +17,14 @@ import QGroundControl.FlightMap
 import QGroundControl.Palette
 import QGroundControl.ScreenTools
 
+//飞行画面（FlyView）中显示地形加载进度和相机的拍照/录像控制按钮区域
 ColumnLayout {
     width: _rightPanelWidth
 
+    //显示“地形高度数据加载进度”的组件，常用于地图飞行
     TerrainProgress {
         Layout.alignment:       Qt.AlignTop
-        Layout.preferredWidth:  _rightPanelWidth
+        Layout.preferredWidth:  _rightPanelWidth+10
     }
 
     // We use a Loader to load the photoVideoControlComponent only when the active vehicle is not null
@@ -30,7 +32,7 @@ ColumnLayout {
     // to be null all over the place
     Loader {
         id:                 photoVideoControlLoader
-        Layout.alignment:   Qt.AlignTop | Qt.AlignRight
+        Layout.alignment:   Qt.AlignVCenter| Qt.AlignRight
         sourceComponent:    globals.activeVehicle ? photoVideoControlComponent : undefined
 
         property real rightEdgeCenterInset: visible ? parent.width - x : 0

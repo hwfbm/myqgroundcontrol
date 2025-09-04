@@ -10,6 +10,9 @@
 #include "QGCCorePlugin.h"
 #include "AppMessages.h"
 #include "AppSettings.h"
+#ifdef Q_OS_ANDROID
+#include "androidbattery.h"
+#endif
 #include "MavlinkSettings.h"
 #include "FactMetaData.h"
 #ifdef QGC_GST_STREAMING
@@ -241,6 +244,9 @@ QQmlApplicationEngine *QGCCorePlugin::createQmlApplicationEngine(QObject *parent
     qmlEngine->rootContext()->setContextProperty(QStringLiteral("joystickManager"), JoystickManager::instance());
     qmlEngine->rootContext()->setContextProperty(QStringLiteral("debugMessageModel"), AppMessages::getModel());
     qmlEngine->rootContext()->setContextProperty(QStringLiteral("logDownloadController"), LogDownloadController::instance());
+    #ifdef Q_OS_ANDROID
+    qmlEngine->rootContext()->setContextProperty(QStringLiteral("androidBattery"),AndroidBattery::instance());
+#endif
     return qmlEngine;
 }
 

@@ -18,6 +18,8 @@ import QGroundControl.Palette
 
 //-------------------------------------------------------------------------
 //-- Remote ID Indicator
+//远程识别指示器，在工具栏上显示“遥测机的远程身份状态”——比如法规要求的 Remote ID 信息状态
+//可能暂时不需要
 Item {
     id:             control
     width:          remoteIDIcon.width * 1.1
@@ -50,7 +52,7 @@ Item {
         FAA,
         EU
     }
-
+//根据飞控状态计算 Remote ID 健康度
     function getRidColor() {
         switch (remoteIDState) {
             case RemoteIDIndicator.RIDState.HEALTHY: 
@@ -96,6 +98,7 @@ Item {
         }
     }
 
+    //组合成一个图标
     QGCColoredImage {
         id:                 remoteIDIcon
         width:              height

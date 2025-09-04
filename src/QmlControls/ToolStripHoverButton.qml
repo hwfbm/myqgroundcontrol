@@ -51,8 +51,15 @@ Button {
     property real contentMargins:    innerText.height * 0.1 //内容边距，始终=文本高度的10%
 
     //定义了两个动态颜色属性（正常时候和按下或选择时候）
-    property color _currentContentColor:  (checked || pressed) ? qgcPal.buttonHighlightText : qgcPal.buttonText
-    property color _currentContentColorSecondary:  (checked || pressed) ? qgcPal.buttonText : qgcPal.buttonHighlight
+    // property color _currentContentColor:  (checked || pressed) ? qgcPal.buttonHighlightText : qgcPal.buttonText
+    // property color _currentContentColorSecondary:  (checked || pressed) ? qgcPal.buttonText : qgcPal.buttonHighlight
+                                     // 正常状态用默认颜色，按下时为橘色
+                                     property color _currentContentColor: pressed ? "#ADFF2F" :
+                                                                           (checked ? qgcPal.buttonHighlightText : qgcPal.buttonText)
+
+                                     // 第二颜色逻辑，你可以根据需求调换
+                                     property color _currentContentColorSecondary: pressed ? qgcPal.buttonText :
+                                                                                 (checked ? qgcPal.buttonText : qgcPal.buttonHighlight)
 
     // 典型用途：
     // 记录最后使用的工具（如选择的是第几个工具）
@@ -165,9 +172,10 @@ Button {
     // 默认状态：工具条背景色
     background: Rectangle {
         id:             buttonBkRect
-        color:          (control.checked || control.pressed) ?
+        color:"transparent"
+        /* (control.checked || control.pressed) ?
                             qgcPal.buttonHighlight :
-                            (control.hovered ? qgcPal.toolStripHoverColor : qgcPal.toolbarBackground)
+                            (control.hovered ? qgcPal.toolStripHoverColor : qgcPal.toolbarBackground)*/
         anchors.fill:   parent
     }
 }

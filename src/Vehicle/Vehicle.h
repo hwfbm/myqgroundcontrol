@@ -49,6 +49,8 @@
 #include "VehicleWindFactGroup.h"
 #include "GimbalController.h"
 
+
+
 class Actuators;
 class AutoPilotPlugin;
 class Autotune;
@@ -78,6 +80,7 @@ class TrajectoryPoints;
 class VehicleBatteryFactGroup;
 class VehicleObjectAvoidance;
 class GimbalController;
+
 #ifdef QGC_UTM_ADAPTER
 class UTMSPVehicle;
 #endif
@@ -287,7 +290,7 @@ public:
     Q_PROPERTY(FactGroup*           generator       READ generatorFactGroup         CONSTANT) //指向管理发电机相关事实的 FactGroup 对象
     Q_PROPERTY(FactGroup*           efi             READ efiFactGroup               CONSTANT) //指向管理 EFI（电子燃油喷射）相关事实的 FactGroup 对象
     Q_PROPERTY(QmlObjectListModel*  hydrogenBatteries       READ hydrogenBatteries  CONSTANT     ) //用于在 QML 中显示电池状态列表 NOTIFY  hydrogenBatteriesChanged
-    // Q_PROPERTY(QmlObjectListModel*  batteries       READ batteries                  CONSTANT) //用于在 QML 中显示电池状态列表
+    Q_PROPERTY(QmlObjectListModel*  batteries       READ batteries                  CONSTANT) //用于在 QML 中显示电池状态列表
     Q_PROPERTY(Actuators*           actuators       READ actuators                  CONSTANT) //管理无人机的执行器（如电机）
     Q_PROPERTY(HealthAndArmingCheckReport* healthAndArmingCheckReport READ healthAndArmingCheckReport CONSTANT) //可能包含有关无人机健康状况和是否准备好起飞的报告，指向一个包含无人机健康状况和是否准备好起飞的报告的对象
 
@@ -1084,7 +1087,7 @@ private slots:
     QFile               _csvLogFile;//存储 CSV 日志文件
 
 
-    VehicleBatteryFactGroup*_batteryFactGroup;
+    //VehicleBatteryFactGroup*_batteryFactGroup;
 
 
     bool            _joystickEnabled = false;//指示操纵杆是否启用

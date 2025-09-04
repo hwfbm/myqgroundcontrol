@@ -58,13 +58,21 @@ PX4AutoPilotPlugin::~PX4AutoPilotPlugin()
     delete _airframeFacts;
 }
 
+
+//返回一个 QVariantList（引用），里面存放了所有 VehicleComponent 对象，在 QML 中，Repeater 的 model 就绑定到这个返回值
 const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
 {
+
+    //只在 _components 还没有生成过（即第一次调用）且参数版本没错时才构建，一旦构建完成，后续调用直接返回 _components（缓存）
     if (_components.count() == 0 && !_incorrectParameterVersion) {
         if (_vehicle) {
-            if (_vehicle->parameterManager()->parametersReady()) {
-                _airframeComponent = new AirframeComponent(_vehicle, this, this);
-                _airframeComponent->setupTriggerSignals();
+            //必须有 _vehicle 且参数已加载完成（parametersReady == true）才会创建组件
+            if (_vehicle->parameterManager()->parametersReady())
+            {
+                //依次构造 PX4 的各个配置组件，每个 VehicleComponent 都要 setupTriggerSignals()
+                //然后用 QVariant::fromValue(...) 包装后 append 到 _components
+                _airframeComponent = new AirframeComponent(_vehicle, this, this);//机架/飞行器机型配置（frame、机型参数）
+                _airframeComponent->setupTriggerSignals();//调用父类VehicleComponent的方法
                 _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_airframeComponent)));
 
                 if (!_vehicle->hilMode()) {

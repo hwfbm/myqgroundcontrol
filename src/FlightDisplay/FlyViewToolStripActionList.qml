@@ -24,7 +24,7 @@ ToolStripActionList {
 
             id: view3DIcon
             visible: _viewer3DEnabled
-            text:           qsTr("3D View")
+            text:       qsTr("3D View")
             iconSource:     "/qmlimages/Viewer3D/City3DMapIcon.svg"
             onTriggered:{
                 if(_is3DViewOpen === false){

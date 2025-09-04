@@ -18,17 +18,22 @@ import QGroundControl.ScreenTools
 import QGroundControl.MultiVehicleManager
 import QGroundControl.Palette
 
+
+
+//显示车辆概况
 Rectangle {
     id:             _summaryRoot
     anchors.fill:   parent
     anchors.rightMargin: ScreenTools.defaultFontPixelWidth
     anchors.leftMargin:  ScreenTools.defaultFontPixelWidth
-    color:          qgcPal.window
+    color:        "transparent" /* qgcPal.window*/
 
     property real _minSummaryW:     ScreenTools.isTinyScreen ? ScreenTools.defaultFontPixelWidth * 28 : ScreenTools.defaultFontPixelWidth * 36
     property real _summaryBoxWidth: _minSummaryW
     property real _summaryBoxSpace: ScreenTools.defaultFontPixelWidth * 2
 
+
+    //如果屏幕太窄，组件宽度缩小到屏幕宽度
     function computeSummaryBoxSize() {
         var sw  = 0
         var rw  = 0
@@ -43,10 +48,11 @@ Rectangle {
                 sw = _summaryBoxSpace * (idx - 1)
             }
             rw = _summaryRoot.width - sw
-            _summaryBoxWidth = rw / idx
+            _summaryBoxWidth = rw / idx//_summaryBoxSpace 控制多个组件间距
         }
     }
 
+    //将字符串每个单词首字母大写,用于组件标题显示
     function capitalizeWords(sentence) {
         return sentence.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
     }
@@ -89,10 +95,11 @@ Rectangle {
                 property bool setupComplete: QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.autopilotPlugin.setupComplete : false
             }
 
+            //是 Qt Quick Controls 2 布局容器，自动按行排列子元素（类似 CSS 的 flex-wrap），当一行放不下新的元素，会自动换到下一行
             Flow {
                 id:         _flowCtl
-                width:      _summaryRoot.width
-                spacing:    _summaryBoxSpace
+                width:      _summaryRoot.width//Flow 会自动根据 _summaryRoot.width 排列每行组件
+                spacing:    _summaryBoxSpace//组件间间距 _summaryBoxSpace
 
                 Repeater {
                     model: QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.autopilotPlugin.vehicleComponents : undefined
@@ -100,11 +107,11 @@ Rectangle {
                     // Outer summary item rectangle
                     Rectangle {
                         width:      _summaryBoxWidth
-                        height:     ScreenTools.defaultFontPixelHeight * 13
-                        color:      qgcPal.windowShade
+                        height:     ScreenTools.defaultFontPixelHeight *8
+                        color:      "transparent"//qgcPal.windowShade
                         visible:    modelData.summaryQmlSource.toString() !== ""
                         border.width: 1
-                        border.color: qgcPal.text
+                        border.color: "transparent"/*qgcPal.text*/
                         Component.onCompleted: {
                             border.color = Qt.rgba(border.color.r, border.color.g, border.color.b, 0.1)
                         }
@@ -118,7 +125,7 @@ Rectangle {
                             height: titleHeight
                             text:   capitalizeWords(modelData.name)
 
-                            // Setup indicator
+                            // Setup indicator状态指示灯
                             Rectangle {
                                 anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
                                 anchors.right:          parent.right
@@ -126,7 +133,7 @@ Rectangle {
                                 width:                  ScreenTools.defaultFontPixelWidth * 1.75
                                 height:                 width
                                 radius:                 width / 2
-                                color:                  modelData.setupComplete ? "#00d932" : "red"
+                                color:                  modelData.setupComplete ? "#2196F3" : "red"
                                 visible:                modelData.requiresSetup && modelData.setupSource !== ""
                             }
 
@@ -144,7 +151,7 @@ Rectangle {
                             Loader {
                                 anchors.fill:       parent
                                 anchors.margins:    ScreenTools.defaultFontPixelWidth
-                                source:             modelData.summaryQmlSource
+                                source:             modelData.summaryQmlSource//返回一个qml,总结各组件信息
 
                                 property var vehicleComponent: modelData
                             }

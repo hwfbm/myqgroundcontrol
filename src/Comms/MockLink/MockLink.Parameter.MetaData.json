@@ -1713,59 +1713,59 @@
       "values": [
         {
           "value": -1,
-          "description": "Unassigned"
+          "description": "未分配模式"
         },
         {
           "value": 0,
-          "description": "Manual"
+          "description": "手动模式"
         },
         {
           "value": 1,
-          "description": "Altitude"
+          "description": "定高模式"
         },
         {
           "value": 2,
-          "description": "Position"
+          "description": "位置模式"
         },
         {
           "value": 3,
-          "description": "Mission"
+          "description": "任务模式"
         },
         {
           "value": 4,
-          "description": "Hold"
+          "description": "保持模式"
         },
         {
           "value": 5,
-          "description": "Return"
+          "description": "返回"
         },
         {
           "value": 6,
-          "description": "Acro"
+          "description": "特技模式"
         },
         {
           "value": 7,
-          "description": "Offboard"
+          "description": "离线飞行"
         },
         {
           "value": 8,
-          "description": "Stabilized"
+          "description": "自稳模式"
         },
         {
           "value": 9,
-          "description": "Rattitude"
+          "description": "Rattitude模式"
         },
         {
           "value": 10,
-          "description": "Takeoff"
+          "description": "起飞"
         },
         {
           "value": 11,
-          "description": "Land"
+          "description": "降落"
         },
         {
           "value": 12,
-          "description": "Follow Me"
+          "description": "目标跟随模式"
         }
       ]
     },
@@ -1779,59 +1779,59 @@
       "values": [
         {
           "value": -1,
-          "description": "Unassigned"
+          "description": "未分配模式"
         },
         {
           "value": 0,
-          "description": "Manual"
+          "description": "手动模式"
         },
         {
           "value": 1,
-          "description": "Altitude"
+          "description": "定高模式"
         },
         {
           "value": 2,
-          "description": "Position"
+          "description": "位置模式"
         },
         {
           "value": 3,
-          "description": "Mission"
+          "description": "任务模式"
         },
         {
           "value": 4,
-          "description": "Hold"
+          "description": "保持模式"
         },
         {
           "value": 5,
-          "description": "Return"
+          "description": "返回"
         },
         {
           "value": 6,
-          "description": "Acro"
+          "description": "特技模式"
         },
         {
           "value": 7,
-          "description": "Offboard"
+          "description": "离线飞行"
         },
         {
           "value": 8,
-          "description": "Stabilized"
+          "description": "自稳模式"
         },
         {
           "value": 9,
-          "description": "Rattitude"
+          "description": "Rattitude模式"
         },
         {
           "value": 10,
-          "description": "Takeoff"
+          "description": "起飞"
         },
         {
           "value": 11,
-          "description": "Land"
+          "description": "降落"
         },
         {
           "value": 12,
-          "description": "Follow Me"
+          "description": "目标跟随模式"
         }
       ]
     },
@@ -1845,59 +1845,59 @@
       "values": [
         {
           "value": -1,
-          "description": "Unassigned"
+          "description": "未分配模式"
         },
         {
           "value": 0,
-          "description": "Manual"
+          "description": "手动模式"
         },
         {
           "value": 1,
-          "description": "Altitude"
+          "description": "定高模式"
         },
         {
           "value": 2,
-          "description": "Position"
+          "description": "位置模式"
         },
         {
           "value": 3,
-          "description": "Mission"
+          "description": "任务模式"
         },
         {
           "value": 4,
-          "description": "Hold"
+          "description": "保持模式"
         },
         {
           "value": 5,
-          "description": "Return"
+          "description": "返回"
         },
         {
           "value": 6,
-          "description": "Acro"
+          "description": "特技模式"
         },
         {
           "value": 7,
-          "description": "Offboard"
+          "description": "离线飞行"
         },
         {
           "value": 8,
-          "description": "Stabilized"
+          "description": "自稳模式"
         },
         {
           "value": 9,
-          "description": "Rattitude"
+          "description": "Rattitude模式"
         },
         {
           "value": 10,
-          "description": "Takeoff"
+          "description": "起飞"
         },
         {
           "value": 11,
-          "description": "Land"
+          "description": "降落"
         },
         {
           "value": 12,
-          "description": "Follow Me"
+          "description": "目标跟随模式"
         }
       ]
     },
@@ -1911,59 +1911,59 @@
       "values": [
         {
           "value": -1,
-          "description": "Unassigned"
+          "description": "未分配模式"
         },
         {
           "value": 0,
-          "description": "Manual"
+          "description": "手动模式"
         },
         {
           "value": 1,
-          "description": "Altitude"
+          "description": "定高模式"
         },
         {
           "value": 2,
-          "description": "Position"
+          "description": "位置模式"
         },
         {
           "value": 3,
-          "description": "Mission"
+          "description": "任务模式"
         },
         {
           "value": 4,
-          "description": "Hold"
+          "description": "保持模式"
         },
         {
           "value": 5,
-          "description": "Return"
+          "description": "返回"
         },
         {
           "value": 6,
-          "description": "Acro"
+          "description": "特技模式"
         },
         {
           "value": 7,
-          "description": "Offboard"
+          "description": "离线飞行"
         },
         {
           "value": 8,
-          "description": "Stabilized"
+          "description": "自稳模式"
         },
         {
           "value": 9,
-          "description": "Rattitude"
+          "description": "Rattitude模式"
         },
         {
           "value": 10,
-          "description": "Takeoff"
+          "description": "起飞"
         },
         {
           "value": 11,
-          "description": "Land"
+          "description": "降落"
         },
         {
           "value": 12,
-          "description": "Follow Me"
+          "description": "目标跟随模式"
         }
       ]
     },
@@ -1977,59 +1977,59 @@
       "values": [
         {
           "value": -1,
-          "description": "Unassigned"
+          "description": "未分配模式"
         },
         {
           "value": 0,
-          "description": "Manual"
+          "description": "手动模式"
         },
         {
           "value": 1,
-          "description": "Altitude"
+          "description": "定高模式"
         },
         {
           "value": 2,
-          "description": "Position"
+          "description": "位置模式"
         },
         {
           "value": 3,
-          "description": "Mission"
+          "description": "任务模式"
         },
         {
           "value": 4,
-          "description": "Hold"
+          "description": "保持模式"
         },
         {
           "value": 5,
-          "description": "Return"
+          "description": "返回"
         },
         {
           "value": 6,
-          "description": "Acro"
+          "description": "特技模式"
         },
         {
           "value": 7,
-          "description": "Offboard"
+          "description": "离线飞行"
         },
         {
           "value": 8,
-          "description": "Stabilized"
+          "description": "自稳模式"
         },
         {
           "value": 9,
-          "description": "Rattitude"
+          "description": "Rattitude模式"
         },
         {
           "value": 10,
-          "description": "Takeoff"
+          "description": "起飞"
         },
         {
           "value": 11,
-          "description": "Land"
+          "description": "降落"
         },
         {
           "value": 12,
-          "description": "Follow Me"
+          "description": "目标跟随模式"
         }
       ]
     },
@@ -2043,59 +2043,59 @@
       "values": [
         {
           "value": -1,
-          "description": "Unassigned"
+          "description": "未分配模式"
         },
         {
           "value": 0,
-          "description": "Manual"
+          "description": "手动模式"
         },
         {
           "value": 1,
-          "description": "Altitude"
+          "description": "定高模式"
         },
         {
           "value": 2,
-          "description": "Position"
+          "description": "位置模式"
         },
         {
           "value": 3,
-          "description": "Mission"
+          "description": "任务模式"
         },
         {
           "value": 4,
-          "description": "Hold"
+          "description": "保持模式"
         },
         {
           "value": 5,
-          "description": "Return"
+          "description": "返回"
         },
         {
           "value": 6,
-          "description": "Acro"
+          "description": "特技模式"
         },
         {
           "value": 7,
-          "description": "Offboard"
+          "description": "离线飞行"
         },
         {
           "value": 8,
-          "description": "Stabilized"
+          "description": "自稳模式"
         },
         {
           "value": 9,
-          "description": "Rattitude"
+          "description": "Rattitude模式"
         },
         {
           "value": 10,
-          "description": "Takeoff"
+          "description": "起飞"
         },
         {
           "value": 11,
-          "description": "Land"
+          "description": "降落"
         },
         {
           "value": 12,
-          "description": "Follow Me"
+          "description": "目标跟随模式"
         }
       ]
     },

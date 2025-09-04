@@ -39,7 +39,14 @@ ApplicationWindow {
 
     property bool   _utmspSendActTrigger
     property bool   _utmspStartTelemetry
+    //飞行视图的核心界面
+    FlyView {
+        id:                     flyView
+        anchors.fill:           parent
+        utmspSendActTrigger:    _utmspSendActTrigger //接收_utmspSendActTrigger信号
 
+
+    }
 
 
     Component.onCompleted: {
@@ -396,38 +403,17 @@ ApplicationWindow {
     //设置主窗口背景
     background: Rectangle {
         anchors.fill:   parent //填充整个父容器
-        color:          QGroundControl.globalPalette.window //使用 QGC 全局调色板的窗口底色，确保界面风格统一，支持主题切换
+        color:   QGroundControl.globalPalette.window //使用 QGC 全局调色板的窗口底色，确保界面风格统一，支持主题切换
     }
 
-    //飞行视图的核心界面
-    FlyView { 
-        id:                     flyView
-        anchors.fill:           parent
-        utmspSendActTrigger:    _utmspSendActTrigger //接收_utmspSendActTrigger信号
-    }
+
 
     //任务规划视图，完整的任务规划、地理围栏和集结点管理功能
-    PlanView {
-        id:             planView
-        anchors.fill:   parent
-        visible:        false //通过visible属性切换
-        // Rectangle {
-        //     width: ScreenTools.screenWidth * 0.8
-        //     height: ScreenTools.defaultFontPixelHeight * 4
-        //     color: ScreenTools.isAndroid ? "blue" : "gray"
-
-        //     Text {
-        //         text: "Hello QGC"
-        //         font.pixelSize: 0
-        //     }
-
-        //     Button {
-        //         width: ScreenTools.implicitButtonWidth
-        //         height: ScreenTools.implicitButtonHeight
-        //         text: "标准按钮"
-        //     }
-        // }
-    }
+    // PlanView {
+    //     id:             planView
+    //     anchors.fill:   parent
+    //     visible:        false //通过visible属性切换
+    // }
 
     //底部状态栏
     //根据设置决定是否显示，FlyViewSettings.showLogReplayStatusBar
@@ -439,12 +425,14 @@ ApplicationWindow {
 
     //弹出工具选择对话框
        //property bool panelShown: false
+  //signal sideBarVisibleChanged(bool visible)//信号控制toolbar
 
     function showToolSelectDialog() {
         if (mainWindow.allowViewSwitch())//判断是否允许视图切换，可能用于避免在某些状态（如飞行中）切换视图
-        { toolMenu.panelVisible = true
-            //aliasSource = toolSelectComponent //调用页面加载，alias相当于自己
-              //toolPanel.visible = true//显示界面
+        {
+            // flyView.showToolbar = false
+            toolMenu.panelVisible = true
+
 
             //原来的
             //mainWindow.showIndicatorDrawer(toolSelectComponent, null)//showIndicatorDrawer() 是 mainWindow 的方法，用于弹出一个抽屉窗口或对话框。toolSelectComponent 是要显示的组件
@@ -455,7 +443,7 @@ ApplicationWindow {
     }
     function closeToolPanel() {
         // 关闭自定义侧边面板
-        //toolPanel.visible = false
+          //flyView.showToolbar = false
         toolMenu.panelVisible = false
         // 恢复主界面显示
         flyView.visible = true
@@ -468,8 +456,9 @@ ApplicationWindow {
 
         ToolMenu {
             id: toolMenu
-            width: parent.width * 2 / 3
-            height: parent.height - ScreenTools.toolbarHeight
+            width: parent.width * 7 / 12
+            toolMenuidheight: parent.height// - ScreenTools.toolbarHeight
+           // toolMenuidheight: parent.height
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             z: 100
@@ -1106,6 +1095,8 @@ ApplicationWindow {
     //它类似于对话框，但不会遮罩全屏，位置设置为：屏幕顶部中间一条横条
     //宽高设置为和 mainWindow 一样大
     //默认是关闭的（visible: false），不能通过手势打开，只能通过代码控制
+
+        //目前我弃用这个布局
     Drawer {
         id:             toolDrawer
         width:          mainWindow.width
@@ -1241,9 +1232,9 @@ ApplicationWindow {
         //背景：Rectangle + 带圆角和边框
         background: Rectangle {
             anchors.fill:   parent
-            color:          qgcPal.alertBackground
+            color:          "blue"//qgcPal.alertBackground
             radius:         ScreenTools.defaultFontPixelHeight * 0.5
-            border.color:   qgcPal.alertBorder
+            border.color:   "blue"//qgcPal.alertBorder
             border.width:   2
 
             Rectangle {
@@ -1252,7 +1243,7 @@ ApplicationWindow {
                 anchors.topMargin:          -(height / 2) //把元素向上移动自身高度的一半
                 color:                      qgcPal.alertBackground
                 radius:                     ScreenTools.defaultFontPixelHeight * 0.25
-                border.color:               qgcPal.alertBorder
+                border.color:                "blue"//qgcPal.alertBorder
                 border.width:               3
                 width:                      vehicleWarningLabel.contentWidth + _margins
                 height:                     vehicleWarningLabel.contentHeight + _margins
@@ -1277,7 +1268,7 @@ ApplicationWindow {
                 anchors.bottomMargin:       -(height / 2)
                 color:                      qgcPal.alertBackground
                 radius:                     ScreenTools.defaultFontPixelHeight * 0.25
-                border.color:               qgcPal.alertBorder
+                border.color:               "blue"// qgcPal.alertBorder
                 border.width:               1
                 width:                      additionalErrorsLabel.contentWidth + _margins
                 height:                     additionalErrorsLabel.contentHeight + _margins
@@ -1405,17 +1396,17 @@ ApplicationWindow {
                 //// 小圆按钮：用于展开。半透明灰色背景
                 anchors.horizontalCenter:   backgroundRect.right
                 anchors.verticalCenter:     backgroundRect.top
-                width:                      ScreenTools.largeFontPixelHeight*1.35
+                width:                      ScreenTools.largeFontPixelHeight//*1.35
                 height:                     width
                 radius:                     width / 2
-                color:                      QGroundControl.globalPalette.button
-                border.color:               QGroundControl.globalPalette.buttonText
+                color:                      Qt.rgba(0, 0, 0, 0.65)/*QGroundControl.globalPalette.button*/
+                //border.color:               QGroundControl.globalPalette.buttonText
                 visible:                    indicatorDrawerLoader.item && indicatorDrawerLoader.item.showExpand && !indicatorDrawer._expanded
 
                 QGCLabel {
                     //可选的右上角扩展按钮 >，点击后设置 _expanded = true
                     anchors.centerIn:   parent
-                    text:               "more"
+                    text:               "<"
                     color:              QGroundControl.globalPalette.buttonText
                 }  
 

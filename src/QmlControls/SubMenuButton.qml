@@ -4,8 +4,8 @@ import QtQuick.Controls
 import QGroundControl.Palette
 import QGroundControl.ScreenTools
 
-// Important Note: SubMenuButtons must manage their checked state manually in order to support
-// view switch prevention. This means they can't be checkable or autoExclusive.
+// Important Note: SubMenuButtons must manage their checked state manually in order to support 子菜单必须手动管理他的选中状态
+// view switch prevention. This means they can't be checkable or autoExclusive.防止试图切换，这意味着它们不能被检查或自动独占
 
 //自定义的 QML Button 组件，主要用于 QGroundControl 项目中的子菜单按钮
 //带图标 + 文字的按钮布局
@@ -42,14 +42,14 @@ Button {
     //背景
     background: Rectangle {
         id:     innerRect
-        color:  qgcPal.windowShade
+        color:  "transparent"/*qgcPal.windowShade*/
         implicitWidth: titleBar.x + titleBar.contentWidth + ScreenTools.defaultFontPixelWidth
         // 高亮层
-        Rectangle {
-            anchors.fill:   parent
-            color:          qgcPal.buttonHighlight
-            opacity:        showHighlight ? 1 : control.enabled && control.hovered ? .2 : 0//按下/选中：100% 高亮，悬停：20% 高亮
-        }
+        // Rectangle {
+        //     anchors.fill:   parent
+        //     color:          qgcPal.buttonHighlight
+        //     opacity:        showHighlight ? 1 : control.enabled && control.hovered ? .2 : 0//按下/选中：100% 高亮，悬停：20% 高亮
+        // }
         // 图标
         QGCColoredImage {
             id:                     image
@@ -58,11 +58,15 @@ Button {
             anchors.horizontalCenter: parent.horizontalCenter  // 横向居中
                anchors.verticalCenter:   parent.verticalCenter     // 纵向居中
             //anchors.verticalCenter: parent.verticalCenter
-            width:                  ScreenTools.defaultFontPixelHeight * 1.5
-            height:               ScreenTools.defaultFontPixelHeight * 1.5
+            width:                  ScreenTools.defaultFontPixelHeight/* * 1.5*/
+            height:               ScreenTools.defaultFontPixelHeight /** 1.5*/
             fillMode:               Image.PreserveAspectFit
             mipmap:                 true
-            color:                  imageColor ? imageColor : (control.setupComplete ? titleBar.color : "red")
+            //color:                  imageColor ? imageColor : (control.setupComplete ? titleBar.color : "red")
+            color: showHighlight//#2196F3
+                  ? "#7FFF00"  // 蓝色，表示点击或选中状态
+                  : (imageColor ? imageColor : (control.setupComplete ? titleBar.color : "red"))
+
             source:                 control.imageResource
             sourceSize:             control.sourceSize
         }

@@ -25,6 +25,7 @@ class QEvent;
 class QPostEventList;
 class QMetaMethod;
 class QMetaObject;
+class Mqttlink;
 
 #if defined(qApp)
 #undef qApp
@@ -87,6 +88,8 @@ public:
     static QString cachedParameterMetaDataFile();
     static QString cachedAirframeMetaDataFile();
 
+      Mqttlink* mqtt();      // 提供全局访问接口
+
 public:
     /// Perform initialize which is common to both normal application running and unit tests.
     void init();
@@ -126,6 +129,7 @@ private slots:
     void _showDelayedAppMessages();
 
 private:
+      Mqttlink* _mqtt = nullptr;//mqtt接口
     bool compressEvent(QEvent *event, QObject *receiver, QPostEventList *postedEvents) final;
 
     /// Initialize the application for normal application boot. Or in other words we are not going to run unit tests.
@@ -164,7 +168,9 @@ private:
         void remove(const QMetaMethod &method);
         bool contains(const QMetaObject *metaObject, int signalIndex);
 
+
     private:
+
         /// Returns a signal index that is can be compared to QMetaCallEvent.signalId
         static int _signalIndex(const QMetaMethod &method);
 

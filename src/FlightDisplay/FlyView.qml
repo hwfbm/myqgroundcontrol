@@ -49,7 +49,13 @@ Item {
         flyView:                true //设置 flyView 为 true 表示这是飞行视图
         Component.onCompleted:  start()
     }
-
+    // Connections {
+    //       target: mainWindow
+    //       onSideBarVisibleChanged: (visible) => {
+    //              // 当侧边栏显示时，隐藏 toolbar；反之亦然
+    //              toolbar.visible = !visible
+    //          }
+    //   }
     property bool   _mainWindowIsMap:       mapControl.pipState.state === mapControl.pipState.fullState//判断主窗口是否显示地图
     property bool   _isFullWindowItemDark:  _mainWindowIsMap ? mapControl.isSatelliteMap : true
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle//获取当前活动飞行器
@@ -89,17 +95,14 @@ Item {
     }
 
     //顶部工具栏，视频全屏时隐藏
-    FlyViewToolBar {
-        id:         toolbar
-        visible:    !QGroundControl.videoManager.fullScreen
-    }
+
 
 
 
     //主地图和视频的容器
     Item {
         id:                 mapHolder
-        anchors.top:        toolbar.bottom
+        anchors.top:       parent.top// toolbar.bottom
         anchors.bottom:     parent.bottom
         anchors.left:       parent.left
         anchors.right:      parent.right
@@ -108,7 +111,7 @@ Item {
         FlyViewMap {
             id:                     mapControl
             planMasterController:   _planController
-            rightPanelWidth:        ScreenTools.defaultFontPixelHeight * 9
+            rightPanelWidth:        ScreenTools.defaultFontPixelHeight //* 9
             pipView:                _pipView
             pipMode:                !_mainWindowIsMap
             toolInsets:             customOverlay.totalToolInsets
@@ -138,6 +141,45 @@ Item {
             property real leftEdgeBottomInset: visible ? width + anchors.margins : 0
             property real bottomEdgeLeftInset: visible ? height + anchors.margins : 0
         }
+        // TelemetryValuesBar {
+        //     //Layout.alignment:   Qt.AlignBottom
+        //     anchors.left: _pipView.right
+        //         anchors.bottom: _pipView.bottom
+        //         anchors.leftMargin: 8 // 你可以调整这个边距
+        //         extraWidth: instrumentPanel.extraValuesWidth
+        //         z: _pipView.z + 1     // 保证在 pip 上层显示，如果需要的话
+        //     //extraWidth:         instrumentPanel.extraValuesWidth
+        // }
+
+
+        //显示数值的条
+        TelemetryValuesBar {
+            id: telemetryBar
+            anchors.bottom: _pipView.bottom
+            anchors.leftMargin: 8
+            extraWidth: instrumentPanel.extraValuesWidth
+            z: _pipView.z + 1
+
+            states: [
+                State {
+                    name: "WithPip"
+                    when: _pipView.visible
+                    AnchorChanges {
+                        target: telemetryBar
+                        anchors.left: _pipView.right
+                    }
+                },
+                State {
+                    //没有画中画窗
+                    name: "WithoutPip"
+                    when: !_pipView.visible
+                    AnchorChanges {
+                        target: telemetryBar
+                        anchors.left: parent.left
+                    }
+                }
+            ]
+        }
 
 
         //小部件层，显示各种飞行信息，处理 UTM 适配器触发信号，管理 3D 查看器状态
@@ -166,7 +208,7 @@ Item {
         }
 
         // Development tool for visualizing the insets for a paticular layer, show if needed
-        //用于可视化边距插入的开发工具，默认隐藏
+        //用于可视化边距插入的开发工具，默认隐藏.开发的时候参考布局
         FlyViewInsetViewer {
             id:                     widgetLayerInsetViewer
             anchors.top:            parent.top
@@ -175,7 +217,7 @@ Item {
             anchors.right:          guidedValueSlider.visible ? guidedValueSlider.left : parent.right
             z:                      widgetLayer.z + 1
             insetsToView:           widgetLayer.totalToolInsets
-            visible:                false
+            visible:               /*true//*/false
         }
 
         //引导操作控制器，管理任务控制器和值滑块
@@ -186,14 +228,14 @@ Item {
         }
 
         //-- Guided value slider (e.g. altitude)
-        //引导值滑块(如高度调整)，位于右侧，最顶层显示
+        //引导值滑块(如高度调整)，位于右侧，最顶层显示,起飞高度右侧尺
         GuidedValueSlider {
             id:                 guidedValueSlider
             anchors.right:      parent.right
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             z:                  QGroundControl.zOrderTopMost
-            visible:            false
+            visible:           false
         }
 
         //3D 查看器窗口，占据整个视图区域
@@ -202,4 +244,15 @@ Item {
             anchors.fill:           parent
         }
     }
+    //property bool showToolbar: true
+    FlyViewToolBar {
+        id:         toolbar
+        visible:  /*flyView.showToolbar //*/!QGroundControl.videoManager.fullScreen
+        Component.onCompleted: {
+              console.log("Toolbar 初始值:", visible)
+          }
+          onVisibleChanged: {
+              console.log("Toolbar visible改变:", visible)
+    }
+          }
 }

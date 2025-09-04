@@ -13,7 +13,7 @@ import QGroundControl.Controls
 ToolStripAction {
     text:           qsTr("Checklist")
     iconSource:     "/qmlimages/check.svg"
-    visible:        _useChecklist
+    visible:       _useChecklist
     enabled:        _useChecklist && _activeVehicle && !_activeVehicle.armed
 
     property var  _activeVehicle:   QGroundControl.multiVehicleManager.activeVehicle

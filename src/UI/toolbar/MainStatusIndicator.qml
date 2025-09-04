@@ -37,13 +37,13 @@ RowLayout {
     QGCLabel {
         id:             mainStatusLabel
         text:           mainStatusText()
-        font.pointSize: ScreenTools.largeFontPointSize
+        font.pointSize: ScreenTools.largeFontPointSize*0.8
 
-        property string _commLostText:      qsTr("飞行器通信丢失")
-        property string _readyToFlyText:    qsTr("飞行器准备起飞")
-        property string _notReadyToFlyText: qsTr("飞行器未准备好")
-        property string _disconnectedText:  qsTr("飞行器未连接，单击手动连接")
-        property string _armedText:         qsTr("飞行器进入预备模式")
+        property string _commLostText:      qsTr("通信丢失")
+        property string _readyToFlyText:    qsTr("准备起飞")
+        property string _notReadyToFlyText: qsTr("未准备好")
+        property string _disconnectedText:  qsTr("未连接，点击连接")
+        property string _armedText:         qsTr("进入预备模式")
         property string _flyingText:        qsTr("飞行中")
         property string _landingText:       qsTr("降落中")
 
@@ -107,7 +107,7 @@ RowLayout {
                     }
                 }
             } else {
-                _mainStatusBGColor = "transparent"//qgcPal.toolbarBackground//brandingPurple
+                _mainStatusBGColor = /*"transparent"//*/qgcPal.toolbarBackground//brandingPurple
                 return mainStatusLabel._disconnectedText
             }
         }

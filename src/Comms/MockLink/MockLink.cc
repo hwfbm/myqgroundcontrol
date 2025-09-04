@@ -141,12 +141,18 @@ void MockLink::run1HzTasks()
       //sendMockErrorMessage("警告:电池有问题", MAV_SEVERITY_ALERT);
 
    // _sendHydrogenBatteryStatus(); // 发出自定义的消息
-    _sendMockMessages(); //发出mock消息
+    _sendMockMessages(); //发出氢电池mock消息
+    _sendGimbalStatus();//云台mock
     _sendVibration();
-    //_sendBatteryStatus();
+    _sendBatteryStatus();//原生电池消息
     _sendSysStatus();
     _sendADSBVehicles();
     _sendRemoteIDArmStatus();
+
+    _sendGpsRawInt();
+    _sendGlobalPositionInt();
+    _sendExtendedSysState();
+     _sendHeartBeat();//心跳消息
 
     if (!qgcApp()->runningUnitTests()) {
         // Sending RC Channels during unit test breaks RC tests which does it's own RC simulation
@@ -163,19 +169,27 @@ void MockLink::run1HzTasks()
 
 void MockLink::run10HzTasks()
 {
+    //如果是高延迟链路配置，直接返回不执行后续任务
+    //高延迟链路通常使用不同的消息发送机制，不需要高频更新
     if (linkConfiguration()->isHighLatency()) {
         return;
     }
 
+    //MAVLink已启动且链路已连接
+    //只有在有效连接状态下才发送消息
     if (_mavlinkStarted && _connected) {
-        _sendHeartBeat();
+
+        //GPS位置发送延迟机制
+        // 延迟机制：通过计数器实现GPS位置发送的延迟
+        // 测试用途：模拟GPS数据初始化或丢失的情况，减到100才发gps等消息
+        // 正常情况：计数器为0时发送三种重要消息
         if (_sendGPSPositionDelayCount > 0) {
             // We delay gps position for better testing
             _sendGPSPositionDelayCount--;
         } else {
-            _sendGpsRawInt();
-            _sendGlobalPositionInt();
-            _sendExtendedSysState();
+            // _sendGpsRawInt();
+            // _sendGlobalPositionInt();
+            // _sendExtendedSysState();
         }
     }
 }
@@ -325,6 +339,50 @@ void MockLink::_sendHeartBeat()
     );
     respondWithMavlinkMessage(msg);
 }
+
+void MockLink::_sendGimbalStatus()
+{
+    mavlink_message_t msg{};
+
+            // 模拟 Gimbal Device Attitude Status
+    mavlink_gimbal_device_attitude_status_t gimbal{};
+    gimbal.time_boot_ms = static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch() % 0xFFFFFFFF);
+    gimbal.q[0] = 1.0f; // w
+    gimbal.q[1] = 0.0f; // x
+    gimbal.q[2] = 0.0f; // y
+    gimbal.q[3] = 0.0f; // z
+    gimbal.angular_velocity_x = 0.0f;
+    gimbal.angular_velocity_y = 0.0f;
+    gimbal.angular_velocity_z = 0.0f;
+    gimbal.flags = GIMBAL_MANAGER_FLAGS_NEUTRAL;
+    gimbal.target_system = _vehicleSystemId;
+    gimbal.target_component = 1; // 云台组件ID
+    gimbal.gimbal_device_id = 1;
+
+            // 打包消息
+    mavlink_msg_gimbal_device_attitude_status_pack_chan(
+        _vehicleSystemId,       // system_id
+        _vehicleComponentId,    // component_id
+        mavlinkChannel(),       // chan
+        &msg,                   // mavlink_message_t*
+        gimbal.target_system,
+        gimbal.target_component,
+        gimbal.time_boot_ms,
+        gimbal.flags,
+        gimbal.q,               // 注意这里直接传 float[4] 数组
+        gimbal.angular_velocity_x,
+        gimbal.angular_velocity_y,
+        gimbal.angular_velocity_z,
+        0,                      // failure_flags
+        0.0f,                   // delta_yaw
+        0.0f,                   // delta_yaw_velocity
+        gimbal.gimbal_device_id
+        );
+
+            // 发送到 QGC
+    respondWithMavlinkMessage(msg);
+}
+
 
 void MockLink::_sendHighLatency2()
 {
@@ -477,28 +535,28 @@ void MockLink::_sendBatteryStatus()
 
 
 
-            // (void) mavlink_msg_battery_status_pack_chan(
-    //     _vehicleSystemId,
-    //     _vehicleComponentId,
-    //     static_cast<uint8_t>(mavlinkChannel()),
-    //     &msg,
-    //     2,                          // battery id
-    //     MAV_BATTERY_FUNCTION_ALL,
-    //     MAV_BATTERY_TYPE_LIPO,
-    //     INT16_MAX,                  // temp cdegC
-    //     rgVoltagesNone,
-    //     600,                        // battery cA
-    //     100,                        // current consumed mAh
-    //     -1,                         // energy consumed not supported
-    //     _battery2PctRemaining,
-    //     _battery2TimeRemaining,
-    //     _battery2ChargeState,
-    //     rgVoltagesExtNone,
-    //     0, // MAV_BATTERY_MODE
-    //     0  // MAV_BATTERY_FAULT
-    // );
+            (void) mavlink_msg_battery_status_pack_chan(
+        _vehicleSystemId,
+        _vehicleComponentId,
+        static_cast<uint8_t>(mavlinkChannel()),
+        &msg,
+        2,                          // battery id
+        MAV_BATTERY_FUNCTION_ALL,
+        MAV_BATTERY_TYPE_LIPO,
+        INT16_MAX,                  // temp cdegC
+        rgVoltagesNone,
+        600,                        // battery cA
+        100,                        // current consumed mAh
+        -1,                         // energy consumed not supported
+        _battery2PctRemaining,
+        _battery2TimeRemaining,
+        _battery2ChargeState,
+        rgVoltagesExtNone,
+        0, // MAV_BATTERY_MODE
+        0  // MAV_BATTERY_FAULT
+    );
 
-    // respondWithMavlinkMessage(msg);
+    respondWithMavlinkMessage(msg);
 
 
 }
@@ -683,7 +741,8 @@ void MockLink::_sendMockMessages()
         };
 
                 // 写入扰动后的值
-        auto write_u16 = [&](int index, int16_t value) {
+        auto write_u16 = [&](int index, int16_t value)
+        {
             data32.data[index]     = value & 0xFF;
             data32.data[index + 1] = (value >> 8) & 0xFF;
         };
@@ -1647,6 +1706,7 @@ void MockLink::_sendHomePosition()
     respondWithMavlinkMessage(msg);
 }
 
+//原始GPS传感器数，有水平精度因子等
 void MockLink::_sendGpsRawInt()
 {
     static uint64_t timeTick = 0;
@@ -1678,6 +1738,8 @@ void MockLink::_sendGpsRawInt()
     respondWithMavlinkMessage(msg);
 }
 
+
+//全球位置，基于 GPS（或 GNSS）提供的经纬度+高度
 void MockLink::_sendGlobalPositionInt()
 {
     static uint64_t timeTick = 0;
@@ -2179,7 +2241,7 @@ void MockLink::_sendRemoteIDArmStatus()
         _vehicleSystemId,
         MAV_COMP_ID_ODID_TXRX_1,
         &msg,
-        MAV_ODID_ARM_STATUS_GOOD_TO_ARM,
+        MAV_ODID_ARM_STATUS_GOOD_TO_ARM,// 状态：可以解锁（良好状态）
         QStringLiteral("No Error").toStdString().c_str()
     );
     respondWithMavlinkMessage(msg);

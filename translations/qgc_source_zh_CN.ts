@@ -4899,7 +4899,7 @@ Click Ok to start the auto-tuning process.
     <message>
         <location filename="../src/UI/toolbar/BatteryIndicator.qml" line="290"/>
         <source>Battery Display</source>
-        <translation>电池显示屏</translation>
+        <translation>电池阈值设置</translation>
     </message>
     <message>
         <location filename="../src/UI/toolbar/BatteryIndicator.qml" line="295"/>
@@ -4909,7 +4909,7 @@ Click Ok to start the auto-tuning process.
     <message>
         <location filename="../src/UI/toolbar/BatteryIndicator.qml" line="303"/>
         <source>Coloring</source>
-        <translation>着色</translation>
+        <translation>颜色</translation>
     </message>
     <message>
         <location filename="../src/UI/toolbar/BatteryIndicator.qml" line="376"/>
@@ -4924,7 +4924,7 @@ Click Ok to start the auto-tuning process.
     <message>
         <location filename="../src/UI/toolbar/BatteryIndicator.qml" line="402"/>
         <source>Vehicle Power</source>
-        <translation>车辆动力</translation>
+        <translation>飞行器动力</translation>
     </message>
     <message>
         <location filename="../src/UI/toolbar/BatteryIndicator.qml" line="403"/>
@@ -7023,7 +7023,7 @@ Click Ok to start the auto-tuning process.
     <message>
         <location filename="../src/FlightDisplay/FlyViewMap.qml" line="621"/>
         <source>ROI at location</source>
-        <translation>地点投资回报率</translation>
+        <translation>定位ROI</translation>
     </message>
     <message>
         <location filename="../src/FlightDisplay/FlyViewMap.qml" line="633"/>
@@ -8062,7 +8062,7 @@ Click Ok to start the auto-tuning process.
     <message>
         <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="39"/>
         <source>Return</source>
-        <translation>返航|返回</translation>
+        <translation>返航</translation>
     </message>
     <message>
         <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="40"/>
@@ -10070,12 +10070,12 @@ Click Ok to start the auto-tuning process.
     <message>
         <location filename="../src/UI/toolbar/MainStatusIndicator.qml" line="173"/>
         <source>Force Arm</source>
-        <translation>力臂</translation>
+        <translation>强制解锁</translation>
     </message>
     <message>
         <location filename="../src/UI/toolbar/MainStatusIndicator.qml" line="173"/>
         <source>Arm</source>
-        <translation>臂</translation>
+        <translation>解锁</translation>
     </message>
     <message>
         <location filename="../src/UI/toolbar/MainStatusIndicator.qml" line="219"/>
@@ -17301,17 +17301,17 @@ ROTATION_NONE表示飞行方向上的组件点。</translation>
     <message>
         <location filename="../src/UI/preferences/TelemetrySettings.qml" line="66"/>
         <source>Only connect to vehicle with same MAVLink protocol version</source>
-        <translation>仅连接到具有相同MAVLink协议版本的车辆</translation>
+        <translation>仅连接到具有相同MAVLink协议版本的飞机</translation>
     </message>
     <message>
         <location filename="../src/UI/preferences/TelemetrySettings.qml" line="75"/>
         <source>MAVLink 2 Signing</source>
-        <translation>MAVLink 2签约</translation>
+        <translation>MAVLink2 签名</translation>
     </message>
     <message>
         <location filename="../src/UI/preferences/TelemetrySettings.qml" line="76"/>
         <source>Signing keys should only be sent to the vehicle over secure links.</source>
-        <translation>签名密钥只能通过安全链接发送到车辆。</translation>
+        <translation>签名密钥只能通过安全链接发送到飞机。</translation>
     </message>
     <message>
         <location filename="../src/UI/preferences/TelemetrySettings.qml" line="92"/>
@@ -17321,12 +17321,12 @@ ROTATION_NONE表示飞行方向上的组件点。</translation>
     <message>
         <location filename="../src/UI/preferences/TelemetrySettings.qml" line="97"/>
         <source>Send to Vehicle</source>
-        <translation>发送到车辆</translation>
+        <translation>发送到飞机</translation>
     </message>
     <message>
         <location filename="../src/UI/preferences/TelemetrySettings.qml" line="110"/>
         <source>Signing key has changed. Don&apos;t forget to send to Vehicle(s) if needed.</source>
-        <translation>签名密钥已更改。如果需要，不要忘记发送给车辆。</translation>
+        <translation>签名密钥已更改。如果需要，不要忘记发送给飞机。</translation>
     </message>
     <message>
         <location filename="../src/UI/preferences/TelemetrySettings.qml" line="117"/>
@@ -17356,7 +17356,7 @@ ROTATION_NONE表示飞行方向上的组件点。</translation>
     <message>
         <location filename="../src/UI/preferences/TelemetrySettings.qml" line="151"/>
         <source>Save logs even if vehicle was not armed</source>
-        <translation>即使车辆没有武装，也要保存日志</translation>
+        <translation>即使飞机没有武装，也要保存日志</translation>
     </message>
     <message>
         <location filename="../src/UI/preferences/TelemetrySettings.qml" line="160"/>
@@ -17372,8 +17372,8 @@ ROTATION_NONE表示飞行方向上的组件点。</translation>
     <message>
         <location filename="../src/UI/preferences/TelemetrySettings.qml" line="175"/>
         <source>Controlled By vehicle</source>
-        <translatorcomment>由车辆控制</translatorcomment>
-        <translation>由车辆控制</translation>
+        <translatorcomment>由飞机控制</translatorcomment>
+        <translation>由飞机控制</translation>
     </message>
     <message>
         <location filename="../src/UI/preferences/TelemetrySettings.qml" line="182"/>
@@ -17413,7 +17413,7 @@ ROTATION_NONE表示飞行方向上的组件点。</translation>
     <message>
         <location filename="../src/UI/preferences/TelemetrySettings.qml" line="239"/>
         <source>Link Status (Current Vehicle))</source>
-        <translation>链接状态（当前车辆）</translation>
+        <translation>链接状态（当前飞机）</translation>
     </message>
     <message>
         <location filename="../src/UI/preferences/TelemetrySettings.qml" line="243"/>
@@ -17438,7 +17438,7 @@ ROTATION_NONE表示飞行方向上的组件点。</translation>
     <message>
         <location filename="../src/UI/preferences/TelemetrySettings.qml" line="267"/>
         <source>Signing:</source>
-        <translation>签字：</translation>
+        <translation>签名：</translation>
     </message>
 </context>
 <context>
@@ -18536,7 +18536,7 @@ ROTATION_NONE表示飞行方向上的组件点。</translation>
     <message>
         <location filename="../src/VehicleSetup/VehicleSummary.qml" line="86"/>
         <source>Below you will find a summary of the settings for your vehicle. To the left are the setup menus for each component.</source>
-        <translation>您将会从以下信息框中看到飞机设置的概况。左边是每个组件的设置菜单。</translation>
+        <translation>您将会从以下信息框中看到飞机设置的概况，下面是每个组件的设置菜单。</translation>
     </message>
     <message>
         <location filename="../src/VehicleSetup/VehicleSummary.qml" line="87"/>
@@ -18554,7 +18554,7 @@ ROTATION_NONE表示飞行方向上的组件点。</translation>
     <message>
         <location filename="../src/FlightDisplay/VehicleWarnings.qml" line="56"/>
         <source>The vehicle has failed a pre-arm check. In order to arm the vehicle, resolve the failure.</source>
-        <translation>车辆未能进行武装前检查。为了装备车辆，解决故障。</translation>
+        <translation>飞机未能进行解锁前检查。为了装备飞机，请解决故障。</translation>
     </message>
 </context>
 <context>
@@ -18562,7 +18562,7 @@ ROTATION_NONE表示飞行方向上的组件点。</translation>
     <message>
         <location filename="../src/AnalyzeView/VibrationPage.qml" line="26"/>
         <source>Analyze vibration associated with your vehicle.</source>
-        <translation>分析与车辆相关的振动。</translation>
+        <translation>分析与飞机相关的振动。</translation>
     </message>
     <message>
         <location filename="../src/AnalyzeView/VibrationPage.qml" line="98"/>

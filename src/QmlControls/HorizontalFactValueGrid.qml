@@ -195,7 +195,7 @@ T.HorizontalFactValueGrid {
 
     Component {
         id: valueEditDialog
-
+//弹出编辑对话框组件
         InstrumentValueEditDialog { }
     }
 }

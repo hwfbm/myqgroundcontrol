@@ -18,7 +18,7 @@ GuidedToolStripAction {
 
     text:       "Gripper"
     iconSource: "/res/Gripper.svg"          
-    visible:    !_isVehicleArmed && _grip_enable   // in this way if the pilot it's on the ground can release the cargo without actions tool
+    visible:   !_isVehicleArmed && _grip_enable   // in this way if the pilot it's on the ground can release the cargo without actions tool
     enabled:    _grip_enable
     actionID:   _guidedController.actionGripper
 }

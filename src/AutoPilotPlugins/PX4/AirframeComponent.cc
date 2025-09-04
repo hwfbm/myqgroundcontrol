@@ -15,6 +15,9 @@
 #include "ParameterManager.h"
 #include "Vehicle.h"
 
+//基类构造函数初始化
+//表示在 AirframeComponent 构造时，先调用它的父类 VehicleComponent 的构造函数，并把参数传过去。
+//因为 AirframeComponent 继承自 VehicleComponent，所以必须保证父类先被正确初始化
 AirframeComponent::AirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::UnknownVehicleComponent, parent)
     , _name(tr("Airframe"))

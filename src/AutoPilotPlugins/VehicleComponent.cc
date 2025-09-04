@@ -61,6 +61,7 @@ void VehicleComponent::addSummaryQmlComponent(QQmlContext *context, QQuickItem *
 void VehicleComponent::setupTriggerSignals()
 {
     // Watch for changed on trigger list params
+    //当组件关注的参数发生变化时，这个函数确保 _triggerUpdated() 会被调用
     for (const QString &paramName: setupCompleteChangedTriggerList()) {
         if (_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, paramName)) {
             Fact *const fact = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, paramName);

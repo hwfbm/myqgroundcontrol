@@ -17,9 +17,21 @@ import QGroundControl.Controls
 import QGroundControl.Palette
 import QGroundControl.ScreenTools
 
+
+// QGroundControl 中用于“飞行任务完成后弹出提示框”的逻辑和 UI 实现组件，功能上是为了在任务完成时给用户提供一些选项，比如是否：
+// 清除当前的任务计划
+// 保留任务计划
+// 继续执行任务（Resume Mission）
+
+// 当 _activeVehicle.armed 从 true → false：
+// 系统会检测：
+// 是否曾经武装（起飞）；
+// 是否曾经处于“任务飞行”模式；
+// 是否真的有计划、围栏、集结点或者相机触发点。
+// 若满足这些条件，就会 missionCompleteDialogComponent.createObject(...).open()，弹出对话框。
 /// Dialog which shows up when a flight completes. Prompts the user for things like whether they should remove the plan from the vehicle.
 Item {
-    visible: false
+    visible: false //它不渲染界面本身，而是通过内部的状态变化来触发一个 QGCPopupDialog。
 
     property var missionController
     property var geoFenceController

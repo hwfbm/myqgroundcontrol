@@ -70,6 +70,9 @@ if(ANDROID)
             ${CMAKE_SOURCE_DIR}/android/src/AndroidInit.cc
             ${CMAKE_SOURCE_DIR}/android/src/AndroidInterface.cc
             ${CMAKE_SOURCE_DIR}/android/src/AndroidInterface.h
+            ${CMAKE_SOURCE_DIR}/android/src/androidbattery.h
+            ${CMAKE_SOURCE_DIR}/android/src/androidbattery.cpp
+
     )
 
     target_link_libraries(${CMAKE_PROJECT_NAME}

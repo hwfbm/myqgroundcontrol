@@ -20,434 +20,1568 @@ import QGroundControl.ScreenTools
 import QGroundControl.Controllers
 import QGroundControl.Palette
 
+// SetupPage {
+//     id:             radioPage
+//     pageComponent:  pageComponent
+
+//     Component {
+//         id: pageComponent
+
+//         Item {
+//             width:  availableWidth
+//             height: Math.max(leftColumn.height, rightColumn.height)
+
+//             //钩子函数，SetupPage 会在页面加载完成后调用这个函数（QGC 约定）
+//             //这里启动 RadioComponentController 的状态机（controller.start()），并更新一次通道数
+//             //updateChannelCount() 目前是空的，作为将来 UI 随通道数联动的扩展点
+//             function setupPageCompleted() {
+//                 controller.start()
+//                 updateChannelCount()
+//             }
+
+//             function updateChannelCount()
+//             {
+//             }
+
+//             QGCPalette { id: qgcPal; colorGroupEnabled: radioPage.enabled }
+
+
+
+//             // 读取 RC 通道值、映射关系（roll/pitch/yaw/throttle 是否已映射、是否反向等）
+//             // 校准流程状态（nextButtonClicked/skip/cancel）
+//             // 绑定功能（Spektrum、CRSF）、拷贝 Trim、获取参数 Fact、帮助图片 imageHelp 等
+//             RadioComponentController {
+//                 id:             controller
+//                 statusText:     statusText
+//                 cancelButton:   cancelButton
+//                 nextButton:     nextButton
+//                 skipButton:     skipButton
+//                 onChannelCountChanged:              updateChannelCount()
+//                 //stick 映射变化时提示“需要重启
+//                 onFunctionMappingChangedAPMReboot:  mainWindow.showMessageDialog(qsTr("Reboot required"), qsTr("Your stick mappings have changed, you must reboot the vehicle for correct operation."))
+//                 //油门反相时提示“需要在遥控上修正”
+//                 onThrottleReversedCalFailure:       mainWindow.showMessageDialog(qsTr("Throttle channel reversed"), qsTr("Calibration failed. The throttle channel on your transmitter is reversed. You must correct this on your transmitter in order to complete calibration."))
+//             }
+
+
+
+//            //模式
+//             Component {
+//                 id: spektrumBindDialogComponent
+
+//                 QGCPopupDialog {
+//                     title:      qsTr("Spektrum Bind")
+//                     buttons:    Dialog.Ok | Dialog.Cancel
+
+//                     onAccepted: { controller.spektrumBindMode(radioGroup.checkedButton.bindMode) }
+
+//                     ButtonGroup { id: radioGroup }
+//                     //通过 ButtonGroup 互斥，默认勾选 DSMX8
+//                     ColumnLayout {
+//                         spacing: ScreenTools.defaultFontPixelHeight / 2
+
+//                         QGCLabel {
+//                             wrapMode:   Text.WordWrap
+//                             text:       qsTr("Click Ok to place your Spektrum receiver in the bind mode.")
+//                         }
+
+//                         QGCLabel {
+//                             wrapMode:   Text.WordWrap
+//                             text:       qsTr("Select the specific receiver type below:")
+//                         }
+
+//                         QGCRadioButton {
+//                             text:               qsTr("DSM2 Mode")
+//                             ButtonGroup.group:  radioGroup
+//                             property int bindMode: RadioComponentController.DSM2
+//                         }
+
+//                         QGCRadioButton {
+//                             text:               qsTr("DSMX (7 channels or less)")
+//                             ButtonGroup.group:  radioGroup
+//                             property int bindMode: RadioComponentController.DSMX7
+//                         }
+
+//                         QGCRadioButton {
+//                             checked:            true
+//                             text:               qsTr("DSMX (8 channels or more)")
+//                             ButtonGroup.group:  radioGroup
+//                             property int bindMode: RadioComponentController.DSMX8
+//                         }
+//                     }
+//                 }
+//             }
+
+//             // Live channel monitor control component
+
+//             //通道监视器子组件
+//             //每个通道（Roll/Pitch/Yaw/Throttle）右侧的水平条 + 圆点指示器
+//             Component {
+//                 id: channelMonitorDisplayComponent
+
+//                 Item {
+//                     property int    rcValue:    1500
+
+
+//                     property int            __lastRcValue:      1500
+//                     readonly property int   __rcValueMaxJitter: 2
+//                     property color          __barColor:         qgcPal.windowShade
+
+//                     readonly property int _pwmMin:      800
+//                     readonly property int _pwmMax:      2200
+//                     readonly property int _pwmRange:    _pwmMax - _pwmMin
+
+//                     // Bar
+//                     Rectangle {
+//                         id:                     bar
+//                         anchors.verticalCenter: parent.verticalCenter
+//                         width:                  parent.width
+//                         height:                 parent.height / 2
+//                         border.color: "#888888"
+//                         border.width:0.8
+//                         radius:3
+//                         color:                  "transparent"/*__barColor*/
+//                     }
+
+//                     // Center point
+//                     Rectangle {
+//                         anchors.horizontalCenter:   parent.horizontalCenter
+//                         width:                      globals.defaultTextWidth / 2
+//                         height:                     parent.height
+//                         color:                      qgcPal.window
+//                     }
+
+//                     // Indicator
+//                     Rectangle {
+//                         anchors.verticalCenter: parent.verticalCenter
+//                         width:                  parent.height * 0.75
+//                         height:                 width
+//                         radius:                 width / 2
+//                         color:                 "#7FFF00"/* qgcPal.text*/
+//                         visible:                mapped
+//                         x:                      (((reversed ? _pwmMax - rcValue : rcValue - _pwmMin) / _pwmRange) * parent.width) - (width / 2)
+//                     }
+
+//                     QGCLabel {
+//                         anchors.fill:           parent
+//                         horizontalAlignment:    Text.AlignHCenter
+//                         verticalAlignment:      Text.AlignVCenter
+//                         font.pointSize: ScreenTools.largeFontPointSize*0.5
+//                         text:                   qsTr("Not Mapped")
+//                         visible:                !mapped
+//                     }
+
+//                     ColorAnimation {
+//                         id:         barAnimation
+//                         target:     bar
+//                         property:   "color"
+//                         from:       "yellow"
+//                         to:         __barColor
+//                         duration:   1500
+//                     }
+//                 }
+//             } // Component - channelMonitorDisplayComponent
+
+//             Column {
+//                 id:             rightColumn
+//                 anchors.top:    parent.top
+//                 anchors.right:  parent.right
+//                 width:          ScreenTools.defaultFontPixelWidth * 10
+//                 spacing:        ScreenTools.defaultFontPixelHeight / 2
+
+//                 Row {
+//                     spacing: ScreenTools.defaultFontPixelWidth
+
+//                     QGCRadioButton {
+//                         text:       qsTr("Mode 1")
+//                         checked:    controller.transmitterMode == 1
+//                         onClicked:  controller.transmitterMode = 1
+//                     }
+
+//                     QGCRadioButton {
+//                         text:       qsTr("Mode 2")
+//                         checked:    controller.transmitterMode == 2
+//                         onClicked:  controller.transmitterMode = 2
+//                     }
+//                 }
+
+//                 Image {
+//                     width:      parent.width*0.5
+//                     fillMode:   Image.PreserveAspectFit
+//                     smooth:     true
+//                     source:     controller.imageHelp
+//                 }
+
+//                 RCChannelMonitor {
+//                     width:      parent.width
+//                     twoColumn:  true
+//                 }
+//             }
+//             // Left side column
+//             Column {
+//                 id:             leftColumn
+//                 anchors.left:   parent.left
+//                 anchors.right:  columnSpacer.left
+//                 spacing:        10
+
+//                 // Attitude Controls
+//                 Column {
+//                     width:      parent.width
+//                     spacing:    5
+//                     QGCLabel { text: qsTr("Attitude Controls") }
+
+//                     Item {
+//                         width:  parent.width
+//                         height: globals.defaultTextHeight * 2
+//                         QGCLabel {
+//                             id:     rollLabel
+//                             width:  globals.defaultTextWidth * 6
+//                             text:   qsTr("Roll")
+//                         }
+
+//                         Loader {
+//                             id:                 rollLoader
+//                             anchors.left:       rollLabel.right
+//                             anchors.right:      parent.right
+//                             height:             globals.defaultTextHeight
+//                             width:              100
+//                             sourceComponent:    channelMonitorDisplayComponent
+
+//                             property bool mapped:           controller.rollChannelMapped
+//                             property bool reversed:         controller.rollChannelReversed
+//                         }
+
+//                         Connections {
+//                             target: controller
+
+//                             onRollChannelRCValueChanged: (rcValue) => rollLoader.item.rcValue = rcValue
+//                         }
+//                     }
+
+//                     Item {
+//                         width:  parent.width
+//                         height: globals.defaultTextHeight * 2
+
+//                         QGCLabel {
+//                             id:     pitchLabel
+//                             width:  globals.defaultTextWidth *6
+//                             text:   qsTr("Pitch")
+//                         }
+
+//                         Loader {
+//                             id:                 pitchLoader
+//                             anchors.left:       pitchLabel.right
+//                             anchors.right:      parent.right
+//                             height:             globals.defaultTextHeight
+//                             width:              100
+//                             sourceComponent:    channelMonitorDisplayComponent
+
+//                             property bool mapped:           controller.pitchChannelMapped
+//                             property bool reversed:         controller.pitchChannelReversed
+//                         }
+
+//                         Connections {
+//                             target: controller
+
+//                             onPitchChannelRCValueChanged: (rcValue) => pitchLoader.item.rcValue = rcValue
+//                         }
+//                     }
+
+//                     Item {
+//                         width:  parent.width
+//                         height: globals.defaultTextHeight * 2
+
+//                         QGCLabel {
+//                             id:     yawLabel
+//                             width:  globals.defaultTextWidth * 6
+//                             text:   qsTr("Yaw")
+//                         }
+
+//                         Loader {
+//                             id:                 yawLoader
+//                             anchors.left:       yawLabel.right
+//                             anchors.right:      parent.right
+//                             height:             globals.defaultTextHeight
+//                             width:              100
+//                             sourceComponent:    channelMonitorDisplayComponent
+
+//                             property bool mapped:           controller.yawChannelMapped
+//                             property bool reversed:         controller.yawChannelReversed
+//                         }
+
+//                         Connections {
+//                             target: controller
+
+//                             onYawChannelRCValueChanged: (rcValue) => yawLoader.item.rcValue = rcValue
+//                         }
+//                     }
+
+//                     Item {
+//                         width:  parent.width
+//                         height: globals.defaultTextHeight * 2
+
+//                         QGCLabel {
+//                             id:     throttleLabel
+//                             width:  globals.defaultTextWidth * 6
+//                             text:   qsTr("Throttle")
+//                         }
+
+//                         Loader {
+//                             id:                 throttleLoader
+//                             anchors.left:       throttleLabel.right
+//                             anchors.right:      parent.right
+//                             height:             globals.defaultTextHeight
+//                             width:              100
+//                             sourceComponent:    channelMonitorDisplayComponent
+
+//                             property bool mapped:           controller.throttleChannelMapped
+//                             property bool reversed:         controller.throttleChannelReversed
+//                         }
+
+//                         Connections {
+//                             target:                             controller
+//                             onThrottleChannelRCValueChanged:    (rcValue) => throttleLoader.item.rcValue = rcValue
+//                         }
+//                     }
+//                 } // Column - Attitude Control labels
+
+//                 // Command Buttons
+//                 Row {
+//                     spacing: 10
+
+//                     QGCButton {
+//                         id:         skipButton
+//                         // width:ScreenTools.defaultFontPixelWidth*6
+//                         // height:width*0.6
+//                         text:       qsTr("Skip")
+
+//                         onClicked:  controller.skipButtonClicked()
+//                     }
+
+//                     QGCButton {
+//                         id:         cancelButton
+//                         text:       qsTr("Cancel")
+//                         onClicked:  controller.cancelButtonClicked()
+//                     }
+
+//                     QGCButton {
+//                         id:         nextButton
+//                         primary:    true
+//                         text:       qsTr("Calibrate")
+
+//                         onClicked: {
+//                             if (text === qsTr("Calibrate")) {
+//                                 if (controller.channelCount < controller.minChannelCount) {
+//                                     mainWindow.showMessageDialog(qsTr("Radio Not Ready"),
+//                                                                  controller.channelCount == 0 ? qsTr("Please turn on transmitter.") :
+//                                                                                                 (controller.channelCount < controller.minChannelCount ?
+//                                                                                                      qsTr("%1 channels or more are needed to fly.").arg(controller.minChannelCount) :
+//                                                                                                      qsTr("Ready to calibrate.")))
+//                                 } else {
+//                                     mainWindow.showMessageDialog(qsTr("Zero Trims"),
+//                                                                  qsTr("Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration.\n\n%1").arg(
+//                                                                      (QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ? "" : qsTr("Please ensure all motor power is disconnected AND all props are removed from the vehicle."))),
+//                                                                  Dialog.Ok,
+//                                                                  function() { controller.nextButtonClicked() })
+//                                 }
+//                             } else {
+//                                 controller.nextButtonClicked()
+//                             }
+//                         }
+//                     }
+//                 } // Row - Buttons
+
+//                 // Status Text
+//                 QGCLabel {
+//                     id:         statusText
+//                     width:      parent.width
+//                     wrapMode:   Text.WordWrap
+//                 }
+
+//                 Rectangle {
+//                     width:          parent.width
+//                     height:         1
+//                     color:   "#888888"
+
+//                 }
+
+//                 QGCLabel { text: qsTr("Additional Radio setup:") }
+
+//                 GridLayout {
+//                     id:                 switchSettingsGrid
+//                     anchors.left:       parent.left
+//                     anchors.right:      parent.right
+//                     columns:            2
+//                     columnSpacing:      ScreenTools.defaultFontPixelWidth
+
+//                     Repeater {
+//                         model: QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ?
+//                                    (QGroundControl.multiVehicleManager.activeVehicle.multiRotor ?
+//                                         [ "RC_MAP_AUX1", "RC_MAP_AUX2", "RC_MAP_PARAM1", "RC_MAP_PARAM2", "RC_MAP_PARAM3"] :
+//                                         [ "RC_MAP_FLAPS", "RC_MAP_AUX1", "RC_MAP_AUX2", "RC_MAP_PARAM1", "RC_MAP_PARAM2", "RC_MAP_PARAM3"]) :
+//                                    0
+
+//                         RowLayout {
+//                             Layout.fillWidth: true
+
+//                             property Fact fact: controller.getParameterFact(-1, modelData)
+
+//                             QGCLabel {
+//                                 Layout.fillWidth:   true
+//                                 text:               fact.shortDescription
+//                             }
+//                             FactComboBox {
+//                                 width:      ScreenTools.defaultFontPixelWidth * 15
+//                                 fact:       parent.fact
+//                                 indexModel: false
+//                             }
+//                         }
+//                     }
+//                 }
+
+//                 RowLayout {
+//                     QGCButton {
+//                         id:         bindButton
+//                         text:       qsTr("Spektrum Bind")
+//                         onClicked:  spektrumBindDialogComponent.createObject(mainWindow).open()
+//                     }
+
+//                     QGCButton {
+//                         text:       qsTr("CRSF Bind")
+//                         onClicked:  mainWindow.showMessageDialog(qsTr("CRSF Bind"),
+//                                                                  qsTr("Click Ok to place your CRSF receiver in the bind mode."),
+//                                                                  Dialog.Ok | Dialog.Cancel,
+//                                                                  function() { controller.crsfBindMode() })
+//                     }
+
+//                     QGCButton {
+//                         text:       qsTr("Copy Trims")
+//                         onClicked:  mainWindow.showMessageDialog(qsTr("Copy Trims"),
+//                                                                  qsTr("Center your sticks and move throttle all the way down, then press Ok to copy trims. After pressing Ok, reset the trims on your radio back to zero."),
+//                                                                  Dialog.Ok | Dialog.Cancel,
+//                                                                  function() { controller.copyTrims() })
+//                     }
+//                 }
+//             } // Column - Left Column
+
+
+
+//             Item {
+//                 id:             columnSpacer
+//                 anchors.right:  rightColumn.left
+//                 width:          20
+//             }
+
+//             // Right side column
+//     // Column - Right Column
+//         } // Item
+//     } // Component - pageComponent
+// } // SetupPage
+
+
+// SetupPage {
+//     id: radioPage
+//    /* property var vehicleComponent: QtObject {
+//         // 可以加默认字段，避免内部逻辑访问时报错
+//         property string name: ""
+//         property string description: ""
+//         property bool allowSetupWhileArmed: false
+//         property bool allowSetupWhileFlying: false
+//     }*/
+//     pageComponent: pageComponent
+//   Component {
+//         id: pageComponent
+
+//         Item {
+//             width: availableWidth
+
+//             QGCPalette { id: qgcPal; colorGroupEnabled: radioPage.enabled }
+
+//             function setupPageCompleted() {
+
+//                            controller.start()
+//                 console.log("setupPageCompleted called")
+//                            updateChannelCount()
+//                        }
+//             function updateChannelCount()
+//             {
+//                         }
+//             RadioComponentController {
+//                 id: controller
+//                 statusText: statusText
+//                 cancelButton: cancelButton
+//                 nextButton: nextButton
+//                 skipButton: skipButton
+//                 onChannelCountChanged:              updateChannelCount()
+//                //stick 映射变化时提示“需要重启
+//                onFunctionMappingChangedAPMReboot:  mainWindow.showMessageDialog(qsTr("Reboot required"), qsTr("Your stick mappings have changed, you must reboot the vehicle for correct operation."))
+//                //油门反相时提示“需要在遥控上修正”
+//                onThrottleReversedCalFailure:       mainWindow.showMessageDialog(qsTr("Throttle channel reversed"), qsTr("Calibration failed. The throttle channel on your transmitter is reversed. You must correct this on your transmitter in order to complete calibration."))
+//             }
+
+//             StackView {
+//                 id: stackView
+//                 anchors.fill: parent
+//                 initialItem: buttonPageComponent
+//             }
+
+//             // ------------------- 按钮页 -------------------
+//             Component {
+//                 id: buttonPageComponent
+
+//                 Column {
+//                     spacing: 3
+//                     width: parent.width
+
+//                     // 遥控器校准
+//                     Leftbutton {
+//                         text: qsTr("遥控器校准")
+//                         width: parent.width
+//                         onClicked: stackView.push(calibrationPageComponent)
+//                     }
+//                     Rectangle {
+//                         width: parent.width
+//                         height:1
+//                         opacity: 0.6
+//                         color: "#888888"
+//                     }
+
+//                     // 摇杆模式
+//                     Leftbutton {
+//                         text: qsTr("摇杆模式")
+//                         width: parent.width
+//                         onClicked: stackView.push(moderemoteComponent)
+//                     }
+//                     Rectangle {
+//                         width: parent.width
+//                         height:1
+//                         opacity: 0.6
+//                         color: "#888888"
+//                     }
+
+//                     // Spektrum
+//                     Leftbutton {
+//                         text: qsTr("Spektrum 绑定")
+//                         width: parent.width
+//                         onClicked: stackView.push(spektrumBindDialogComponent)
+//                     }
+//                     Rectangle {
+//                         width: parent.width
+//                         height:1
+//                         opacity: 0.6
+//                         color: "#888888"
+//                     }
+//                     // 其他设置
+//                     Leftbutton {
+//                         text: qsTr("其他设置")
+//                         width: parent.width
+//                         onClicked: stackView.push(additionComponent)
+//                     }
+//                     Rectangle {
+//                         width: parent.width
+//                         height:1
+//                         opacity: 0.6
+//                         color: "#888888"
+//                     }
+//                 }
+//             }
+// //---------------按钮组件--------------
+
+//             //遥控器校准+按钮组件
+//             Component {
+//                 id: calibrationPageComponent
+//                 ColumnLayout {
+//                     spacing: 40
+
+//                     // 顶部 Back 按钮和分割线
+//                     ColumnLayout {
+//                         Layout.fillWidth: true
+//                         spacing: 1 // 按钮和线之间间隔
+
+//                         QGCButton {
+//                             id: back
+//                             text: qsTr("返回")
+//                             onClicked: stackView.pop()
+//                         }
+
+
+//                     }
+
+//                     // Loader 占满剩余空间
+//                     Loader {
+//                         id: leftColumnLoader
+//                         sourceComponent: leftColumnComponent
+//                         Layout.fillWidth: true
+//                         Layout.fillHeight: true
+//                     }
+//                 }
+//             }
+//             //摇杆模式组件+按钮
+//             Component {
+//                 id: moderemoteComponent
+//                 ColumnLayout {
+//                     spacing: 10
+
+//                     // 顶部 Back 按钮和分割线
+//                     ColumnLayout {
+//                         Layout.fillWidth: true
+//                         spacing: 1 // 按钮和线之间间隔
+
+//                         QGCButton {
+//                             id: back
+//                             text: qsTr("返回")
+//                             //width:parent.width
+//                             //horizontalAlignment: Qt.AlignLeft
+//                             //Layout.fillWidth: true
+//                             //Layout.preferredHeight: ScreenTools.defaultFontPointSize * 3
+//                             //Layout.minimumWidth: 50
+//                             // setsize: ScreenTools.defaultFontPointSize*1.5
+//                             // bordercolor: "transparent"
+//                             // backcolor: "transparent"
+//                             onClicked: stackView.pop()
+//                         }
+
+
+//                     }
+
+//                     // Loader 占满剩余空间
+//                     Loader {
+//                         id: leftColumnLoader
+//                         sourceComponent: moderemote
+//                         Layout.fillWidth: true
+//                         Layout.fillHeight: true
+//                     }
+//                 }
+//             }
+//             //摇杆模式组件+按钮
+//             Component {
+//                 id: spektrumBindDialogComponent
+//                 ColumnLayout {
+//                     spacing: 10
+
+//                     // 顶部 Back 按钮和分割线
+//                     ColumnLayout {
+//                         Layout.fillWidth: true
+//                         spacing: 1 // 按钮和线之间间隔
+
+//                         QGCButton {
+//                             id: back
+//                             text: qsTr("返回")
+//                             onClicked: stackView.pop()
+//                         }
+
+
+//                     }
+
+//                     // Loader 占满剩余空间
+//                     Loader {
+//                         id: leftColumnLoader
+//                         sourceComponent: spektrumBindPage
+//                         Layout.fillHeight: true
+//                     }
+//                 }
+//             }
+//             Component {
+//                 id: additionComponent
+//                 ColumnLayout {
+//                     spacing: 10
+
+//                     // 顶部 Back 按钮和分割线
+//                     ColumnLayout {
+//                         Layout.fillWidth: true
+//                         spacing: 1 // 按钮和线之间间隔
+
+//                         QGCButton {
+//                             id: back
+//                             text: qsTr("返回")
+//                             onClicked: stackView.pop()
+//                         }
+
+
+//                     }
+
+//                     // Loader 占满剩余空间
+//                     Loader {
+//                         id: leftColumnLoader
+//                         sourceComponent: addition
+//                         Layout.fillHeight: true
+//                     }
+//                 }
+//             }
+// //-----------------按钮所加载的组件-----------
+
+//             //其他遥控器设置
+//             Component {
+//                 id: addition
+//                 Item {
+//                     anchors.left:   parent.left
+//                     anchors.right:  parent.right
+//                     anchors.top:    parent.top
+
+//                     Column {
+//                         width: parent.width
+//                         spacing: ScreenTools.defaultFontPixelHeight
+
+//                         // 没有连接飞机时，显示提示
+//                         QGCLabel {
+
+//                             visible: QGroundControl.multiVehicleManager.activeVehicle === null
+//                             text: qsTr("请连接飞机以显示更多遥控器设置")
+//                             //font.pointSize:  ScreenTools.defaultFontPixelHeight*1.
+//                             color: "#7FFF00"
+//                         }
+
+//                         // 有飞机时显示原有设置
+//                         Column {
+//                             visible: QGroundControl.multiVehicleManager.activeVehicle !== null
+//                             spacing: ScreenTools.defaultFontPixelHeight
+
+//                             QGCLabel { text: qsTr("Additional Radio setup:") }
+
+//                             GridLayout {
+//                                 id:                 switchSettingsGrid
+//                                 anchors.left:       parent.left
+//                                 anchors.right:      parent.right
+//                                 columns:            2
+//                                 columnSpacing:      ScreenTools.defaultFontPixelWidth
+
+//                                 Repeater {
+//                                     model: QGroundControl.multiVehicleManager.activeVehicle &&
+//                                            QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ?
+//                                                (QGroundControl.multiVehicleManager.activeVehicle.multiRotor ?
+//                                                     [ "RC_MAP_AUX1", "RC_MAP_AUX2", "RC_MAP_PARAM1", "RC_MAP_PARAM2", "RC_MAP_PARAM3"] :
+//                                                     [ "RC_MAP_FLAPS", "RC_MAP_AUX1", "RC_MAP_AUX2", "RC_MAP_PARAM1", "RC_MAP_PARAM2", "RC_MAP_PARAM3"]) :
+//                                                0
+
+//                                     RowLayout {
+//                                         Layout.fillWidth: true
+
+//                                         property Fact fact: controller.getParameterFact(-1, modelData)
+
+//                                         QGCLabel {
+//                                             Layout.fillWidth:   true
+//                                             text:               fact.shortDescription
+//                                         }
+//                                         FactComboBox {
+//                                             width:      ScreenTools.defaultFontPixelWidth * 15
+//                                             fact:       parent.fact
+//                                             indexModel: false
+//                                         }
+//                                     }
+//                                 }
+//                             }
+
+//                             RowLayout {
+//                                 QGCButton {
+//                                     id:         bindButton
+//                                     text:       qsTr("Spektrum Bind")
+//                                     onClicked:  spektrumBindDialogComponent.createObject(mainWindow).open()
+//                                 }
+
+//                                 QGCButton {
+//                                     text:       qsTr("CRSF Bind")
+//                                     onClicked:  mainWindow.showMessageDialog(qsTr("CRSF Bind"),
+//                                                                              qsTr("Click Ok to place your CRSF receiver in the bind mode."),
+//                                                                              Dialog.Ok | Dialog.Cancel,
+//                                                                              function() { controller.crsfBindMode() })
+//                                 }
+
+//                                 QGCButton {
+//                                     text:       qsTr("Copy Trims")
+//                                     onClicked:  mainWindow.showMessageDialog(qsTr("Copy Trims"),
+//                                                                              qsTr("Center your sticks and move throttle all the way down, then press Ok to copy trims. After pressing Ok, reset the trims on your radio back to zero."),
+//                                                                              Dialog.Ok | Dialog.Cancel,
+//                                                                              function() { controller.copyTrims() })
+//                                 }
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
+
+
+
+//             //Spektrum绑定
+//             // 摇杆模式设置页面组件
+//             Component {
+//                 id: spektrumBindPage
+
+//                 //Item {
+//                     // 主列布局
+//                     ColumnLayout {
+//                         anchors.right: parent.right
+//                         anchors.left: parent.left
+//                         spacing: 10
+
+//                         // 顶部返回按钮
+
+
+//                         // 标题
+//                         // QGCLabel {
+//                         //     text: qsTr("Spektrum 遥控器绑定")
+//                         //     font.pointSize: ScreenTools.largeFontPointSize
+//                         //     Layout.alignment: Qt.AlignHCenter
+//                         //    // Layout.topMargin: 20
+//                         //}
+
+//                         // 说明文字
+//                         QGCLabel {
+//                             Layout.fillWidth: true
+//                             wrapMode: Text.WordWrap
+//                             text: qsTr("点击\"开始绑定\"按钮将您的Spektrum接收器置于绑定模式。")
+//                             Layout.topMargin: 10
+//                         }
+
+//                         QGCLabel {
+//                             Layout.fillWidth: true
+//                             wrapMode: Text.WordWrap
+//                             text: qsTr("请在下方选择特定的接收器类型：")
+//                             Layout.bottomMargin: 10
+//                         }
+
+//                         // 单选按钮组
+//                         ButtonGroup {
+//                             id: radioGroup
+//                             onCheckedButtonChanged: {
+//                                 // 选择变化时可以在这里处理
+//                             }
+//                         }
+
+//                         ColumnLayout {
+//                             Layout.fillWidth: true
+//                             spacing: 12
+
+//                             QGCRadioButton {
+//                                 text: qsTr("DSM2 模式")
+//                                 ButtonGroup.group: radioGroup
+//                                 property int bindMode: RadioComponentController.DSM2// 用实际的值替换 RadioComponentController.DSM2
+//                             }
+
+//                             QGCRadioButton {
+//                                 text: qsTr("DSMX (7通道或更少)")
+//                                 ButtonGroup.group: radioGroup
+//                                 property int bindMode:  RadioComponentController.DSMX7 // 用实际的值替换 RadioComponentController.DSMX7
+//                             }
+
+//                             QGCRadioButton {
+//                                 checked: true
+//                                 text: qsTr("DSMX (8通道或更多)")
+//                                 ButtonGroup.group: radioGroup
+//                                 property int bindMode:RadioComponentController.DSMX8 // 用实际的值替换 RadioComponentController.DSMX8
+//                             }
+//                         }
+
+
+//                         // 底部按钮行
+//                         RowLayout {
+//                             Layout.fillWidth: true
+//                             spacing: 10
+
+//                             // 取消按钮
+//                             QGCButton {
+//                                 text: qsTr("取消")
+//                                 //Layout.fillWidth: true
+//                                 onClicked: stackView.pop() // 直接返回上一页
+//                             }
+
+//                             // 开始绑定按钮
+//                             QGCButton {
+//                                 text: qsTr("开始绑定")
+//                                 //Layout.fillWidth: true
+//                                 primary: true // 主要操作按钮
+
+//                                 onClicked: {
+//                                     if (radioGroup.checkedButton) {
+//                                         // 执行绑定操作
+//                                         controller.spektrumBindMode(radioGroup.checkedButton.bindMode)
+
+//                                         // 显示操作完成提示（可选）
+//                                         // mainWindow.showMessage(qsTr("绑定操作已开始"))
+
+//                                         // 可以选择自动返回或者停留在此页面
+//                                         // stackView.pop() // 立即返回
+//                                     }
+//                                 }
+//                             }
+//                         }
+//                     }
+//                // }
+//             }
+//             // Component {
+//             //                id: spektrumBindDialog
+
+//             //                QGCPopupDialog {
+//             //                    title:      qsTr("Spektrum Bind")
+//             //                    buttons:    Dialog.Ok | Dialog.Cancel
+
+//             //                    onAccepted: { controller.spektrumBindMode(radioGroup.checkedButton.bindMode) }
+
+//             //                    ButtonGroup { id: radioGroup }
+//             //                    //通过 ButtonGroup 互斥，默认勾选 DSMX8
+//             //                    ColumnLayout {
+//             //                        spacing: ScreenTools.defaultFontPixelHeight / 2
+
+//             //                        QGCLabel {
+//             //                            wrapMode:   Text.WordWrap
+//             //                            text:       qsTr("Click Ok to place your Spektrum receiver in the bind mode.")
+//             //                        }
+
+//             //                        QGCLabel {
+//             //                            wrapMode:   Text.WordWrap
+//             //                            text:       qsTr("Select the specific receiver type below:")
+//             //                        }
+
+//             //                        QGCRadioButton {
+//             //                            text:               qsTr("DSM2 Mode")
+//             //                            ButtonGroup.group:  radioGroup
+//             //                            property int bindMode: RadioComponentController.DSM2
+//             //                        }
+
+//             //                        QGCRadioButton {
+//             //                            text:               qsTr("DSMX (7 channels or less)")
+//             //                            ButtonGroup.group:  radioGroup
+//             //                            property int bindMode: RadioComponentController.DSMX7
+//             //                        }
+
+//             //                        QGCRadioButton {
+//             //                            checked:            true
+//             //                            text:               qsTr("DSMX (8 channels or more)")
+//             //                            ButtonGroup.group:  radioGroup
+//             //                            property int bindMode: RadioComponentController.DSMX8
+//             //                        }
+//             //                    }
+//             //                }
+//             //            }
+//             //摇杆模式组件，被加载
+//             Component {
+//                 id: moderemote
+
+//                 Column {
+//                     id: rightColumn
+//                     anchors.top: parent.top
+//                     anchors.left: parent.left
+//                     anchors.right: parent.right
+//                     spacing: ScreenTools.defaultFontPixelHeight / 2
+
+//                     Row {
+//                         spacing: ScreenTools.defaultFontPixelWidth
+
+//                         QGCRadioButton {
+//                             text: qsTr("Mode 1")
+//                             checked: controller.transmitterMode == 1
+//                             onClicked: controller.transmitterMode = 1
+//                         }
+
+//                         QGCRadioButton {
+//                             text: qsTr("Mode 2")
+//                             checked: controller.transmitterMode == 2
+//                             onClicked: controller.transmitterMode = 2
+//                         }
+//                     }
+
+//                     // 图片居中，宽度自适应父项
+//                     Image {
+//                         source: controller.imageHelp
+//                         anchors.horizontalCenter: parent.horizontalCenter
+//                         fillMode: Image.PreserveAspectFit
+//                         smooth: true
+//                         width: parent.width * 0.5   // 可根据需求调整宽度比例
+//                         height: parent.width * 0.3  // 或者根据比例计算高度
+//                     }
+
+//                     // RC 通道监控
+//                     RCChannelMonitor {
+//                         width: parent.width
+//                         twoColumn: true
+//                     }
+//                 }
+//             }
+
+
+
+
+
+//           //遥控器校准通道，被加载
+//             //todo:没接飞机的时候不加载
+//             Component {
+//                 id: leftColumnComponent
+
+//                 Column {
+//                     width: parent.width
+//                     spacing: 10
+
+//                     // // 占位属性，用 Loader 加载后赋值
+//                     // property var controller
+//                     // property var qgcPal
+
+//                     QGCLabel { text: qsTr("Attitude Controls") }
+
+//                     Item {
+//                         width: parent.width
+//                         height: globals.defaultTextHeight * 2
+
+//                         QGCLabel
+//                         {
+//                             id: rollLabel;
+//                             text: qsTr("Roll");
+//                             width:  globals.defaultTextWidth *6
+//                         }
+
+//                         Loader {
+//                             id: rollLoader
+//                             anchors.left: rollLabel.right
+//                             anchors.right: parent.right
+//                             height: globals.defaultTextHeight
+//                             width: 80
+//                             sourceComponent: channelMonitorDisplayComponent
+//                             // property bool mapped: controller.rollChannelMapped
+//                             // property bool reversed: controller.rollChannelReversed
+//                             property bool mapped: controller ? controller.rollChannelMapped : false
+//                             property bool reversed: controller ? controller.rollChannelReversed : false
+//                         }
+
+//                         Connections {
+//                             target: controller
+//                             onRollChannelRCValueChanged: rcValue => rollLoader.item.rcValue = rcValue
+//                         }
+//                     }
+//                     Item {
+//                                             width:  parent.width
+//                                             height: globals.defaultTextHeight * 2
+
+//                                             QGCLabel {
+//                                                 id:     pitchLabel
+//                                                 width:  globals.defaultTextWidth *6
+//                                                 text:   qsTr("Pitch")
+//                                             }
+
+//                                             Loader {
+//                                                 id:                 pitchLoader
+//                                                 anchors.left:       pitchLabel.right
+//                                                 anchors.right:      parent.right
+//                                                 height:             globals.defaultTextHeight
+//                                                 width:             80
+//                                                 sourceComponent:    channelMonitorDisplayComponent
+
+//                                                 property bool mapped:           controller.pitchChannelMapped
+//                                                 property bool reversed:         controller.pitchChannelReversed
+//                                             }
+
+//                                             Connections {
+//                                                 target: controller
+
+//                                                 onPitchChannelRCValueChanged: (rcValue) => pitchLoader.item.rcValue = rcValue
+//                                             }
+//                                         }
+//                     Item {
+//                                             width:  parent.width
+//                                             height: globals.defaultTextHeight * 2
+
+//                                             QGCLabel {
+//                                                 id:     yawLabel
+//                                                 width:  globals.defaultTextWidth * 6
+//                                                 text:   qsTr("Yaw")
+//                                             }
+
+//                                             Loader {
+//                                                 id:                 yawLoader
+//                                                 anchors.left:       yawLabel.right
+//                                                 anchors.right:      parent.right
+//                                                 height:             globals.defaultTextHeight
+//                                                 width:              80
+//                                                 sourceComponent:    channelMonitorDisplayComponent
+
+//                                                 property bool mapped:           controller.yawChannelMapped
+//                                                 property bool reversed:         controller.yawChannelReversed
+//                                             }
+
+//                                             Connections {
+//                                                 target: controller
+
+//                                                 onYawChannelRCValueChanged: (rcValue) => yawLoader.item.rcValue = rcValue
+//                                             }
+//                                         }
+//                     Item {
+//                                       width:  parent.width
+//                                       height: globals.defaultTextHeight * 2
+
+//                                       QGCLabel {
+//                                           id:     throttleLabel
+//                                           width:  globals.defaultTextWidth * 6
+//                                           text:   qsTr("Throttle")
+//                                       }
+
+//                                       Loader {
+//                                           id:                 throttleLoader
+//                                           anchors.left:       throttleLabel.right
+//                                           anchors.right:      parent.right
+//                                           height:             globals.defaultTextHeight
+//                                           width:              80
+//                                           sourceComponent:    channelMonitorDisplayComponent
+
+//                                           property bool mapped:           controller.throttleChannelMapped
+//                                           property bool reversed:         controller.throttleChannelReversed
+//                                       }
+
+//                                       Connections {
+//                                           target:                             controller
+//                                           onThrottleChannelRCValueChanged:    (rcValue) => throttleLoader.item.rcValue = rcValue
+//                                       }
+//                                   }
+
+//                     Row {
+//                                        spacing: 10
+
+//                                        QGCButton {
+//                                            id:         skipButton
+//                                            // width:ScreenTools.defaultFontPixelWidth*6
+//                                            // height:width*0.6
+//                                            text:       qsTr("Skip")
+
+//                                            onClicked:  controller.skipButtonClicked()
+//                                        }
+
+//                                        QGCButton {
+//                                            id:         cancelButton
+//                                            text:       qsTr("Cancel")
+//                                            onClicked:  controller.cancelButtonClicked()
+//                                        }
+
+//                                        QGCButton {
+//                                            id:         nextButton
+//                                            primary:    true
+//                                            text:       qsTr("Calibrate")
+
+//                                            onClicked: {
+//                                                if (text === qsTr("Calibrate")) {
+//                                                    if (controller.channelCount < controller.minChannelCount) {
+//                                                        mainWindow.showMessageDialog(qsTr("Radio Not Ready"),
+//                                                                                     controller.channelCount == 0 ? qsTr("Please turn on transmitter.") :
+//                                                                                                                    (controller.channelCount < controller.minChannelCount ?
+//                                                                                                                         qsTr("%1 channels or more are needed to fly.").arg(controller.minChannelCount) :
+//                                                                                                                         qsTr("Ready to calibrate.")))
+//                                                    } else {
+//                                                        mainWindow.showMessageDialog(qsTr("Zero Trims"),
+//                                                                                     qsTr("Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration.\n\n%1").arg(
+//                                                                                         (QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ? "" : qsTr("Please ensure all motor power is disconnected AND all props are removed from the vehicle."))),
+//                                                                                     Dialog.Ok,
+//                                                                                     function() { controller.nextButtonClicked() })
+//                                                    }
+//                                                } else {
+//                                                    controller.nextButtonClicked()
+//                                                }
+//                                            }
+//                                        }
+//                                    } // Row - Buttons
+
+//                                    // Status Text
+//                                    QGCLabel {
+//                                        id:         statusText
+//                                        width:      parent.width
+//                                        wrapMode:   Text.WordWrap
+//                                    }
+//                               }
+
+
+
+//                     // pitch/yaw/throttle 同理
+//                 }
+//             //}
+
+//             // ------------------- 通道条 -------------------
+//             Component {
+//                 id: channelMonitorDisplayComponent
+//                 Item {
+//                     property int rcValue: 1500
+//                     property color __barColor: qgcPal.windowShade
+//                     readonly property int   __rcValueMaxJitter: 2
+//                     readonly property int _pwmMin: 800
+//                     readonly property int _pwmMax: 2200
+//                     readonly property int _pwmRange: _pwmMax - _pwmMin
+
+//                     Rectangle {
+//                         id: bar
+//                         anchors.verticalCenter: parent.verticalCenter
+//                         width: parent.width
+//                         height: parent.height / 2
+//                         border.color: "#888888"
+//                         border.width: 0.8
+//                         radius: 3
+//                         color: "transparent"
+//                     }
+
+//                     Rectangle {
+//                         anchors.horizontalCenter: parent.horizontalCenter
+//                         width: globals.defaultTextWidth / 2
+//                         height: parent.height
+//                         color: qgcPal.window
+//                     }
+
+//                     Rectangle {
+//                         anchors.verticalCenter: parent.verticalCenter
+//                         width: parent.height * 0.75
+//                         height: width
+//                         radius: width / 2
+//                         color: "#7FFF00"
+//                         visible: mapped
+//                         x: (((reversed ? _pwmMax - rcValue : rcValue - _pwmMin) / _pwmRange) * parent.width) - (width / 2)
+//                     }
+
+//                     QGCLabel {
+//                         anchors.fill: parent
+//                         horizontalAlignment: Text.AlignHCenter
+//                         verticalAlignment: Text.AlignVCenter
+//                         text: qsTr("Not Mapped")
+//                         font.pointSize: ScreenTools.largeFontPointSize*0.5
+//                         visible: !mapped
+//                     }
+//                     ColorAnimation {
+//                                            id:         barAnimation
+//                                            target:     bar
+//                                            property:   "color"
+//                                            from:       "yellow"
+//                                            to:         __barColor
+//                                            duration:   1500
+//                                        }
+//                 }
+//             }
+//         }
+//     }
+// }
 SetupPage {
-    id:             radioPage
-    pageComponent:  pageComponent
+    id: radioPage
+    pageComponent: pageComponent
 
     Component {
         id: pageComponent
-
         Item {
-            width:  availableWidth
-            height: Math.max(leftColumn.height, rightColumn.height)
-
-            function setupPageCompleted() {
-                controller.start()
-                updateChannelCount()
-            }
-
-            function updateChannelCount()
-            {
-            }
+            width: availableWidth
 
             QGCPalette { id: qgcPal; colorGroupEnabled: radioPage.enabled }
 
+            function setupPageCompleted() {
+                controller.start()
+                console.log("setupPageCompleted called")
+                updateChannelCount()
+            }
+            function updateChannelCount() {}
+
             RadioComponentController {
-                id:             controller
-                statusText:     statusText
-                cancelButton:   cancelButton
-                nextButton:     nextButton
-                skipButton:     skipButton
-                onChannelCountChanged:              updateChannelCount()
-                onFunctionMappingChangedAPMReboot:  mainWindow.showMessageDialog(qsTr("Reboot required"), qsTr("Your stick mappings have changed, you must reboot the vehicle for correct operation."))
-                onThrottleReversedCalFailure:       mainWindow.showMessageDialog(qsTr("Throttle channel reversed"), qsTr("Calibration failed. The throttle channel on your transmitter is reversed. You must correct this on your transmitter in order to complete calibration."))
+                id: controller
+                statusText: statusText
+                cancelButton: cancelButton
+                nextButton: nextButton
+                skipButton: skipButton
+                onChannelCountChanged: updateChannelCount()
+                onFunctionMappingChangedAPMReboot: mainWindow.showMessageDialog(qsTr("Reboot required"), qsTr("Your stick mappings have changed, you must reboot the vehicle for correct operation."))
+                onThrottleReversedCalFailure: mainWindow.showMessageDialog(qsTr("Throttle channel reversed"), qsTr("Calibration failed. The throttle channel on your transmitter is reversed. You must correct this on your transmitter in order to complete calibration."))
             }
 
-            Component {
-                id: spektrumBindDialogComponent
+            // ----------------- StackLayout 替代 StackView -----------------
+            StackLayout {
+                id: stackLayout
+                anchors.fill: parent
+                currentIndex: 0
 
-                QGCPopupDialog {
-                    title:      qsTr("Spektrum Bind")
-                    buttons:    Dialog.Ok | Dialog.Cancel
-
-                    onAccepted: { controller.spektrumBindMode(radioGroup.checkedButton.bindMode) }
-
-                    ButtonGroup { id: radioGroup }
-
-                    ColumnLayout {
-                        spacing: ScreenTools.defaultFontPixelHeight / 2
-
-                        QGCLabel {
-                            wrapMode:   Text.WordWrap
-                            text:       qsTr("Click Ok to place your Spektrum receiver in the bind mode.")
-                        }
-
-                        QGCLabel {
-                            wrapMode:   Text.WordWrap
-                            text:       qsTr("Select the specific receiver type below:")
-                        }
-
-                        QGCRadioButton {
-                            text:               qsTr("DSM2 Mode")
-                            ButtonGroup.group:  radioGroup
-                            property int bindMode: RadioComponentController.DSM2
-                        }
-
-                        QGCRadioButton {
-                            text:               qsTr("DSMX (7 channels or less)")
-                            ButtonGroup.group:  radioGroup
-                            property int bindMode: RadioComponentController.DSMX7
-                        }
-
-                        QGCRadioButton {
-                            checked:            true
-                            text:               qsTr("DSMX (8 channels or more)")
-                            ButtonGroup.group:  radioGroup
-                            property int bindMode: RadioComponentController.DSMX8
-                        }
-                    }
-                }
-            }
-
-            // Live channel monitor control component
-            Component {
-                id: channelMonitorDisplayComponent
-
-                Item {
-                    property int    rcValue:    1500
-
-
-                    property int            __lastRcValue:      1500
-                    readonly property int   __rcValueMaxJitter: 2
-                    property color          __barColor:         qgcPal.windowShade
-
-                    readonly property int _pwmMin:      800
-                    readonly property int _pwmMax:      2200
-                    readonly property int _pwmRange:    _pwmMax - _pwmMin
-
-                    // Bar
-                    Rectangle {
-                        id:                     bar
-                        anchors.verticalCenter: parent.verticalCenter
-                        width:                  parent.width
-                        height:                 parent.height / 2
-                        color:                  __barColor
-                    }
-
-                    // Center point
-                    Rectangle {
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        width:                      globals.defaultTextWidth / 2
-                        height:                     parent.height
-                        color:                      qgcPal.window
-                    }
-
-                    // Indicator
-                    Rectangle {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width:                  parent.height * 0.75
-                        height:                 width
-                        radius:                 width / 2
-                        color:                  qgcPal.text
-                        visible:                mapped
-                        x:                      (((reversed ? _pwmMax - rcValue : rcValue - _pwmMin) / _pwmRange) * parent.width) - (width / 2)
-                    }
-
-                    QGCLabel {
-                        anchors.fill:           parent
-                        horizontalAlignment:    Text.AlignHCenter
-                        verticalAlignment:      Text.AlignVCenter
-                        text:                   qsTr("Not Mapped")
-                        visible:                !mapped
-                    }
-
-                    ColorAnimation {
-                        id:         barAnimation
-                        target:     bar
-                        property:   "color"
-                        from:       "yellow"
-                        to:         __barColor
-                        duration:   1500
-                    }
-                }
-            } // Component - channelMonitorDisplayComponent
-
-            // Left side column
-            Column {
-                id:             leftColumn
-                anchors.left:   parent.left
-                anchors.right:  columnSpacer.left
-                spacing:        10
-
-                // Attitude Controls
+                // 0 - Button Page
                 Column {
-                    width:      parent.width
-                    spacing:    5
-                    QGCLabel { text: qsTr("Attitude Controls") }
+                    spacing: 3
+                    width: parent.width
 
-                    Item {
-                        width:  parent.width
-                        height: globals.defaultTextHeight * 2
-                        QGCLabel {
-                            id:     rollLabel
-                            width:  globals.defaultTextWidth * 10
-                            text:   qsTr("Roll")
-                        }
-
-                        Loader {
-                            id:                 rollLoader
-                            anchors.left:       rollLabel.right
-                            anchors.right:      parent.right
-                            height:             globals.defaultTextHeight
-                            width:              100
-                            sourceComponent:    channelMonitorDisplayComponent
-
-                            property bool mapped:           controller.rollChannelMapped
-                            property bool reversed:         controller.rollChannelReversed
-                        }
-
-                        Connections {
-                            target: controller
-
-                            onRollChannelRCValueChanged: (rcValue) => rollLoader.item.rcValue = rcValue
-                        }
+                    Leftbutton {
+                        text: qsTr("遥控器校准")
+                        width: parent.width
+                        onClicked: stackLayout.currentIndex = 1
                     }
+                    Rectangle { width: parent.width; height: 1; opacity: 0.6; color: "#888888" }
 
-                    Item {
-                        width:  parent.width
-                        height: globals.defaultTextHeight * 2
-
-                        QGCLabel {
-                            id:     pitchLabel
-                            width:  globals.defaultTextWidth * 10
-                            text:   qsTr("Pitch")
-                        }
-
-                        Loader {
-                            id:                 pitchLoader
-                            anchors.left:       pitchLabel.right
-                            anchors.right:      parent.right
-                            height:             globals.defaultTextHeight
-                            width:              100
-                            sourceComponent:    channelMonitorDisplayComponent
-
-                            property bool mapped:           controller.pitchChannelMapped
-                            property bool reversed:         controller.pitchChannelReversed
-                        }
-
-                        Connections {
-                            target: controller
-
-                            onPitchChannelRCValueChanged: (rcValue) => pitchLoader.item.rcValue = rcValue
-                        }
+                    Leftbutton {
+                        text: qsTr("摇杆模式")
+                        width: parent.width
+                        onClicked: stackLayout.currentIndex = 2
                     }
+                    Rectangle { width: parent.width; height: 1; opacity: 0.6; color: "#888888" }
 
-                    Item {
-                        width:  parent.width
-                        height: globals.defaultTextHeight * 2
-
-                        QGCLabel {
-                            id:     yawLabel
-                            width:  globals.defaultTextWidth * 10
-                            text:   qsTr("Yaw")
-                        }
-
-                        Loader {
-                            id:                 yawLoader
-                            anchors.left:       yawLabel.right
-                            anchors.right:      parent.right
-                            height:             globals.defaultTextHeight
-                            width:              100
-                            sourceComponent:    channelMonitorDisplayComponent
-
-                            property bool mapped:           controller.yawChannelMapped
-                            property bool reversed:         controller.yawChannelReversed
-                        }
-
-                        Connections {
-                            target: controller
-
-                            onYawChannelRCValueChanged: (rcValue) => yawLoader.item.rcValue = rcValue
-                        }
+                    Leftbutton {
+                        text: qsTr("Spektrum 绑定")
+                        width: parent.width
+                        onClicked: stackLayout.currentIndex = 3
                     }
+                    Rectangle { width: parent.width; height: 1; opacity: 0.6; color: "#888888" }
 
-                    Item {
-                        width:  parent.width
-                        height: globals.defaultTextHeight * 2
-
-                        QGCLabel {
-                            id:     throttleLabel
-                            width:  globals.defaultTextWidth * 10
-                            text:   qsTr("Throttle")
-                        }
-
-                        Loader {
-                            id:                 throttleLoader
-                            anchors.left:       throttleLabel.right
-                            anchors.right:      parent.right
-                            height:             globals.defaultTextHeight
-                            width:              100
-                            sourceComponent:    channelMonitorDisplayComponent
-
-                            property bool mapped:           controller.throttleChannelMapped
-                            property bool reversed:         controller.throttleChannelReversed
-                        }
-
-                        Connections {
-                            target:                             controller
-                            onThrottleChannelRCValueChanged:    (rcValue) => throttleLoader.item.rcValue = rcValue
-                        }
+                    Leftbutton {
+                        text: qsTr("其他设置")
+                        width: parent.width
+                        onClicked: stackLayout.currentIndex = 4
                     }
-                } // Column - Attitude Control labels
+                    Rectangle { width: parent.width; height: 1; opacity: 0.6; color: "#888888" }
+                }
 
-                // Command Buttons
-                Row {
+                // 1 - Calibration Page
+                ColumnLayout {
+                    spacing: 40
+                    QGCButton {
+                        text: qsTr("返回")
+                        onClicked: stackLayout.currentIndex = 0
+                    }
+                    Loader { id: leftColumnLoader; sourceComponent: leftColumnComponent; Layout.fillWidth: true; Layout.fillHeight: true }
+                }
+
+                // 2 - Mode Remote Page
+                ColumnLayout {
                     spacing: 10
-
                     QGCButton {
-                        id:         skipButton
-                        text:       qsTr("Skip")
-                        onClicked:  controller.skipButtonClicked()
+                        text: qsTr("返回")
+                        onClicked: stackLayout.currentIndex = 0
                     }
-
-                    QGCButton {
-                        id:         cancelButton
-                        text:       qsTr("Cancel")
-                        onClicked:  controller.cancelButtonClicked()
-                    }
-
-                    QGCButton {
-                        id:         nextButton
-                        primary:    true
-                        text:       qsTr("Calibrate")
-
-                        onClicked: {
-                            if (text === qsTr("Calibrate")) {
-                                if (controller.channelCount < controller.minChannelCount) {
-                                    mainWindow.showMessageDialog(qsTr("Radio Not Ready"),
-                                                                 controller.channelCount == 0 ? qsTr("Please turn on transmitter.") :
-                                                                                                (controller.channelCount < controller.minChannelCount ?
-                                                                                                     qsTr("%1 channels or more are needed to fly.").arg(controller.minChannelCount) :
-                                                                                                     qsTr("Ready to calibrate.")))
-                                } else {
-                                    mainWindow.showMessageDialog(qsTr("Zero Trims"),
-                                                                 qsTr("Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration.\n\n%1").arg(
-                                                                     (QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ? "" : qsTr("Please ensure all motor power is disconnected AND all props are removed from the vehicle."))),
-                                                                 Dialog.Ok,
-                                                                 function() { controller.nextButtonClicked() })
-                                }
-                            } else {
-                                controller.nextButtonClicked()
-                            }
-                        }
-                    }
-                } // Row - Buttons
-
-                // Status Text
-                QGCLabel {
-                    id:         statusText
-                    width:      parent.width
-                    wrapMode:   Text.WordWrap
+                    Loader { id: moderemoteLoader; sourceComponent: moderemote; Layout.fillWidth: true; Layout.fillHeight: true }
                 }
 
-                Rectangle {
-                    width:          parent.width
-                    height:         1
-                    border.color:   qgcPal.text
-                    border.width:   1
+                // 3 - Spektrum Bind Page
+                ColumnLayout {
+                    spacing: 10
+                    QGCButton {
+                        text: qsTr("返回")
+                        onClicked: stackLayout.currentIndex = 0
+                    }
+                    Loader { id: spektrumBindLoader; sourceComponent: spektrumBindPage; Layout.fillWidth: true; Layout.fillHeight: true }
                 }
 
-                QGCLabel { text: qsTr("Additional Radio setup:") }
-
-                GridLayout {
-                    id:                 switchSettingsGrid
-                    anchors.left:       parent.left
-                    anchors.right:      parent.right
-                    columns:            2
-                    columnSpacing:      ScreenTools.defaultFontPixelWidth
-
-                    Repeater {
-                        model: QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ?
-                                   (QGroundControl.multiVehicleManager.activeVehicle.multiRotor ?
-                                        [ "RC_MAP_AUX1", "RC_MAP_AUX2", "RC_MAP_PARAM1", "RC_MAP_PARAM2", "RC_MAP_PARAM3"] :
-                                        [ "RC_MAP_FLAPS", "RC_MAP_AUX1", "RC_MAP_AUX2", "RC_MAP_PARAM1", "RC_MAP_PARAM2", "RC_MAP_PARAM3"]) :
-                                   0
-
-                        RowLayout {
-                            Layout.fillWidth: true
-
-                            property Fact fact: controller.getParameterFact(-1, modelData)
-
-                            QGCLabel {
-                                Layout.fillWidth:   true
-                                text:               fact.shortDescription
-                            }
-                            FactComboBox {
-                                width:      ScreenTools.defaultFontPixelWidth * 15
-                                fact:       parent.fact
-                                indexModel: false
-                            }
-                        }
+                // 4 - Addition Page
+                ColumnLayout {
+                    spacing: 10
+                    QGCButton {
+                        text: qsTr("返回")
+                        onClicked: stackLayout.currentIndex = 0
                     }
+                    Loader { id: additionLoader; sourceComponent: addition; Layout.fillWidth: true; Layout.fillHeight: true }
                 }
-
-                RowLayout {
-                    QGCButton {
-                        id:         bindButton
-                        text:       qsTr("Spektrum Bind")
-                        onClicked:  spektrumBindDialogComponent.createObject(mainWindow).open()
-                    }
-
-                    QGCButton {
-                        text:       qsTr("CRSF Bind")
-                        onClicked:  mainWindow.showMessageDialog(qsTr("CRSF Bind"),
-                                                                 qsTr("Click Ok to place your CRSF receiver in the bind mode."),
-                                                                 Dialog.Ok | Dialog.Cancel,
-                                                                 function() { controller.crsfBindMode() })
-                    }
-
-                    QGCButton {
-                        text:       qsTr("Copy Trims")
-                        onClicked:  mainWindow.showMessageDialog(qsTr("Copy Trims"),
-                                                                 qsTr("Center your sticks and move throttle all the way down, then press Ok to copy trims. After pressing Ok, reset the trims on your radio back to zero."),
-                                                                 Dialog.Ok | Dialog.Cancel,
-                                                                 function() { controller.copyTrims() })
-                    }
-                }
-            } // Column - Left Column
-
-            Item {
-                id:             columnSpacer
-                anchors.right:  rightColumn.left
-                width:          20
             }
 
-            // Right side column
-            Column {
-                id:             rightColumn
-                anchors.top:    parent.top
-                anchors.right:  parent.right
-                width:          ScreenTools.defaultFontPixelWidth * 40
-                spacing:        ScreenTools.defaultFontPixelHeight / 2
-
-                Row {
-                    spacing: ScreenTools.defaultFontPixelWidth
-
-                    QGCRadioButton {
-                        text:       qsTr("Mode 1")
-                        checked:    controller.transmitterMode == 1
-                        onClicked:  controller.transmitterMode = 1
+            // ----------------- 共享按钮行 -----------------
+            Row {
+                spacing: 10
+                QGCButton { id: skipButton; text: qsTr("Skip"); onClicked: controller.skipButtonClicked() }
+                QGCButton { id: cancelButton; text: qsTr("Cancel"); onClicked: controller.cancelButtonClicked() }
+                QGCButton {
+                    id: nextButton
+                    primary: true
+                    text: qsTr("Calibrate")
+                    onClicked: {
+                        if (text === qsTr("Calibrate")) {
+                            if (controller.channelCount < controller.minChannelCount) {
+                                mainWindow.showMessageDialog(
+                                    qsTr("Radio Not Ready"),
+                                    controller.channelCount === 0 ? qsTr("Please turn on transmitter.") :
+                                    qsTr("%1 channels or more are needed to fly.").arg(controller.minChannelCount)
+                                )
+                            } else {
+                                mainWindow.showMessageDialog(
+                                    qsTr("Zero Trims"),
+                                    qsTr("Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration."),
+                                    Dialog.Ok,
+                                    function() { controller.nextButtonClicked() }
+                                )
+                            }
+                        } else {
+                            controller.nextButtonClicked()
+                        }
                     }
-
-                    QGCRadioButton {
-                        text:       qsTr("Mode 2")
-                        checked:    controller.transmitterMode == 2
-                        onClicked:  controller.transmitterMode = 2
-                    }
                 }
+            }
 
-                Image {
-                    width:      parent.width
-                    fillMode:   Image.PreserveAspectFit
-                    smooth:     true
-                    source:     controller.imageHelp
-                }
+            QGCLabel { id: statusText; width: parent.width; wrapMode: Text.WordWrap }
 
-                RCChannelMonitor {
-                    width:      parent.width
-                    twoColumn:  true
-                }
-            } // Column - Right Column
-        } // Item
-    } // Component - pageComponent
-} // SetupPage
+            // ----------------- 原来的 Loader 页面组件 -----------------
+            // Component { id: leftColumnComponent; /* ... 保留原 leftColumnComponent 内容 ... */ }
+            Component {
+                           id: leftColumnComponent
+
+                           Column {
+                               width: parent.width
+                               spacing: 10
+
+                               // // 占位属性，用 Loader 加载后赋值
+                               // property var controller
+                               // property var qgcPal
+
+                               QGCLabel { text: qsTr("Attitude Controls") }
+
+                               Item {
+                                   width: parent.width
+                                   height: globals.defaultTextHeight * 2
+
+                                   QGCLabel
+                                   {
+                                       id: rollLabel;
+                                       text: qsTr("Roll");
+                                       width:  globals.defaultTextWidth *6
+                                   }
+
+                                   Loader {
+                                       id: rollLoader
+                                       anchors.left: rollLabel.right
+                                       anchors.right: parent.right
+                                       height: globals.defaultTextHeight
+                                       width: 80
+                                       sourceComponent: channelMonitorDisplayComponent
+                                       // property bool mapped: controller.rollChannelMapped
+                                       // property bool reversed: controller.rollChannelReversed
+                                       property bool mapped: controller ? controller.rollChannelMapped : false
+                                       property bool reversed: controller ? controller.rollChannelReversed : false
+                                   }
+
+                                   Connections {
+                                       target: controller
+                                       onRollChannelRCValueChanged: rcValue => rollLoader.item.rcValue = rcValue
+                                   }
+                               }
+                               Item {
+                                                       width:  parent.width
+                                                       height: globals.defaultTextHeight * 2
+
+                                                       QGCLabel {
+                                                           id:     pitchLabel
+                                                           width:  globals.defaultTextWidth *6
+                                                           text:   qsTr("Pitch")
+                                                       }
+
+                                                       Loader {
+                                                           id:                 pitchLoader
+                                                           anchors.left:       pitchLabel.right
+                                                           anchors.right:      parent.right
+                                                           height:             globals.defaultTextHeight
+                                                           width:             80
+                                                           sourceComponent:    channelMonitorDisplayComponent
+
+                                                           property bool mapped:           controller.pitchChannelMapped
+                                                           property bool reversed:         controller.pitchChannelReversed
+                                                       }
+
+                                                       Connections {
+                                                           target: controller
+
+                                                           onPitchChannelRCValueChanged: (rcValue) => pitchLoader.item.rcValue = rcValue
+                                                       }
+                                                   }
+                               Item {
+                                                       width:  parent.width
+                                                       height: globals.defaultTextHeight * 2
+
+                                                       QGCLabel {
+                                                           id:     yawLabel
+                                                           width:  globals.defaultTextWidth * 6
+                                                           text:   qsTr("Yaw")
+                                                       }
+
+                                                       Loader {
+                                                           id:                 yawLoader
+                                                           anchors.left:       yawLabel.right
+                                                           anchors.right:      parent.right
+                                                           height:             globals.defaultTextHeight
+                                                           width:              80
+                                                           sourceComponent:    channelMonitorDisplayComponent
+
+                                                           property bool mapped:           controller.yawChannelMapped
+                                                           property bool reversed:         controller.yawChannelReversed
+                                                       }
+
+                                                       Connections {
+                                                           target: controller
+
+                                                           onYawChannelRCValueChanged: (rcValue) => yawLoader.item.rcValue = rcValue
+                                                       }
+                                                   }
+                               Item {
+                                                 width:  parent.width
+                                                 height: globals.defaultTextHeight * 2
+
+                                                 QGCLabel {
+                                                     id:     throttleLabel
+                                                     width:  globals.defaultTextWidth * 6
+                                                     text:   qsTr("Throttle")
+                                                 }
+
+                                                 Loader {
+                                                     id:                 throttleLoader
+                                                     anchors.left:       throttleLabel.right
+                                                     anchors.right:      parent.right
+                                                     height:             globals.defaultTextHeight
+                                                     width:              80
+                                                     sourceComponent:    channelMonitorDisplayComponent
+
+                                                     property bool mapped:           controller.throttleChannelMapped
+                                                     property bool reversed:         controller.throttleChannelReversed
+                                                 }
+
+                                                 Connections {
+                                                     target:                             controller
+                                                     onThrottleChannelRCValueChanged:    (rcValue) => throttleLoader.item.rcValue = rcValue
+                                                 }
+                                             }
+
+                               Row {
+                                                  spacing: 10
+
+                                                  QGCButton {
+                                                      id:         skipButton
+                                                      // width:ScreenTools.defaultFontPixelWidth*6
+                                                      // height:width*0.6
+                                                      text:       qsTr("Skip")
+
+                                                      onClicked:  controller.skipButtonClicked()
+                                                  }
+
+                                                  QGCButton {
+                                                      id:         cancelButton
+                                                      text:       qsTr("Cancel")
+                                                      onClicked:  controller.cancelButtonClicked()
+                                                  }
+
+                                                  QGCButton {
+                                                      id:         nextButton
+                                                      primary:    true
+                                                      text:       qsTr("Calibrate")
+
+                                                      onClicked: {
+                                                          if (text === qsTr("Calibrate")) {
+                                                              if (controller.channelCount < controller.minChannelCount) {
+                                                                  mainWindow.showMessageDialog(qsTr("Radio Not Ready"),
+                                                                                               controller.channelCount == 0 ? qsTr("Please turn on transmitter.") :
+                                                                                                                              (controller.channelCount < controller.minChannelCount ?
+                                                                                                                                   qsTr("%1 channels or more are needed to fly.").arg(controller.minChannelCount) :
+                                                                                                                                   qsTr("Ready to calibrate.")))
+                                                              } else {
+                                                                  mainWindow.showMessageDialog(qsTr("Zero Trims"),
+                                                                                               qsTr("Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration.\n\n%1").arg(
+                                                                                                   (QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ? "" : qsTr("Please ensure all motor power is disconnected AND all props are removed from the vehicle."))),
+                                                                                               Dialog.Ok,
+                                                                                               function() { controller.nextButtonClicked() })
+                                                              }
+                                                          } else {
+                                                              controller.nextButtonClicked()
+                                                          }
+                                                      }
+                                                  }
+                                              } // Row - Buttons
+
+                                              // Status Text
+                                              QGCLabel {
+                                                  id:         statusText
+                                                  width:      parent.width
+                                                  wrapMode:   Text.WordWrap
+                                              }
+                                         }
+
+
+
+                               // pitch/yaw/throttle 同理
+                           }
+                       //}
+            // Component { id: moderemote; /* ... 保留原 moderemote 内容 ... */ }
+            // Component { id: spektrumBindPage; /* ... 保留原 spektrumBindPage 内容 ... */ }
+            // Component { id: addition; /* ... 保留原 addition 内容 ... */ }
+        }
+    }
+}
+

@@ -55,7 +55,7 @@ Item {
         Image {
             id:             noVideo
             anchors.fill:   parent
-            source:         "/res/NoVideoBackground.jpg"
+            source:        "/qmlimages/wait-vedio.jpg" //"/res/NoVideoBackground.jpg"
             fillMode:       Image.PreserveAspectCrop
             visible:        !(QGroundControl.videoManager.decoding)
 
@@ -63,14 +63,14 @@ Item {
                 anchors.centerIn:   parent
                 width:              noVideoLabel.contentWidth + ScreenTools.defaultFontPixelHeight
                 height:             noVideoLabel.contentHeight + ScreenTools.defaultFontPixelHeight
-                radius:             ScreenTools.defaultFontPixelWidth / 2
+                radius:             ScreenTools.defaultFontPixelWidth
                 color:              "black"
-                opacity:            0.5
+                opacity:            0.4
             }
 
             QGCLabel {
                 id:                 noVideoLabel
-                text:               QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
+                text:               QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue ? qsTr("等待视频中...") : qsTr("VIDEO DISABLED...")
                 font.bold:          true
                 color:              "white"
                 font.pointSize:     useSmallFont ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
@@ -119,6 +119,7 @@ Item {
                 id:             videoContent
                 objectName:     "videoContent"
 
+                //当 videoManager.imageFileChanged() 信号触发（例如用户点击“截图”按钮），就会执行：grabToImage(...) 捕捉当前视频帧
                 Connections {
                     target: QGroundControl.videoManager
                     function onImageFileChanged() {
@@ -129,6 +130,7 @@ Item {
                         });
                     }
                 }
+                //网格线，在视频上画出九宫格（构图辅助用）
                 Rectangle {
                     color:  Qt.rgba(1,1,1,0.5)
                     height: parent.height

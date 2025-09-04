@@ -52,8 +52,9 @@ Button {
         // color:          (button.checked || button.pressed) ?
         //                     qgcPal.buttonHighlight :
         //                     (button.hovered ? qgcPal.toolStripHoverColor : qgcPal.toolbarBackground)
-        color:          (button.checked || button.pressed) ?
-                            qgcPal.toolStripHoverColor :qgcPal.toolbarBackground
+        color:"transparent"         /* (button.checked || button.pressed) ?
+                            qgcPal.toolStripHoverColor :"transparent"*/
+        /*qgcPal.toolbarBackground*/
         anchors.fill:   parent
               border.width:   QGroundControl.corePlugin.showTouchAreas ? 3 : 0
     }
@@ -63,12 +64,13 @@ Button {
         anchors.verticalCenter: button.verticalCenter
         QGCColoredImage {
             id:                     _icon
-            height:                 ScreenTools.defaultFontPixelHeight * 2
+            height:                 ScreenTools.defaultFontPixelHeight /** 2*/
             width:                  height
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            //当 logo 为真时完全透明；否则如果按钮被选中就用高亮色，未被选中就用普通色
-            color:                  logo ? "transparent" : (button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText)
+            //当 logo 为真时完全透明；否则如果按钮被选中就用高亮色，未被选中就用普通色#/*2196F3*/
+            color:                   (button.pressed || button.hovered) ? "#ADFF2F" : "transparent"
+             // color:                  logo ? "transparent" : (button.checked ?qgcPal.buttonHighlightText:" qgcPal.buttonText)
             source:                 button.icon.source
             anchors.verticalCenter: parent.verticalCenter
         }

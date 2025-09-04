@@ -22,10 +22,12 @@ Button {
     property bool   primary:        false                               ///< primary button for a group of buttons
     property bool   showBorder:     qgcPal.globalTheme === QGCPalette.Light
     property real   backRadius:     ScreenTools.buttonBorderRadius
-    property real   heightFactor:   0.5
+    property real   heightFactor:   0.4
     property string iconSource:     ""
     property real   fontWeight:     Font.Normal // default for qml Text
     property real   pointSize:      ScreenTools.defaultFontPointSize
+    property alias setsize: text. font.pointSize
+   // property alias fontpis: text. Layout.alignment
 
     property alias wrapMode:            text.wrapMode
     property alias horizontalAlignment: text.horizontalAlignment
@@ -33,8 +35,10 @@ Button {
     property alias textColor:           text.color
 
     property bool   _showHighlight:     enabled && (pressed | checked)
+    property alias bordercolor: backRect.border.color
+    property alias backcolor:  backRect.color
 
-    property int _horizontalPadding:    ScreenTools.defaultFontPixelWidth * 2
+    property int _horizontalPadding:    ScreenTools.defaultFontPixelWidth*1.3
     property int _verticalPadding:      Math.round(ScreenTools.defaultFontPixelHeight * heightFactor)
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
@@ -44,14 +48,25 @@ Button {
         radius:         backRadius
         implicitWidth:  ScreenTools.implicitButtonWidth
         implicitHeight: ScreenTools.implicitButtonHeight
-        border.width:   control.showBorder ? 1 : 0
-        border.color:   qgcPal.buttonBorder
-        color:          primary ? qgcPal.primaryButton : qgcPal.button
+        border.width:   control.showBorder ? 1 : 1//一直有边框
+        //border.color:   "#bbbbbb"//*/qgcPal.buttonBorder
+        border.color: {
+            //如果是主要按钮
+            if (primary)
+                return "#3399ff"    // 高亮蓝色
+            //如果按钮可用且悬浮
+            else if (control.enabled && control.hovered)
+                return "#3399ff"    // 悬浮蓝色
+            else
+                return "#888888"    // 默认灰
+        }
+        color:          primary ? "#0066ff" : "transparent" // 如果是主要按钮,也就是设置了primary属性,就是蓝色，其他透明色/* qgcPal.primaryButton : qgcPal.button*/
 
         Rectangle {
             anchors.fill:   parent
-            color:          qgcPal.buttonHighlight
-            opacity:        _showHighlight ? 1 : control.enabled && control.hovered ? .2 : 0
+            color:           "#3399ff"//qgcPal.buttonHighlight
+            //透明度,若是可用且点击,不透明,悬停且可用,半透明,其他时候透明
+            opacity:        _showHighlight ? 1 : control.enabled && control.hovered ? 0.2 : 0
             radius:         parent.radius
         }
     }
@@ -78,8 +93,9 @@ Button {
                 font.pointSize:         control.pointSize
                 font.family:            control.font.family
                 font.weight:            fontWeight
-                color:                  _showHighlight ? qgcPal.buttonHighlightText : (primary ? qgcPal.primaryButtonText : qgcPal.buttonText)
-                visible:                control.text !== "" 
+                color:                  _showHighlight ? qgcPal.buttonHighlightText : (primary ?qgcPal.primaryButtonText : qgcPal.buttonText)
+                opacity:        /*_showHighlight ? 1 : */control.enabled && control.hovered ? 0.5 :1
+                visible:                control.text !== ""
             }
     }
 }
