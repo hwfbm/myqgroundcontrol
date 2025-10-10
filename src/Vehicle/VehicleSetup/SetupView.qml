@@ -20,8 +20,8 @@ import QGroundControl.MultiVehicleManager
 
 Rectangle {
     id:     setupView
-    color:  "transparent"//qgcPal.windowShade
-    border.color: "#00ffffff"
+    color:   Qt.rgba(0, 0, 0, 0.8)//qgcPal.windowShade
+    //border.color: "white"
     z:      QGroundControl.zOrderTopMost
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
@@ -37,10 +37,10 @@ Rectangle {
 
     //当前飞控是否解锁
     property bool   _vehicleArmed:                  QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.armed : false
-    property string _messagePanelText:              qsTr("missing message panel text")
-   //当前飞控参数是否完整
+    property string _messagePanelText:              qsTr("missing message panel text") // 消息面板文本
+   //当前飞控参数是否完整可用
     property bool   _fullParameterVehicleAvailable: QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable && !QGroundControl.multiVehicleManager.activeVehicle.parameterManager.missingParameters
-    property var    _corePlugin:                    QGroundControl.corePlugin
+    property var    _corePlugin:                    QGroundControl.corePlugin// 核心插件引用
 
     function showSummaryPanel() {
         if (mainWindow.allowViewSwitch()) {
@@ -50,12 +50,15 @@ Rectangle {
 
     //展示概述界面，连接和未连接有区别
     function _showSummaryPanel() {
+        //车辆没有组件
         if (_fullParameterVehicleAvailable) {
-            if (QGroundControl.multiVehicleManager.activeVehicle.autopilotPlugin.vehicleComponents.length === 0) {
+            if (QGroundControl.multiVehicleManager.activeVehicle.autopilotPlugin.vehicleComponents.length === 0)
+            {
                 panelLoader.setSourceComponent(noComponentsVehicleSummaryComponent)
             } else {
                 panelLoader.setSource("VehicleSummary.qml")
             }
+            //参数不完整
         } else if (QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable) {
             panelLoader.setSourceComponent(missingParametersVehicleSummaryComponent)
         } else {
@@ -64,6 +67,7 @@ Rectangle {
         summaryButton.checked = true
     }
 
+    // 显示指定QML面板
     function showPanel(button, qmlSource) {
         if (mainWindow.allowViewSwitch()) {
             button.checked = true
@@ -71,6 +75,7 @@ Rectangle {
         }
     }
 
+     // 显示车辆组件面板
     function showVehicleComponentPanel(vehicleComponent)
     {
         if (mainWindow.allowViewSwitch()) {
@@ -92,6 +97,7 @@ Rectangle {
         }
     }
 
+      // 显示参数编辑器
     function showParametersPanel() {
         if (mainWindow.allowViewSwitch()) {
             parametersButton.checked = true
@@ -127,10 +133,11 @@ Rectangle {
         }
     }
 //用于右侧面板不同状态显示提示信息
+//未连接时显示的面板
     Component {
         id: noComponentsVehicleSummaryComponent
         Rectangle {
-            color: qgcPal.windowShade
+            color:  Qt.rgba(0, 0, 0, 0.8)/*qgcPal.windowShade*/
             QGCLabel {
                 anchors.margins:        _defaultTextWidth * 2
                 anchors.fill:           parent
@@ -145,10 +152,11 @@ Rectangle {
         }
     }
 
+    //未连接时面板
     Component {
         id: disconnectedVehicleSummaryComponent
         Rectangle {
-            color: qgcPal.windowShade
+            color: Qt.rgba(0, 0, 0, 0.8) /*qgcPal.windowShade*/
             QGCLabel {
                 anchors.margins:        _defaultTextWidth * 2
                 anchors.fill:           parent
@@ -164,11 +172,12 @@ Rectangle {
         }
     }
 
+    //参数不完整时显示
     Component {
         id: missingParametersVehicleSummaryComponent
 
         Rectangle {
-            color: qgcPal.windowShade
+            color: Qt.rgba(0, 0, 0, 0.8)//qgcPal.windowShade
 
             QGCLabel {
                 anchors.margins:        _defaultTextWidth * 2
@@ -185,6 +194,7 @@ Rectangle {
         }
     }
 
+    // 车辆连接/断开时自动更新显示
     Component {
         id: messagePanelComponent
 
@@ -217,6 +227,7 @@ Rectangle {
             id:         buttonColumn
             spacing:    ScreenTools.defaultFontPixelHeight / 4
 
+            // 概述按钮
             ConfigButton {
                 id:                 summaryButton
                 icon.source:        "/qmlimages/VehicleSummaryIcon.png"
@@ -227,13 +238,19 @@ Rectangle {
                 onClicked: showSummaryPanel()
             }
 
+            // 光学Flow配置
+            //这个按钮是打开「光学流传感器配置面板」的，用于设置无人机上安装的光学 Flow 传感器参数。光学 Flow 可以帮助无人机在没有 GPS 的环境下保持位置稳定
             ConfigButton {
-                visible:            QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.flowImageIndex > 0 : false
+                //根据 activeVehicle.flowImageIndex 判断,只有当前有飞机连接，并且飞机上安装了 Flow 传感器，按钮才显示
+                visible:           QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.flowImageIndex > 0 : false
                 text:               qsTr("Optical Flow")
                 Layout.fillWidth:   true
                 onClicked:          showPanel(this, "OpticalFlowSensor.qml")
             }
 
+            // 摇杆配置,电脑上的 USB/蓝牙摇杆或者键盘按键,直接通过操作系统输入（JoystickManager 管理）qgc
+            //用于打开「遥控器/摇杆配置面板」，可以设置外接摇杆或者遥控器的参数
+            //也就是只有当前有飞机，并且系统检测到至少一个摇杆设备，按钮才显示
             ConfigButton {
                 id:                 joystickButton
                 icon.source:      "/qmlimages/Joystick.png"
@@ -248,6 +265,7 @@ Rectangle {
                 property bool   _forcedToButtonsOnly:   !QGroundControl.corePlugin.options.allowJoystickSelection && _buttonsOnly
             }
 
+             // 动态车辆组件按钮
             Repeater {
                 id:     componentRepeater
                 model:  _fullParameterVehicleAvailable ? QGroundControl.multiVehicleManager.activeVehicle.autopilotPlugin.vehicleComponents : 0
@@ -264,8 +282,10 @@ Rectangle {
                 }
             }
 
+            // 参数编辑器
             ConfigButton {
                 id:                 parametersButton
+                // 高级UI模式且非高延迟链路时可见
                 visible:            QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable &&
                                     !QGroundControl.multiVehicleManager.activeVehicle.usingHighLatencyLink &&
                                     _corePlugin.showAdvancedUI
@@ -275,9 +295,11 @@ Rectangle {
                 onClicked:          showPanel(this, "SetupParameterEditor.qml")
             }
 
+            // 固件升级
             ConfigButton {
                 id:                 firmwareButton
                 icon.source:      "/qmlimages/FirmwareUpgradeIcon.png"
+                //非移动端且允许固件升级时可见
                 visible:            !ScreenTools.isMobile && _corePlugin.options.showFirmwareUpgrade
                 text:               qsTr("Firmware")
                 Layout.fillWidth:   true
@@ -296,9 +318,10 @@ Rectangle {
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         width:                  1
-        color:                  qgcPal.windowShade
+        color:  "white "          /* qgcPal.windowShade*/
     }
 
+    //右侧内容面板 (panelLoader)
     Loader {
         id:                     panelLoader
         anchors.topMargin:      _verticalMargin
@@ -310,6 +333,7 @@ Rectangle {
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
 
+        // 动态加载不同的配置页面
         function setSource(source, vehicleComponent) {
             panelLoader.source = ""
             panelLoader.vehicleComponent = vehicleComponent

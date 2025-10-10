@@ -71,6 +71,7 @@
 #include "VideoManager.h"
 
 #include "Mqttlink.h"
+#include "loginmanager.h"
 #include "MavlinkToJson.h"
 
 #ifndef QGC_DISABLE_MAVLINK_INSPECTOR
@@ -110,8 +111,9 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting)
     , _runningUnitTests(unitTesting)
 {
 
-    // 初始化 MQTT 单例
-    _mqtt = Mqttlink::instance();  // 单例会自动连接服务器
+    // 初始化单例
+    _mqtt = Mqttlink::instance();  // 单例mqtt
+    _login=LoginManager::instance();//单例登录
 
     // connect(qgcApp()->mqtt(), &Mqttlink::mqttMessageReceived,
     //         this, [](const QString &topic, const QJsonObject &json){
@@ -126,11 +128,13 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting)
     MavlinkToJson* mav2json = new MavlinkToJson(this);
 
     // 设置上下文（可选，从配置文件或 Vehicle 里读取）
-    mav2json->setContext("factory-01", "uav-1001", "station", "1.0.1");
+   // mav2json->setContext("factory-01", "uav-1001", "station", "1.0.1");
 
     // 连接信号
     QObject::connect(proto, &MAVLinkProtocol::messageReceived,
                      mav2json, &MavlinkToJson::handleMessage);
+
+
 
 
 
@@ -242,6 +246,7 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting)
     _checkForNewVersion();
 #endif
 }
+
 
 void QGCApplication::setLanguage()
 {
@@ -367,10 +372,22 @@ void QGCApplication::init()
 
 void QGCApplication::_initForNormalAppBoot()
 {
+#ifdef Q_OS_WIN
+    QByteArray gstBinPath = "E:/gstreamer/1.0/msvc_x86_64/bin";
+    QByteArray gstPluginPath = "E:/gstreamer/1.0/msvc_x86_64/lib/gstreamer-1.0";
+    // 把 GStreamer bin 放在 PATH 前面
+    qputenv("PATH", gstBinPath + ";" + qgetenv("PATH"));
+    qputenv("GST_PLUGIN_PATH", gstPluginPath);
+#endif
 #ifdef QGC_GST_STREAMING
     // Gstreamer video playback requires OpenGL
     QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
 #endif
+
+
+    qDebug() << "路径:::=" << QString::fromLocal8Bit(qgetenv("PATH"));
+    qDebug() << "GST_PLUGIN_PATH=" << QString::fromLocal8Bit(qgetenv("GST_PLUGIN_PATH"));
+
 
     QGCCorePlugin::instance(); // CorePlugin must be initialized before VideoManager for Video Cleanup
     VideoManager::instance(); // GStreamer must be initialized before QmlEngine
@@ -535,22 +552,29 @@ void QGCApplication::showCriticalVehicleMessage(const QString &message)
     }
 }
 
+//显示应用程序消息的通用函数
+//接收消息内容和可选标题
+//如果标题为空，使用应用程序名称作为默认标题
 void QGCApplication::showAppMessage(const QString &message, const QString &title)
 {
     const QString dialogTitle = title.isEmpty() ? applicationName() : title;
 
-    QObject *const rootQmlObject = _rootQmlObject();
+    QObject *const rootQmlObject = _rootQmlObject();//获取QML根对象（UI已加载）
     if (rootQmlObject) {
         QVariant varReturn;
         QVariant varMessage = QVariant::fromValue(message);
+        //使用QMetaObject::invokeMethod调用QML中的_showMessageDialog方法
         QMetaObject::invokeMethod(rootQmlObject, "_showMessageDialog", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, dialogTitle), Q_ARG(QVariant, varMessage));
-    } else if (runningUnitTests()) {
+    }
+    //在单元测试环境中，没有UI界面。使用调试日志输出消息内容
+    else if (runningUnitTests())
+    {
         // Unit tests can run without UI
         qCDebug(QGCApplicationLog) << "QGCApplication::showAppMessage unittest title:message" << dialogTitle << message;
     } else {
-        // UI isn't ready yet
-        _delayedAppMessages.append(QPair<QString, QString>(dialogTitle, message));
-        QTimer::singleShot(200, this, &QGCApplication::_showDelayedAppMessages);
+        // UI isn't ready yetUI 还在初始化中，无法立即显示消息
+        _delayedAppMessages.append(QPair<QString, QString>(dialogTitle, message));//将消息暂存到_delayedAppMessages列表
+        QTimer::singleShot(200, this, &QGCApplication::_showDelayedAppMessages);//200毫秒后尝试重新显示延迟的消息
     }
 }
 

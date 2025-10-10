@@ -383,20 +383,31 @@ Vehicle *MultiVehicleManager::getVehicleById(int vehicleId) const
     return nullptr;
 }
 
+//用于管理一个指向 Vehicle 对象的指针，而不是一个布尔值
+// 函数定义：设置当前激活的车辆指针
 void MultiVehicleManager::_setActiveVehicle(Vehicle *vehicle)
 {
-    if (vehicle != _activeVehicle) {
-        _activeVehicle = vehicle;
-        emit activeVehicleChanged(vehicle);
+    // 1. 检查新指针是否与当前指针不同
+    if (vehicle != _activeVehicle)//也就是，如果当前连接的vehicle和之前的不一样，也包括断开，nullptr
+    {
+        // 2. 如果不同，则更新成员变量
+        _activeVehicle = vehicle;//vehicle就变成nullptr了
+        emit activeVehicleChanged(vehicle);// 3. 发出信号，通知外界激活的车辆对象发生了变化
     }
+     // 4. 如果新旧指针相同，则什么都不做
 }
 
+
+// 函数定义：设置“是否有可用激活车辆”的状态
 void MultiVehicleManager::_setActiveVehicleAvailable(bool activeVehicleAvailable)
 {
+    // 1. 检查新值是否与当前值不同
     if (activeVehicleAvailable != _activeVehicleAvailable) {
+          // 2. 如果不同，则更新成员变量
         _activeVehicleAvailable = activeVehicleAvailable;
-        emit activeVehicleAvailableChanged(activeVehicleAvailable);
+        emit activeVehicleAvailableChanged(activeVehicleAvailable);  // 3. 发出信号，通知外界状态发生了变化
     }
+    // 4. 如果新值与旧值相同，则什么都不做
 }
 
 void MultiVehicleManager::_setParameterReadyVehicleAvailable(bool parametersReady)

@@ -5,9 +5,10 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.8.0'
+        classpath 'com.android.tools.build:gradle:8.6.0'
     }
 }
+
 
 repositories {
     google()
@@ -25,7 +26,7 @@ if (project.plugins.findPlugin("qtGradlePluginType") != null) {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
-    //noinspection GradleDependency
+    //noinspection GradleDependencyz
     implementation 'androidx.core:core:1.13.1'
     implementation 'com.github.mik3y:usb-serial-for-android:3.8.1'
 }
@@ -47,6 +48,19 @@ android {
      * updated by QtCreator and androiddeployqt tools.
      * Changing them manually might break the compilation!
      *******************************************************/
+
+
+signingConfigs {
+       release {
+           storeFile file("C:\\Users\\Administrator\\qgc-release-key.keystore")
+           storePassword "xqwrj."
+           keyAlias "qgc-key-alias"
+           keyPassword "xqwrj."
+       }
+   }
+
+
+
 
     // namespace = androidPackageName
     namespace = "org.mavlink.qgroundcontrol"
@@ -95,6 +109,7 @@ android {
 
     defaultConfig {
         resConfig "en"
+          multiDexEnabled true
         minSdkVersion qtMinSdkVersion
         targetSdkVersion qtTargetSdkVersion
         ndk.abiFilters = qtTargetAbiList.split(",")

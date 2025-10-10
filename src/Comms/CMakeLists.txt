@@ -23,6 +23,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         mqttlink.cpp
         mavlinktojson.h
         mavlinktojson.cpp
+        loginmanager.h
+        loginmanager.cpp
 
 )
 
@@ -88,5 +90,40 @@ if(QGC_ZEROCONF_ENABLED)
         target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ZEROCONF_ENABLED)
     endif()
 endif()
+
+#===========================================================================#
+# 添加 jwt-cpp 库
+# message(STATUS "Building JWT-Cpp Library")
+
+# CPMAddPackage(
+#     NAME jwt-cpp
+#     GITHUB_REPOSITORY Thalhammer/jwt-cpp
+#     GIT_TAG master  # 或者选择一个稳定的标签
+#     OPTIONS
+#         "JWT_BUILD_EXAMPLES OFF"
+#         "JWT_BUILD_TESTS OFF"
+#     #[[SOURCE_SUBDIR src]]  # jwt-cpp 源文件目录
+# )
+
+# target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+#     # ${jwt-cpp_SOURCE_DIR}/include/jwt-cpp
+#     # ${jwt-cpp_SOURCE_DIR}/include/picojson
+#      ${jwt-cpp_SOURCE_DIR}/include)
+# # 如果 jwt-cpp 拉取了 picojson 作为子依赖，CMake 应该自动处理，但你可以手动检查 picojson 的路径
+# message(STATUS "PicoJSON Include Path: ${jwt-cpp_SOURCE_DIR}/include/picojson")
+# # file(GLOB JWT_CPP_SOURCES "${jwt-cpp_SOURCE_DIR}/src/*")
+
+# # # 将 jwt-cpp 源文件添加到项目中
+# # target_sources(${CMAKE_PROJECT_NAME}
+# #     PRIVATE
+# #     ${JWT_CPP_SOURCES}
+# # )
+
+# # 添加 jwt-cpp 的头文件目录
+# message(STATUS "JWT CPP Source Directory: ${jwt-cpp_SOURCE_DIR}")
+
+
+
+
 
 # target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QABSTRACTSOCKET_DEBUG)

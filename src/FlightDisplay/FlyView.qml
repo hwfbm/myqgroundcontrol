@@ -36,6 +36,8 @@ import Viewer3D
 Item {
     id: _root
 
+     property alias toolbarVisible: toolbar.visible//用于toolmenu绑定toolbar的visible
+
     // These should only be used by MainRootWindow
     property var planController:    _planController
     property var guidedController:  _guidedController

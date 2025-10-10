@@ -425,11 +425,12 @@ void BluetoothLink::_onDisconnected()
     emit disconnected();
 }
 
-void BluetoothLink::_onErrorOccurred(const QString &errorString)
+//处理蓝牙通信错误，当蓝牙通信发生错误时自动调用
+void BluetoothLink::_onErrorOccurred(const QString &errorString)//传入的错误信息字符串
 {
     qCWarning(BluetoothLinkLog) << "Communication error:" << errorString;
-    emit communicationError(tr("Bluetooth Link Error"), tr("Link %1: (Device: %2) %3").arg(_bluetoothConfig->name(), _bluetoothConfig->device().name, errorString));
-}
+    emit communicationError(tr("Bluetooth Link Error"), tr("%1").arg(/*_bluetoothConfig->name(), _bluetoothConfig->device().name,*/ errorString));
+}//格式化的详细错误信息，连接名称，蓝牙设备名称，具体的错误信息"Link %1: (Device: %2) %3"
 
 void BluetoothLink::_onDataReceived(const QByteArray &data)
 {

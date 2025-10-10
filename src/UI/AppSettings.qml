@@ -19,7 +19,7 @@ import QGroundControl.ScreenTools
 
 Rectangle {
     id:     settingsView
-    color:  "transparent"// Qt.rgba(0, 0, 0, 0.65)//qgcPal.windowShade
+    color:   Qt.rgba(0, 0, 0, 0.8)// Qt.rgba(0, 0, 0, 0.65)//qgcPal.windowShade
     // gradient: Gradient {
     //     GradientStop {
     //         position: 0.15;

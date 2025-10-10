@@ -16,6 +16,7 @@ import QGroundControl.ScreenTools
 
 //段代码定义了一个基于 QGCPopupDialog 的可复用消息对话框
 QGCPopupDialog {
+
     property alias  text:           label.text
     property var    acceptFunction: null        // Mainly used by MainRootWindow.showMessage to specify accept function in call
     property var    closeFunction:  null
@@ -38,10 +39,15 @@ QGCPopupDialog {
 
     //显示文本消息（支持自动换行
     ColumnLayout {
+
+        width: Math.min(mainWindow.width * 0.8, 400) // 最大宽度限制
+
         QGCLabel {
             id:                     label
-            Layout.preferredWidth:  Math.max(mainWindow.width / (ScreenTools.isMobile ? 2 : 3), headerMinWidth)//桌面端：窗口宽度的 1/3，移动端：窗口宽度的 1/2
+            //Layout.preferredWidth:  Math.max(mainWindow.width / (ScreenTools.isMobile ? 2 : 3), headerMinWidth)//桌面端：窗口宽度的 1/3，移动端：窗口宽度的 1/2
             wrapMode:               Text.WordWrap
+            width: parent.width // 必须跟 ColumnLayout 宽度一致
+            font.pointSize: ScreenTools.mediumFontPointSize
         }
     }
 }

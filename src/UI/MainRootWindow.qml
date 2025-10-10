@@ -23,8 +23,7 @@ import QGroundControl.Controls
 import QGroundControl.FactControls
 import QGroundControl.ScreenTools
 import QGroundControl.FlightDisplay
-//import "../FlightMap"
-//import "../FlightDisplay"
+
 
 import QGroundControl.UTMSP
 
@@ -37,6 +36,8 @@ ApplicationWindow {
     minimumHeight:  ScreenTools.isMobile ? ScreenTools.screenHeight : Math.min(ScreenTools.defaultFontPixelWidth * 50, Screen.height)
     visible:        true
 
+
+    property bool menuVisible: toolMenu.panelVisible//toolmenu和toolbar的共享属性
     property bool   _utmspSendActTrigger
     property bool   _utmspStartTelemetry
     //飞行视图的核心界面
@@ -44,7 +45,7 @@ ApplicationWindow {
         id:                     flyView
         anchors.fill:           parent
         utmspSendActTrigger:    _utmspSendActTrigger //接收_utmspSendActTrigger信号
-
+       toolbarVisible: !mainWindow.menuVisible
 
     }
 
@@ -403,7 +404,7 @@ ApplicationWindow {
     //设置主窗口背景
     background: Rectangle {
         anchors.fill:   parent //填充整个父容器
-        color:   QGroundControl.globalPalette.window //使用 QGC 全局调色板的窗口底色，确保界面风格统一，支持主题切换
+        color:  "black"// QGroundControl.globalPalette.window //使用 QGC 全局调色板的窗口底色，确保界面风格统一，支持主题切换
     }
 
 
@@ -456,7 +457,7 @@ ApplicationWindow {
 
         ToolMenu {
             id: toolMenu
-            width: parent.width * 7 / 12
+            width: parent.width * 8 / 12
             toolMenuidheight: parent.height// - ScreenTools.toolbarHeight
            // toolMenuidheight: parent.height
             anchors.right: parent.right
@@ -1127,7 +1128,7 @@ ApplicationWindow {
             anchors.right:  parent.right
             anchors.top:    parent.top
             height:         ScreenTools.toolbarHeight
-            color:         "red"/* qgcPal.toolbarBackground*/
+            color: Qt.rgba(0, 0, 0, 0.65) /* qgcPal.toolbarBackground*/
 
             //包含内容
             RowLayout {
@@ -1141,6 +1142,7 @@ ApplicationWindow {
                 QGCLabel {
                     font.pointSize: ScreenTools.largeFontPointSize
                     text:           "<" // 返回箭头
+                      color: "white"
                 }
 
                 QGCLabel {
@@ -1399,7 +1401,7 @@ ApplicationWindow {
                 width:                      ScreenTools.largeFontPixelHeight//*1.35
                 height:                     width
                 radius:                     width / 2
-                color:                      Qt.rgba(0, 0, 0, 0.65)/*QGroundControl.globalPalette.button*/
+                color:                      Qt.rgba(0, 0, 0, 0.9)/*QGroundControl.globalPalette.button*/
                 //border.color:               QGroundControl.globalPalette.buttonText
                 visible:                    indicatorDrawerLoader.item && indicatorDrawerLoader.item.showExpand && !indicatorDrawer._expanded
 
@@ -1407,6 +1409,7 @@ ApplicationWindow {
                     //可选的右上角扩展按钮 >，点击后设置 _expanded = true
                     anchors.centerIn:   parent
                     text:               "<"
+                      //
                     color:              QGroundControl.globalPalette.buttonText
                 }  
 

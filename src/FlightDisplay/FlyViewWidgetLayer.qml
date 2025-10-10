@@ -211,7 +211,8 @@ Item {
        // anchors.top:            parent.top
         anchors.verticalCenter: parent.verticalCenter
         z:                      QGroundControl.zOrderWidgets
-        maxHeight:              parent.height - y - parentToolInsets.bottomEdgeLeftInset - _toolsMargin
+        //maxHeight:              parent.height - y - parentToolInsets.bottomEdgeLeftInset - _toolsMargin//会有循环高度依赖
+        maxHeight: parent.height - parentToolInsets.bottomEdgeLeftInset - _toolsMargin
         // maxHeight:              parent.height * 0.25
          width: ScreenTools.defaultFontPixelHeight *3//parent.height * 0.1
         visible:                !QGroundControl.videoManager.fullScreen

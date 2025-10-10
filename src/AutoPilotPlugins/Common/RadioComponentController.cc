@@ -64,26 +64,26 @@ void RadioComponentController::start()
 const RadioComponentController::stateMachineEntry* RadioComponentController::_getStateMachineEntry(int step) const
 {
     static constexpr const char *msgBeginPX4 = QT_TR_NOOP(
-        "Lower the Throttle stick all the way down as shown in diagram.\n\n"
-        "It is recommended to disconnect all motors for additional safety, however, the system is designed to not arm during the calibration.\n\n"
-        "Click Next to continue"
+        "如图所示，将油门杆一路向下拉\n\n"
+        "建议断开所有电机，以增加安全性，然而，系统的设计是在校准期间不解锁\n\n"
+        "点击下一步继续"
     );
     static constexpr const char *msgBeginAPM = QT_TR_NOOP(
-        "Lower the Throttle stick all the way down as shown in diagram.\nReset all transmitter trims to center.\n\n"
-        "Please ensure all motor power is disconnected AND all props are removed from the vehicle.\n\n"
-        "Click Next to continue"
+        "如图所示，将油门杆一路向下拉\n将所有发射机调整到中心位置\n\n"
+        "请确保所有电机电源已断开，所有道具已从飞机上卸下。\n\n"
+        "点击下一步继续"
     );
-    static constexpr const char *msgThrottleUp =    QT_TR_NOOP("Move the Throttle stick all the way up and hold it there...");
-    static constexpr const char *msgThrottleDown =  QT_TR_NOOP("Move the Throttle stick all the way down and leave it there...");
-    static constexpr const char *msgYawLeft =       QT_TR_NOOP("Move the Yaw stick all the way to the left and hold it there...");
-    static constexpr const char *msgYawRight =      QT_TR_NOOP("Move the Yaw stick all the way to the right and hold it there...");
-    static constexpr const char *msgRollLeft =      QT_TR_NOOP("Move the Roll stick all the way to the left and hold it there...");
-    static constexpr const char *msgRollRight =     QT_TR_NOOP("Move the Roll stick all the way to the right and hold it there...");
-    static constexpr const char *msgPitchDown =     QT_TR_NOOP("Move the Pitch stick all the way down and hold it there...");
-    static constexpr const char *msgPitchUp =       QT_TR_NOOP("Move the Pitch stick all the way up and hold it there...");
-    static constexpr const char *msgPitchCenter =   QT_TR_NOOP("Allow the Pitch stick to move back to center...");
-    static constexpr const char *msgSwitchMinMax =  QT_TR_NOOP("Move all the transmitter switches and/or dials back and forth to their extreme positions.");
-    static constexpr const char *msgComplete =      QT_TR_NOOP("All settings have been captured. Click Next to write the new parameters to your board.");
+    static constexpr const char *msgThrottleUp =    QT_TR_NOOP("将油门杆向上移动并保持在那里...");
+    static constexpr const char *msgThrottleDown =  QT_TR_NOOP("把油门杆一直往下，然后把它放在那里...");
+    static constexpr const char *msgYawLeft =       QT_TR_NOOP("将偏航杆一直向左移动并保持在那里...");
+    static constexpr const char *msgYawRight =      QT_TR_NOOP("将偏航杆一直向右移动并保持在那里...");
+    static constexpr const char *msgRollLeft =      QT_TR_NOOP("移动横滚杆一直到左边，并保持在那里...");
+    static constexpr const char *msgRollRight =     QT_TR_NOOP("移动横滚杆一直到右边，并保持在那里...");
+    static constexpr const char *msgPitchDown =     QT_TR_NOOP("移动俯仰杆一直向下，并保持在那里...");
+    static constexpr const char *msgPitchUp =       QT_TR_NOOP("移动俯仰杆一直向上，并保持在那里...");
+    static constexpr const char *msgPitchCenter =   QT_TR_NOOP("允许俯仰杆移回中心…");
+    static constexpr const char *msgSwitchMinMax =  QT_TR_NOOP("移动所有的发射机开关和/或拨号盘来回到他们的极端位置");
+    static constexpr const char *msgComplete =      QT_TR_NOOP("已捕获所有设置。单击Next将新参数写入您的板。");
 
     static constexpr const char *imageHome =         "radioHome.png";
     static constexpr const char *imageThrottleUp =   "radioThrottleUp.png";
@@ -239,7 +239,7 @@ void RadioComponentController::_rcChannelsChanged(int channelCount, int pwmValue
                         (this->*state->rcInputFn)(state->function, channel, channelValue);
                     }
                 } else {
-                    qCWarning(RadioComponentControllerLog) << "Internal error: nullptr _getStateMachineEntry return";
+                    qCWarning(RadioComponentControllerLog) << "内部错误: nullptr _getStateMachineEntry return";
                 }
             }
         }
@@ -254,7 +254,7 @@ void RadioComponentController::nextButtonClicked()
             if (_unitTestMode) {
                 emit nextButtonMessageBoxDisplayed();
             } else {
-                qgcApp()->showAppMessage(QStringLiteral("Detected %1 radio channels. To operate PX4, you need at least %2 channels.").arg(_chanCount).arg(_chanMinimum));
+                qgcApp()->showAppMessage(QStringLiteral("检测到%1个无线电频道，要操作PX4，您至少需要%2个通道").arg(_chanCount).arg(_chanMinimum));
             }
             return;
         }
@@ -264,7 +264,7 @@ void RadioComponentController::nextButtonClicked()
         if (state && state->nextFn) {
             (this->*state->nextFn)();
         } else {
-            qCWarning(RadioComponentControllerLog) << "Internal error: nullptr _getStateMachineEntry return";
+            qCWarning(RadioComponentControllerLog) << "内部错误: nullptr _getStateMachineEntry return";
         }
     }
 }

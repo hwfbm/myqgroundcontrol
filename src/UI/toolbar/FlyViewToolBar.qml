@@ -25,6 +25,10 @@ Rectangle {
     height: ScreenTools.toolbarHeight
     //color:  qgcPal.mytoolbarBackground
     color: "transparent"
+
+     property bool  toolbarvisible: true
+    visible:toolbarvisible//外部传入
+
 //qgcPal.mytoolbarBackground
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _communicationLost: _activeVehicle ? _activeVehicle.vehicleLinkManager.communicationLost : false
@@ -46,6 +50,7 @@ Rectangle {
         visible:        qgcPal.globalTheme === QGCPalette.Light
     }
 
+    //任务栏背景色
     Rectangle {
         anchors.fill: parent//viewButtonRow
 
@@ -286,6 +291,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter   // 垂直居中
             anchors.rightMargin: ScreenTools.defaultFontPixelWidth*2
 
+                visible: Qt.platform.os === "android"   // 🚀 只在 Android 下显示
             QGCColoredImage {
                 id: batteryIcon
                 source: "/qmlimages/remote_battery.svg"

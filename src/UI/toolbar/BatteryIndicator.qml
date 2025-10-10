@@ -25,6 +25,12 @@ Item {
     height: parent.height   // 只跟 Toolbar 高度对齐，不拉伸上下
     anchors.verticalCenter: parent.verticalCenter
     width:batteryRow.width
+
+
+    readonly property real _horizontalMargin:   _defaultTextWidth / 2
+    readonly property real _verticalMargin:     _defaultTextHeight / 2
+    readonly property real _defaultTextHeight:  ScreenTools.defaultFontPixelHeight
+    readonly property real _defaultTextWidth:   ScreenTools.defaultFontPixelWidth
     property bool       showIndicator:      true//是否显示电池指示器（可通过配置关闭）
     property bool       waitForParameters:  false   // 是否等待飞控参数加载完成后再显示 UI
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle//当前活动的无人机对象，返回当前激活的无人机（通过 multiVehicleManager 获取），vehicle类
@@ -297,74 +303,75 @@ Item {
         id: batteryPopup
         ToolIndicatorPage {
             showExpand: true
+
             //expanded: false
             waitForParameters:  control.waitForParameters //绑定到外部控制器的参数等待状态（可能用于加载动画）
             contentComponent: batteryContentComponent
             expandedComponent:  batteryExpandedComponent//展开设置面板
         }
     }
-
     Component {
         id: batteryContentComponent
-        ColumnLayout {
-            spacing: 2
-            width: ScreenTools.defaultFontPixelWidth * 20  // 增加宽度以显示更多内容
-            height: width
-            Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 15
+        QGCFlickable {
+            id: batteryList
+            width: ScreenTools.defaultFontPixelWidth * 19
+            height: batteryshow.implicitHeight
+            flickableDirection: Flickable.VerticalFlick
+            clip: true
 
+            contentWidth: parent.width                     // ✅ 水平方向和外层一致
+            contentHeight:  batteryshow.implicitHeight + _verticalMargin
 
-            Repeater {
-                model: _activeVehicle && _activeVehicle.batteries ? _activeVehicle.batteries : 0
-               //因为model是QmlObjectListModel类型，可迭代对象容器，object指代其中一个对象
-                delegate: SettingsGroupLayout {
-                    id: batteryGroup
-                    property var battery: object   // 当前电池对象
+            ColumnLayout {
+                id: batteryshow
+                width: parent.width                        // ✅ 列表宽度跟随 Flickable
+                spacing: 2
 
-                    heading: qsTr("锂电池 %1").arg(battery.id ? battery.id.valueString : "N/A")
-                    contentSpacing: 2
-                    showDividers: true
+                Repeater {
+                    model: _activeVehicle && _activeVehicle.batteries ? _activeVehicle.batteries : 0
+                    delegate: SettingsGroupLayout {
+                        id: batteryGroup
+                        property var battery: object
 
-                    GridLayout {
-                        columns: 2
-                        columnSpacing: 2
-                        rowSpacing: 3
+                        heading: qsTr("锂电池 %1").arg(battery.id ? battery.id.valueString : "N/A")
+                        contentSpacing: 2
+                        showDividers: true
 
-                        // 电压
-                        LabelledLabel {
-                            label: qsTr("电压:")
-                            labelText: battery.voltage ? battery.voltage.valueString + " " + battery.voltage.units : "N/A"
-                        }
+                        GridLayout {
+                            columns: 2
+                            columnSpacing: 2
+                            rowSpacing: 3
 
-                        // 电量
-                        LabelledLabel {
-                            label: qsTr("电量:")
-                            labelText: battery.percentRemaining ? battery.percentRemaining.valueString + " " + battery.percentRemaining.units : "N/A"
-                        }
-                        // 电流
-                        LabelledLabel {
-                            label: qsTr("电流:")
-                            labelText: battery.current ? battery.current.valueString + " " + battery.current.units : "N/A"
-                        }
-                        // 温度
-                        LabelledLabel {
-                            label: qsTr("温度:")
-                            labelText: battery.temperature ? battery.temperature.valueString + " " + battery.temperature.units : "N/A"
+                            LabelledLabel {
+                                label: qsTr("电压:")
+                                labelText: battery.voltage ? battery.voltage.valueString + " " + battery.voltage.units : "N/A"
+                            }
+                            LabelledLabel {
+                                label: qsTr("电量:")
+                                labelText: battery.percentRemaining ? battery.percentRemaining.valueString + " " + battery.percentRemaining.units : "N/A"
+                            }
+                            LabelledLabel {
+                                label: qsTr("电流:")
+                                labelText: battery.current ? battery.current.valueString + " " + battery.current.units : "N/A"
+                            }
+                            LabelledLabel {
+                                label: qsTr("温度:")
+                                labelText: battery.temperature ? battery.temperature.valueString + " " + battery.temperature.units : "N/A"
+                            }
                         }
                     }
                 }
-            }
 
-
-            // 如果没有电池数据时的提示
-            QGCLabel {
-                text: qsTr("No battery data available")
-                visible: !_activeVehicle || (_activeVehicle.batteries === 0 && _activeVehicle.hydrogenBatteries === 0)
-
-                horizontalAlignment: Text.AlignHCenter
-                Layout.fillWidth: true
+                QGCLabel {
+                    text: qsTr("No battery data available")
+                    visible: !_activeVehicle || (_activeVehicle.batteries === 0 && _activeVehicle.hydrogenBatteries === 0)
+                    horizontalAlignment: Text.AlignHCenter
+                    Layout.fillWidth: true
+                }
             }
         }
     }
+
 
 
 

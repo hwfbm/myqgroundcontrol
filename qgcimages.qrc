@@ -226,6 +226,7 @@
         <file alias="fly.svg">src/UI/toolbar/Images/fly.svg</file>
         <file alias="signal.svg">src/UI/toolbar/Images/signal.svg</file>
         <file alias="hd.svg">src/UI/toolbar/Images/hd.svg</file>
+        <file alias="blur.png">src/UI/toolbar/Images/blur.png</file>
         <file alias="batterylogo.svg">src/UI/toolbar/Images/batterylogo.svg</file>
         <file alias="crama.svg">src/UI/toolbar/Images/crama.svg</file>
         <file alias="common.svg">src/UI/toolbar/Images/common.svg</file>

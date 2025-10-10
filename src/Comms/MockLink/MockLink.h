@@ -42,6 +42,8 @@ public:
     void sendStatusTextMessages();
     void _sendGimbalStatus();//发送mock的gimble消息
 
+
+
     bool shouldSendStatusText() const { return _sendStatusText; }
 
     bool isConnected() const final { return _connected; }

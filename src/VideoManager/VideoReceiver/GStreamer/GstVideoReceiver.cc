@@ -56,6 +56,7 @@ GstVideoReceiver::GstVideoReceiver(QObject* parent)
     , _signalDepth(0)
     , _endOfStream(false)
 {
+    qDebug() << "真正的是VideoReceiver created:" << metaObject()->className();
     _slotHandler.start();
     connect(&_watchdogTimer, &QTimer::timeout, this, &GstVideoReceiver::_watchdog);
     _watchdogTimer.start(1000);
@@ -67,9 +68,11 @@ GstVideoReceiver::~GstVideoReceiver(void)
     _slotHandler.shutdown();
 }
 
-void
-GstVideoReceiver::start(const QString& uri, unsigned timeout, int buffer)
+void GstVideoReceiver::start(const QString& uri, unsigned timeout, int buffer)
 {
+    //前置检查和初始化
+    //首先检查是否需要线程调度，确保在正确的线程中执行
+    qDebug(VideoReceiverLog) << "start开始了！！！！！！！:";
     if (_needDispatch()) {
         QString cachedUri = uri;
         _slotHandler.dispatch([this, cachedUri, timeout, buffer]() {
@@ -78,6 +81,7 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout, int buffer)
         return;
     }
 
+    //检查流水线是否已在运行，避免重复启动
     if(_pipeline) {
         qCDebug(VideoReceiverLog) << "Already running!" << _uri;
         _dispatchSignal([this](){
@@ -86,6 +90,7 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout, int buffer)
         return;
     }
 
+    //验证URI参数的有效性
     if (uri.isEmpty()) {
         qCDebug(VideoReceiverLog) << "Failed because URI is not specified";
         _dispatchSignal([this](){
@@ -108,14 +113,21 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout, int buffer)
     GstElement* decoderQueue = nullptr;
     GstElement* recorderQueue = nullptr;
 
+    //GStreamer 流水线构建
+    //gst_element_factory_make
     do {
+        // 创建 tee 元素 - 用于数据流分流
+        //Tee（三通/分流器
         if((_tee = gst_element_factory_make("tee", nullptr)) == nullptr)  {
             qCCritical(VideoReceiverLog) << "gst_element_factory_make('tee') failed";
             break;
         }
 
-        GstPad* pad;
 
+        //在 tee 的 sink pad 上添加 buffer 探针,用于监控和统计数据流信息
+        GstPad* pad;//Pad（连接点）
+
+        //获取tee的进水口
         if ((pad = gst_element_get_static_pad(_tee, "sink")) == nullptr) {
             qCCritical(VideoReceiverLog) << "gst_element_get_static_pad() failed";
             break;
@@ -123,26 +135,84 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout, int buffer)
 
         _lastSourceFrameTime = 0;
 
+        //参数说明
+        // _teeProbeId = gst_pad_add_probe(
+        //     pad, // 要监测的pad
+        //     GST_PAD_PROBE_TYPE_BUFFER, // 监测类型
+        //     _teeProbe, // 回调函数（函数指针）
+        //     this, // 给回调函数的参数，在回调函数中是，user_data：给回调函数的额外数据，如果传递的this，那么在回调函数中可以用this（当前类）的方法
+        //     nullptr
+        //     );
         _teeProbeId = gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER, _teeProbe, this, nullptr);
         gst_object_unref(pad);
         pad = nullptr;
 
+
+        // 创建队列元素 - 缓冲数据流
+        //解码
         if((decoderQueue = gst_element_factory_make("queue", nullptr)) == nullptr)  {
             qCCritical(VideoReceiverLog) << "gst_element_factory_make('queue') failed";
             break;
         }
 
+        // 创建阀门元素 - 控制数据流开关
+        // Valve（阀门）
         if((_decoderValve = gst_element_factory_make("valve", nullptr)) == nullptr)  {
             qCCritical(VideoReceiverLog) << "gst_element_factory_make('valve') failed";
             break;
         }
 
+        //初始化时设置阀门为"drop"模式，阻止数据流通过.为后续的动态控制提供基础
         g_object_set(_decoderValve, "drop", TRUE, nullptr);
-
+       //录像分支
         if((recorderQueue = gst_element_factory_make("queue", nullptr)) == nullptr)  {
             qCCritical(VideoReceiverLog) << "gst_element_factory_make('queue') failed";
             break;
         }
+
+
+
+
+        // // --- RTMP 分支 ---
+        //     GstElement *rtmpQueue   = gst_element_factory_make("queue", "rtmpQueue");
+        // GstElement *depay       = gst_element_factory_make("rtph264depay", "rtmpDepay");
+        // GstElement *parser      = gst_element_factory_make("h264parse", "rtmpParser");
+        // GstElement *flvMux      = gst_element_factory_make("flvmux", "rtmpFlvMux");
+        // GstElement *rtmpSink    = gst_element_factory_make("rtmpsink", "rtmpSink");
+
+        // if (!rtmpQueue || !depay || !parser || !flvMux || !rtmpSink) {
+        //     qCCritical(VideoReceiverLog) << "Failed to create RTMP branch elements";
+        //     break;
+        // }
+
+        // // 设置 RTMP 推流地址
+        // g_object_set(rtmpSink, "location", "rtmp://47.112.2.160:1935/live/sn123456", nullptr);
+        // g_object_set(flvMux, "streamable", TRUE, nullptr); // 让 flv 边打包边推流
+
+        // // 添加到 pipeline
+        // gst_bin_add_many(GST_BIN(_pipeline), rtmpQueue, depay, parser, flvMux, rtmpSink, nullptr);
+
+        // // 链接分支
+        // if (!gst_element_link_many(rtmpQueue, depay, parser, flvMux, rtmpSink, nullptr)) {
+        //     qCCritical(VideoReceiverLog) << "Unable to link RTMP branch";
+        //     break;
+        // }
+
+        // // 从 _tee 拿一个 pad 动态链接到 rtmpQueue
+        // GstPad *tee_src_pad = gst_element_get_request_pad(_tee, "src_%u");
+        // GstPad *queue_sink_pad = gst_element_get_static_pad(rtmpQueue, "sink");
+        // if (gst_pad_link(tee_src_pad, queue_sink_pad) != GST_PAD_LINK_OK) {
+        //     qCCritical(VideoReceiverLog) << "Tee could not be linked to rtmpQueue";
+        //     break;
+        // }
+        // gst_object_unref(queue_sink_pad);
+
+
+
+
+
+
+
 
         if((_recorderValve = gst_element_factory_make("valve", nullptr)) == nullptr)  {
             qCCritical(VideoReceiverLog) << "gst_element_factory_make('valve') failed";
@@ -158,6 +228,7 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout, int buffer)
 
         g_object_set(_pipeline, "message-forward", TRUE, nullptr);
 
+        //调用 _makeSource 根据 URI 创建合适的源元素,支持多种输入源（文件、网络流等）
         if ((_source = _makeSource(uri)) == nullptr) {
             qCCritical(VideoReceiverLog) << "_makeSource() failed";
             break;
@@ -167,7 +238,7 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout, int buffer)
 
         pipelineUp = true;
 
-        GstPad* srcPad = nullptr;
+        GstPad* srcPad = nullptr;//（出水口）
 
         GstIterator* it;
 
@@ -189,6 +260,7 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout, int buffer)
             gst_object_unref(srcPad);
             srcPad = nullptr;
         } else {
+            // 动态 Pad 处理,连接 pad-added 信号，处理动态创建的源pad,适用于某些源元素在运行时才创建pad的情况
             g_signal_connect(_source, "pad-added", G_CALLBACK(_onNewPad), this);
         }
 
@@ -206,7 +278,7 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout, int buffer)
 
         if ((bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline))) != nullptr) {
             gst_bus_enable_sync_message_emission(bus);
-            g_signal_connect(bus, "sync-message", G_CALLBACK(_onBusMessage), this);
+            g_signal_connect(bus, "sync-message", G_CALLBACK(_onBusMessage), this);// 当有人按门铃（pad-added事件）时，就执行_onNewPad函数
             gst_object_unref(bus);
             bus = nullptr;
         }
@@ -215,16 +287,20 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout, int buffer)
         running = gst_element_set_state(_pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE;
     } while(0);
 
+
+    // 资源清理
     if (!running) {
         qCCritical(VideoReceiverLog) << "Failed";
 
+        // // 清理已创建的流水线
         // In newer versions, the pipeline will clean up all references that are added to it
         if (_pipeline != nullptr) {
-            gst_element_set_state(_pipeline, GST_STATE_NULL);
+            gst_element_set_state(_pipeline, GST_STATE_NULL);//设置元素的状态
             gst_object_unref(_pipeline);
             _pipeline = nullptr;
         }
 
+         // 清理未加入流水线的独立元素
         // If we failed before adding items to the pipeline, then clean up
         if (!pipelineUp) {
             if (_recorderValve != nullptr) {
@@ -262,9 +338,11 @@ GstVideoReceiver::start(const QString& uri, unsigned timeout, int buffer)
             emit onStartComplete(STATUS_FAIL);
         });
     } else {
+        //生成流水线图，便于调试和分析
         GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-started");
         qCDebug(VideoReceiverLog) << "Started" << _uri;
 
+        //通过信号机制异步通知启动结果
         _dispatchSignal([this](){
             emit onStartComplete(STATUS_OK);
         });
@@ -373,6 +451,9 @@ GstVideoReceiver::stop(void)
     _dispatchSignal([this](){
         emit onStopComplete(STATUS_OK);
     });
+
+    qDebug(VideoReceiverLog) << "start开始了:";
+    startStreaming("rtmp://47.112.2.160:1935/live/sn123456");
 }
 
 void
@@ -748,6 +829,8 @@ GstVideoReceiver::_filterParserCaps(GstElement* bin, GstPad* pad, GstElement* el
     return TRUE;
 }
 
+
+//该函数根据不同的URI协议创建相应的GStreamer源管道组件
 GstElement*
 GstVideoReceiver::_makeSource(const QString& uri)
 {
@@ -756,6 +839,7 @@ GstVideoReceiver::_makeSource(const QString& uri)
         return nullptr;
     }
 
+    //检测URI协议类型以确定使用哪种源组件
     bool isUdp264   = uri.contains("udp://",    Qt::CaseInsensitive);
     bool isRtsp     = uri.contains("rtsp://",   Qt::CaseInsensitive);
     bool isUdp265   = uri.contains("udp265://", Qt::CaseInsensitive);
@@ -769,23 +853,30 @@ GstVideoReceiver::_makeSource(const QString& uri)
     GstElement* bin     = nullptr;
     GstElement* srcbin  = nullptr;
 
+    //源元素创建
     do {
         QUrl url(uri);
 
+        //TCP MPEG-TS流
         if(isTcpMPEGTS) {
             if ((source = gst_element_factory_make("tcpclientsrc", "source")) != nullptr) {
                 g_object_set(static_cast<gpointer>(source), "host", qPrintable(url.host()), "port", url.port(), nullptr);
             }
-        } else if (isRtsp) {
+        }
+        //RTSP流
+        else if (isRtsp) {
             if ((source = gst_element_factory_make("rtspsrc", "source")) != nullptr) {
                 g_object_set(static_cast<gpointer>(source), "location", qPrintable(uri), "latency", 17, "udp-reconnect", 1, "timeout", _udpReconnect_us, NULL);
             }
-        } else if(isUdp264 || isUdp265 || isUdpMPEGTS) {
+        }
+        //UDP流（H.264/H.265）
+        else if(isUdp264 || isUdp265 || isUdpMPEGTS) {
             if ((source = gst_element_factory_make("udpsrc", "source")) != nullptr) {
                 g_object_set(static_cast<gpointer>(source), "uri", QStringLiteral("udp://%1:%2").arg(qPrintable(url.host()), QString::number(url.port())).toUtf8().constData(), nullptr);
 
                 GstCaps* caps = nullptr;
 
+                // 设置RTP caps
                 if(isUdp264) {
                     if ((caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264")) == nullptr) {
                         qCCritical(VideoReceiverLog) << "gst_caps_from_string() failed";
@@ -813,6 +904,7 @@ GstVideoReceiver::_makeSource(const QString& uri)
             break;
         }
 
+        // 管道构建
         if ((bin = gst_bin_new("sourcebin")) == nullptr) {
             qCCritical(VideoReceiverLog) << "gst_bin_new('sourcebin') failed";
             break;
@@ -829,6 +921,7 @@ GstVideoReceiver::_makeSource(const QString& uri)
 
         // FIXME: AV: Android does not determine MPEG2-TS via parsebin - have to explicitly state which demux to use
         // FIXME: AV: tsdemux handling is a bit ugly - let's try to find elegant solution for that later
+        //MPEG-TS特殊处理
         if (isTcpMPEGTS || isUdpMPEGTS) {
             if ((tsdemux = gst_element_factory_make("tsdemux", nullptr)) == nullptr) {
                 qCCritical(VideoReceiverLog) << "gst_element_factory_make('tsdemux') failed";
@@ -842,16 +935,20 @@ GstVideoReceiver::_makeSource(const QString& uri)
                 break;
             }
 
-            source = tsdemux;
+            //
+            source = tsdemux;// 将tsdemux作为新的源
             tsdemux = nullptr;
         }
 
         int probeRes = 0;
-
+        //智能连接逻辑
+        //pad探测
         gst_element_foreach_src_pad(source, _padProbe, &probeRes);
 
+        //如果有静态pad
         if (probeRes & 1) {
-            if (probeRes & 2 && _buffer >= 0) {
+            if (probeRes & 2 && _buffer >= 0)// 需要jitter buffer
+            {
                 if ((buffer = gst_element_factory_make("rtpjitterbuffer", nullptr)) == nullptr) {
                     qCCritical(VideoReceiverLog) << "gst_element_factory_make('rtpjitterbuffer') failed";
                     break;
@@ -869,7 +966,11 @@ GstVideoReceiver::_makeSource(const QString& uri)
                     break;
                 }
             }
-        } else {
+        }
+
+         // 动态pad，使用信号连接
+        // 信号连接
+        else {
             g_signal_connect(source, "pad-added", G_CALLBACK(_linkPad), parser);
         }
 
@@ -879,8 +980,9 @@ GstVideoReceiver::_makeSource(const QString& uri)
 
         srcbin = bin;
         bin = nullptr;
-    } while(0);
+    } while(0);//清理机制，使用do-while(0)模式实现局部清理
 
+    // 错误时清理所有资源
     if (bin != nullptr) {
         gst_object_unref(bin);
         bin = nullptr;
@@ -926,6 +1028,9 @@ GstVideoReceiver::_makeDecoder(GstCaps* caps, GstElement* videoSink)
     return decoder;
 }
 
+
+//创建GStreamer文件保存管道的函数
+//该函数根据指定的文件格式创建相应的GStreamer文件保存bin
 GstElement*
 GstVideoReceiver::_makeFileSink(const QString& videoFile, FILE_FORMAT format)
 {
@@ -935,29 +1040,38 @@ GstVideoReceiver::_makeFileSink(const QString& videoFile, FILE_FORMAT format)
     GstElement* bin = nullptr;
     bool releaseElements = true;
 
+    //确保文件格式在有效范围内
     do{
         if (format < FILE_FORMAT_MIN || format >= FILE_FORMAT_MAX) {
             qCCritical(VideoReceiverLog) << "Unsupported file format";
             break;
         }
 
+        //复用器(Muxer)创建：包装机，把视频+音频"包装"成一个文件
+        // 根据格式选择不同的"包装机"，可能是：mp4mux, avimux, matroskamux 等
         if ((mux = gst_element_factory_make(_kFileMux[format - FILE_FORMAT_MIN], nullptr)) == nullptr) {
             qCCritical(VideoReceiverLog) << "gst_element_factory_make('" << _kFileMux[format - FILE_FORMAT_MIN] << "') failed";
             break;
         }
 
+        //创建保存机：文件接收器创建
+        //创建filesink元素并设置输出文件路径
         if ((sink = gst_element_factory_make("filesink", nullptr)) == nullptr) {
             qCCritical(VideoReceiverLog) << "gst_element_factory_make('filesink') failed";
             break;
         }
 
+        //设置对象属性，以null结束
         g_object_set(static_cast<gpointer>(sink), "location", qPrintable(videoFile), nullptr);
 
+        //Bin容器创建
+        //创建bin容器来封装复用器和文件接收器
         if ((bin = gst_bin_new("sinkbin")) == nullptr) {
             qCCritical(VideoReceiverLog) << "gst_bin_new('sinkbin') failed";
             break;
         }
 
+        // Pad模板获取。获取复用器的视频输入pad模板。"video_%u"表示请求视频输入pad
         GstPadTemplate* padTemplate;
 
         if ((padTemplate = gst_element_class_get_pad_template(GST_ELEMENT_GET_CLASS(mux), "video_%u")) == nullptr) {
@@ -967,16 +1081,21 @@ GstVideoReceiver::_makeFileSink(const QString& videoFile, FILE_FORMAT format)
 
         // FIXME: AV: pad handling is potentially leaking (and other similar places too!)
         GstPad* pad;
-
+      //从复用器请求一个可用的输入pad
         if ((pad = gst_element_request_pad(mux, padTemplate, nullptr, nullptr)) == nullptr) {
             qCCritical(VideoReceiverLog) << "gst_element_request_pad(mux) failed";
             break;
         }
 
+      //构建管道
+      //将复用器和文件接收器添加到bin中
+      //创建ghost pad将bin的内部pad暴露给外部
+      //设置releaseElements = false防止重复释放
         gst_bin_add_many(GST_BIN(bin), mux, sink, nullptr);
 
-        releaseElements = false;
+        releaseElements = false;// 元素已加入bin，不需要单独释放
 
+        //ghostpad给整个生产线开了一个"原料投入口"
         GstPad* ghostpad = gst_ghost_pad_new("sink", pad);
 
         gst_element_add_pad(bin, ghostpad);
@@ -984,13 +1103,14 @@ GstVideoReceiver::_makeFileSink(const QString& videoFile, FILE_FORMAT format)
         gst_object_unref(pad);
         pad = nullptr;
 
+        //连接元素，连接复用器和文件接收器，完成管道构建
         if (!gst_element_link(mux, sink)) {
             qCCritical(VideoReceiverLog) << "gst_element_link() failed";
             break;
         }
 
         fileSink = bin;
-        bin = nullptr;
+        bin = nullptr;// // 所有权转移
     } while(0);
 
     if (releaseElements) {
@@ -1012,6 +1132,39 @@ GstVideoReceiver::_makeFileSink(const QString& videoFile, FILE_FORMAT format)
 
     return fileSink;
 }
+
+
+
+GstElement*GstVideoReceiver:: _makeRtmpSink(const QString& rtmpUrl)
+{
+    GstElement* queue   = gst_element_factory_make("queue", nullptr);
+    GstElement* mux     = gst_element_factory_make("flvmux", "flvmux");
+    GstElement* sink    = gst_element_factory_make("rtmpsink", "rtmpsink");
+
+    if (!queue || !mux || !sink) {
+        qCWarning(VideoReceiverLog) << "Failed to create RTMP elements";
+        return nullptr;
+    }
+
+    g_object_set(G_OBJECT(sink),
+                 "location", rtmpUrl.toUtf8().constData(),
+                 "async", FALSE,
+                 "sync", FALSE,
+                 nullptr);
+
+    gst_bin_add_many(GST_BIN(_pipeline), queue, mux, sink, nullptr);
+
+    if (!gst_element_link_many(queue, mux, sink, nullptr)) {
+        qCWarning(VideoReceiverLog) << "Failed to link RTMP elements";
+        return nullptr;
+    }
+
+    return queue; // 返回队列作为入口
+}
+
+
+
+
 
 void
 GstVideoReceiver::_onNewSourcePad(GstPad* pad)
@@ -1482,45 +1635,75 @@ GstVideoReceiver::_linkPad(GstElement* element, GstPad* pad, gpointer data)
     }
 }
 
+
+
+
+//探针函数，检测pad的能力(caps)，检测pad是否支持RTP数据，并设置检测结果标志
+//Caps = 媒体格式的"身份证"或"说明书"，Caps在GStreamer中的作用： 格式协商、能力查询、格式过滤
+// [视频数据]
+//    ├── 类型：视频/H264
+//    ├── 分辨率：1920x1080
+//    ├── 帧率：30fps
+//    └── 像素格式：I420
+
+//  [音频数据]
+//    ├── 类型：音频/AAC
+//    ├── 采样率：44100Hz
+//    └── 声道数：2
+// 为什么需要这个检测？
+//     RTP流：需要jitterbuffer来消除网络抖动
+//     其他流：可能不需要特殊处理
+//     动态pad：需要不同的连接方式
 gboolean
 GstVideoReceiver::_padProbe(GstElement* element, GstPad* pad, gpointer user_data)
 {
-    Q_UNUSED(element)
+    Q_UNUSED(element)// 忽略element参数
 
-    int* probeRes = (int*)user_data;
+    int* probeRes = (int*)user_data;// 用户数据是int指针，用于返回结果
 
-    *probeRes |= 1;
+    *probeRes |= 1;// 设置最低位：表示这个pad有静态caps
 
-    GstCaps* filter = gst_caps_from_string("application/x-rtp");
+    GstCaps* filter = gst_caps_from_string("application/x-rtp");// 创建RTP媒体类型的caps过滤器
 
     if (filter != nullptr) {
-        GstCaps* caps = gst_pad_query_caps(pad, nullptr);
+        GstCaps* caps = gst_pad_query_caps(pad, nullptr);// 获取这个pad支持的所有媒体类型和能力
 
         if (caps != nullptr) {
+            //caps不是"任意类型"（有具体能力）&&caps能与RTP类型交集（支持RTP）
             if (!gst_caps_is_any(caps) && gst_caps_can_intersect(caps, filter)) {
-                *probeRes |= 2;
+                *probeRes |= 2; // 设置第2位：表示支持RTP数据
             }
+            // *probeRes 的可能值：
+            //     1 (0b01)：有静态caps，但不一定是RTP
+            //     3 (0b11)：有静态caps且支持RTP数据
 
-            gst_caps_unref(caps);
+            gst_caps_unref(caps); // 释放caps资源
             caps = nullptr;
         }
 
-        gst_caps_unref(filter);
+        gst_caps_unref(filter);// 释放filter资源
         filter = nullptr;
     }
 
     return TRUE;
 }
 
+//GStreamer Pad探针(Probe) 函数，回调函数
+//水管监控摄像头
+//当数据流过这个接口时，能知道并执行一些操作：如帧率统计等
+//pad：被监控的接口（哪个水管）
+//info：流经的数据信息（什么水流过）
+//user_data：给回调函数的"额外信息包"
 GstPadProbeReturn
 GstVideoReceiver::_teeProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
 {
-    Q_UNUSED(pad)
-    Q_UNUSED(info)
+    Q_UNUSED(pad)// 告诉编译器：参数pad未使用（避免警告）
+    Q_UNUSED(info)// 参数info也未使用
 
+    // 把user_data转换回GstVideoReceiver对象指针
     if(user_data != nullptr) {
         GstVideoReceiver* pThis = static_cast<GstVideoReceiver*>(user_data);
-        pThis->_noteTeeFrame();
+        pThis->_noteTeeFrame(); // 调用对象的帧计数方法，用于帧率统计
     }
 
     return GST_PAD_PROBE_OK;
@@ -1612,4 +1795,220 @@ GstVideoReceiver::_keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer us
     });
 
     return GST_PAD_PROBE_REMOVE;
+}
+
+
+
+
+// ---------- 公共 slot：入口，派发到 worker 线程 ----------
+void GstVideoReceiver::startStreaming(const QString &rtmpUrl)
+{
+    qCDebug(VideoReceiverLog) << "走进了startStreaming called with:" << rtmpUrl;
+    // 不在 Worker 线程就 dispatch
+    if (_needDispatch()) {
+        QString cached = rtmpUrl;
+        _slotHandler.dispatch([this, cached]() {
+            startStreaming(cached);
+        });
+        return;
+    }
+
+    if (_streamingToRtmp) {
+        qCDebug(VideoReceiverLog) << "Already streaming to RTMP:" << _currentRtmpUrl;
+        return;
+    }
+
+    if (!_pipeline || !_tee) {
+        qCWarning(VideoReceiverLog) << "Pipeline or tee not ready; cannot start RTMP";
+        return;
+    }
+
+            // 保存 url
+    _currentRtmpUrl = rtmpUrl;
+
+            // 创建并挂载 rtmp branch
+    if (!_makeRtmpBranch(rtmpUrl)) {
+        qCWarning(VideoReceiverLog) << "Failed to create RTMP branch";
+        _currentRtmpUrl.clear();
+        return;
+    }
+
+    _streamingToRtmp = true;
+    qCDebug(VideoReceiverLog) << "！！！！RTMP streaming started to" << rtmpUrl;
+    qCDebug(VideoReceiverLog) << "有flvmux！！！！:" << (gst_element_factory_find("flvmux") != nullptr);
+    qCDebug(VideoReceiverLog) << "！！！！Has rtmpsink:" << (gst_element_factory_find("rtmpsink") != nullptr);
+
+}
+
+void GstVideoReceiver::stopStreaming()
+{
+    if (_needDispatch()) {
+        _slotHandler.dispatch([this](){ stopStreaming(); });
+        return;
+    }
+
+    if (!_streamingToRtmp) {
+        qCDebug(VideoReceiverLog) << "RTMP streaming not active";
+        return;
+    }
+
+    _shutdownRtmpBranch();
+    _currentRtmpUrl.clear();
+    _streamingToRtmp = false;
+    qCDebug(VideoReceiverLog) << "RTMP streaming stopped";
+}
+
+
+
+
+// ---------- internal: 创建 rtmp 分支并把 tee pad 链到 queue sink  ----------
+bool GstVideoReceiver::_makeRtmpBranch(const QString &rtmpUrl)
+{
+    // 假设在 Worker 线程
+    if (!_pipeline || !_tee) {
+        qCWarning(VideoReceiverLog) << "_makeRtmpBranch: pipeline or tee null";
+        return false;
+    }
+
+            // 创建元素
+    GstElement *rtmpQueue = gst_element_factory_make("queue", "rtmp_queue");
+    GstElement *parser    = gst_element_factory_make("h264parse", "rtmp_h264parse");
+    GstElement *flvMux    = gst_element_factory_make("flvmux", "rtmp_flvmux");
+    GstElement *rtmpSink  = gst_element_factory_make("rtmpsink", "rtmp_sink");
+
+    if (!rtmpQueue || !parser || !flvMux || !rtmpSink) {
+        qCWarning(VideoReceiverLog) << "Failed to create RTMP elements";
+        if (rtmpQueue) gst_object_unref(rtmpQueue);
+        if (parser) gst_object_unref(parser);
+        if (flvMux) gst_object_unref(flvMux);
+        if (rtmpSink) gst_object_unref(rtmpSink);
+        return false;
+    }
+
+            // 配置元素
+    g_object_set(flvMux, "streamable", TRUE, nullptr);
+    g_object_set(rtmpSink, "location", rtmpUrl.toUtf8().constData(), "async", FALSE, "sync", FALSE, nullptr);
+
+            // Add to pipeline
+    gst_bin_add_many(GST_BIN(_pipeline), rtmpQueue, parser, flvMux, rtmpSink, nullptr);
+
+            // Link queue -> parser -> flvmux -> rtmpsink
+    if (!gst_element_link_many(rtmpQueue, parser, flvMux, rtmpSink, nullptr)) {
+        qCWarning(VideoReceiverLog) << "Unable to link RTMP branch elements";
+        // cleanup
+        gst_bin_remove_many(GST_BIN(_pipeline), rtmpQueue, parser, flvMux, rtmpSink, nullptr);
+        gst_object_unref(rtmpQueue);
+        gst_object_unref(parser);
+        gst_object_unref(flvMux);
+        gst_object_unref(rtmpSink);
+        return false;
+    }
+
+            // Request a src pad from tee
+    GstPad *tee_src_pad = gst_element_get_request_pad(_tee, "src_%u");
+    if (!tee_src_pad) {
+        qCWarning(VideoReceiverLog) << "Failed to request tee src pad";
+        // remove added elements
+        gst_bin_remove_many(GST_BIN(_pipeline), rtmpQueue, parser, flvMux, rtmpSink, nullptr);
+        gst_object_unref(rtmpQueue);
+        gst_object_unref(parser);
+        gst_object_unref(flvMux);
+        gst_object_unref(rtmpSink);
+        return false;
+    }
+
+            // get sink pad of queue
+    GstPad *queue_sink_pad = gst_element_get_static_pad(rtmpQueue, "sink");
+    if (!queue_sink_pad) {
+        qCWarning(VideoReceiverLog) << "Failed to get queue sink pad";
+        gst_element_release_request_pad(_tee, tee_src_pad);
+        gst_object_unref(tee_src_pad);
+        gst_bin_remove_many(GST_BIN(_pipeline), rtmpQueue, parser, flvMux, rtmpSink, nullptr);
+        gst_object_unref(rtmpQueue);
+        gst_object_unref(parser);
+        gst_object_unref(flvMux);
+        gst_object_unref(rtmpSink);
+        return false;
+    }
+
+            // Link tee pad -> queue sink pad
+    if (gst_pad_link(tee_src_pad, queue_sink_pad) != GST_PAD_LINK_OK) {
+        qCWarning(VideoReceiverLog) << "Tee could not be linked to rtmp queue";
+        gst_object_unref(queue_sink_pad);
+        gst_element_release_request_pad(_tee, tee_src_pad);
+        gst_object_unref(tee_src_pad);
+        gst_bin_remove_many(GST_BIN(_pipeline), rtmpQueue, parser, flvMux, rtmpSink, nullptr);
+        gst_object_unref(rtmpQueue);
+        gst_object_unref(parser);
+        gst_object_unref(flvMux);
+        gst_object_unref(rtmpSink);
+        return false;
+    }
+
+            // keep references for shutdown
+    _rtmpQueue = rtmpQueue;
+    _rtmpParser = parser;
+    _rtmpFlvMux = flvMux;
+    _rtmpSink = rtmpSink;
+    _rtmpTeePad = tee_src_pad;
+
+            // unref queue_sink_pad (we still hold element refs)
+    gst_object_unref(queue_sink_pad);
+
+            // set pipeline to PLAYING on newly added elements
+    gst_element_sync_state_with_parent(rtmpQueue);
+    gst_element_sync_state_with_parent(parser);
+    gst_element_sync_state_with_parent(flvMux);
+    gst_element_sync_state_with_parent(rtmpSink);
+
+    qCDebug(VideoReceiverLog) << "_makeRtmpBranch: RTMP branch created and linked";
+    return true;
+}
+
+// ---------- internal: 卸载 rtmp 分支 ----------
+void GstVideoReceiver::_shutdownRtmpBranch()
+{
+    if (!_pipeline) return;
+
+            // stop elements first
+    if (_rtmpSink) gst_element_set_state(_rtmpSink, GST_STATE_NULL);
+    if (_rtmpFlvMux) gst_element_set_state(_rtmpFlvMux, GST_STATE_NULL);
+    if (_rtmpParser) gst_element_set_state(_rtmpParser, GST_STATE_NULL);
+    if (_rtmpQueue) gst_element_set_state(_rtmpQueue, GST_STATE_NULL);
+
+            // unlink tee pad if requested
+    if (_rtmpTeePad && _rtmpQueue) {
+        GstPad *queue_sink = gst_element_get_static_pad(_rtmpQueue, "sink");
+        if (queue_sink) {
+            gst_pad_unlink(_rtmpTeePad, queue_sink);
+            gst_object_unref(queue_sink);
+        }
+        gst_element_release_request_pad(_tee, _rtmpTeePad);
+        gst_object_unref(_rtmpTeePad);
+        _rtmpTeePad = nullptr;
+    }
+
+            // remove from pipeline and unref elements
+    if (_rtmpQueue) {
+        gst_bin_remove(GST_BIN(_pipeline), _rtmpQueue);
+        gst_object_unref(_rtmpQueue);
+        _rtmpQueue = nullptr;
+    }
+    if (_rtmpParser) {
+        gst_bin_remove(GST_BIN(_pipeline), _rtmpParser);
+        gst_object_unref(_rtmpParser);
+        _rtmpParser = nullptr;
+    }
+    if (_rtmpFlvMux) {
+        gst_bin_remove(GST_BIN(_pipeline), _rtmpFlvMux);
+        gst_object_unref(_rtmpFlvMux);
+        _rtmpFlvMux = nullptr;
+    }
+    if (_rtmpSink) {
+        gst_bin_remove(GST_BIN(_pipeline), _rtmpSink);
+        gst_object_unref(_rtmpSink);
+        _rtmpSink = nullptr;
+    }
+
+    qCDebug(VideoReceiverLog) << "_shutdownRtmpBranch: cleaned up";
 }

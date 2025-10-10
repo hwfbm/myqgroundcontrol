@@ -21,6 +21,9 @@
 #include "TCPLink.h"
 #include "UDPLink.h"
 
+// #include "loginmanager.h"
+// #include "mqttlink.h"
+
 #ifdef QGC_ENABLE_BLUETOOTH
 #include "BluetoothLink.h"
 #endif
@@ -36,6 +39,8 @@
 #ifdef QT_DEBUG
 #include "MockLink.h"
 #endif
+
+
 
 #ifndef QGC_AIRLINK_DISABLED
 #include "AirLinkLink.h"
@@ -81,6 +86,8 @@ LinkManager *LinkManager::instance()
 
 void LinkManager::registerQmlTypes()
 {
+    (void) qmlRegisterUncreatableType<LoginManager>("QGroundControl",       1, 0, "LoginManager",         "Reference only");
+    (void) qmlRegisterUncreatableType<Mqttlink>("QGroundControl", 1, 0, "Mqttlink",   "Reference only");
     (void) qmlRegisterUncreatableType<LinkManager>("QGroundControl",       1, 0, "LinkManager",         "Reference only");
     (void) qmlRegisterUncreatableType<LinkConfiguration>("QGroundControl", 1, 0, "LinkConfiguration",   "Reference only");
     (void) qmlRegisterUncreatableType<LinkInterface>("QGroundControl",     1, 0, "LinkInterface",       "Reference only");

@@ -60,6 +60,7 @@ Popup {
     focus:              true
     margins:            0
 
+    property alias dialogTitle: titleLable.text        // 让上层可以改标题
     property string title
     property var    buttons:                Dialog.Ok //按钮组合 (使用 Qt 的 Dialog 标准按钮枚举)
     property alias  acceptButtonEnabled:    acceptButton.enabled //接受按钮启用状态
@@ -173,58 +174,58 @@ Popup {
         rejectButton.visible = false
         // Accept role buttons
         if (buttons & Dialog.Ok) {
-            acceptButton.text = qsTr("Ok")
+            acceptButton.text = qsTr("确定")
             acceptButton.visible = true
         } else if (buttons & Dialog.Open) {
-            acceptButton.text = qsTr("Open")
+            acceptButton.text = qsTr("打开")
             acceptButton.visible = true
         } else if (buttons & Dialog.Save) {
-            acceptButton.text = qsTr("Save")
+            acceptButton.text = qsTr("保存")
             acceptButton.visible = true
         } else if (buttons & Dialog.Apply) {
-            acceptButton.text = qsTr("Apply")
+            acceptButton.text = qsTr("应用")
             acceptButton.visible = true
         } else if (buttons & Dialog.Open) {
-            acceptButton.text = qsTr("Open")
+            acceptButton.text = qsTr("打开")
             acceptButton.visible = true
         } else if (buttons & Dialog.SaveAll) {
-            acceptButton.text = qsTr("Save All")
+            acceptButton.text = qsTr("全部保存")
             acceptButton.visible = true
         } else if (buttons & Dialog.Yes) {
-            acceptButton.text = qsTr("Yes")
+            acceptButton.text = qsTr("同意")
             acceptButton.visible = true
         } else if (buttons & Dialog.YesToAll) {
-            acceptButton.text = qsTr("Yes to All")
+            acceptButton.text = qsTr("全部同意")
             acceptButton.visible = true
         } else if (buttons & Dialog.Retry) {
-            acceptButton.text = qsTr("Retry")
+            acceptButton.text = qsTr("重试")
             acceptButton.visible = true
         } else if (buttons & Dialog.Reset) {
-            acceptButton.text = qsTr("Reset")
+            acceptButton.text = qsTr("重置")
             acceptButton.visible = true
         } else if (buttons & Dialog.RestoreToDefaults) {
-            acceptButton.text = qsTr("Restore to Defaults")
+            acceptButton.text = qsTr("还原系统到出厂默认值")
             acceptButton.visible = true
         } else if (buttons & Dialog.Ignore) {
-            acceptButton.text = qsTr("Ignore")
+            acceptButton.text = qsTr("忽略")
             acceptButton.visible = true
         }
 
         // Reject role buttons
         if (buttons & Dialog.Cancel) {
-            rejectButton.text = qsTr("Cancel")
+            rejectButton.text = qsTr("取消")
             rejectButton.visible = true
         } else if (buttons & Dialog.Close) {
-            rejectButton.text = qsTr("Close")
+            rejectButton.text = qsTr("关闭")
             rejectButton.visible = true
         } else if (buttons & Dialog.No) {
-            rejectButton.text = qsTr("No")
+            rejectButton.text = qsTr("否定")
             rejectButton.visible = true
         } else if (buttons & Dialog.NoToAll) {
-            rejectButton.text = qsTr("No to All")
+            rejectButton.text = qsTr("全部否定")
             rejectButton.visible = true
         } else if (buttons & Dialog.Abort) {
-            rejectButton.text = qsTr("Abort")
+            rejectButton.text = qsTr("中断")
             rejectButton.visible = true
         }
 //如果包含 Dialog.Cancel，允许按 Escape 键关闭对话框
@@ -261,13 +262,19 @@ Popup {
         //// 标题行（包含标题和按钮）
         RowLayout {
             id:                     titleRowLayout
-            Layout.fillWidth:       true
+             width:Math.min(mainWindow.width * 0.85, 400)
+            //Layout.fillWidth:       true
             spacing:                _contentMargin
 
             QGCLabel {
                 id: titleLable
                 Layout.fillWidth:   true
+                 Layout.maximumWidth: mainWindow.width * 0.8 - rejectButton.implicitWidth - acceptButton.implicitWidth - titleRowLayout.spacing*2
+                //width:Math.min(mainWindow.width * 0.7, 400)
+                 wrapMode: Text.WordWrap         // 有宽度才能自动换行
+                  //width: Math.min(mainWindow.width * 0.7, 400)  // 限制最大宽度
                 text:               root.title
+                //color:"yellow"
                 font.pointSize:     ScreenTools.mediumFontPointSize
                 verticalAlignment:	Text.AlignVCenter
             }
@@ -291,6 +298,7 @@ Popup {
             Layout.fillWidth:       true
             Layout.preferredWidth:  Math.min(maxAvailableWidth, totalContentWidth)
             Layout.preferredHeight: Math.min(maxAvailableHeight, totalContentHeight)
+
             color:                 Qt.rgba(0, 0, 0, 0.65) /* _qgcPal.window*/
             border.color:  "#888888"
             radius:         root.padding / 2

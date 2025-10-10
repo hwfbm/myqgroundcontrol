@@ -29,7 +29,7 @@ RadioButton {
             height:             width
             antialiasing:       true
             radius:             height * 0.5
-            color:              "black"
+            color:              "#2196F3"
             visible:            control.checked
         }
     }

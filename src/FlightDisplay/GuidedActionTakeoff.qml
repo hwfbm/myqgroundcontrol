@@ -9,6 +9,7 @@
 
 import QGroundControl.FlightDisplay
 
+//起飞
 GuidedToolStripAction {
     text:       _guidedController.takeoffTitle
     //iconSource: "/res/takeoff.svg"

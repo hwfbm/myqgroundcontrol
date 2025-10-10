@@ -14,6 +14,7 @@ import QGroundControl
 import QGroundControl.ScreenTools
 import QGroundControl.Palette
 
+//带箭头的弹出式面板
 Item {
     id:         _root
     visible:    false
@@ -24,6 +25,7 @@ Item {
     property var    toolStrip
 
     // Should be an enum but that get's into the whole problem of creating a singleton which isn't worth the effort
+    //方向枚举
     readonly property int dropLeft:     1
     readonly property int dropRight:    2
     readonly property int dropUp:       3
@@ -41,24 +43,31 @@ Item {
     property var    _dropPanelCancel
     property var    _parentButton
 
+    //显示面板
     function show(panelEdgeTopPoint, panelComponent, parentButton) {
-        _parentButton = parentButton
-        _dropEdgeTopPoint = panelEdgeTopPoint
-        _dropDownComponent = panelComponent
-        _calcPositions()
-        visible = true
-        _dropPanelCancel = dropPanelCancelComponent.createObject(toolStrip.parent)
+        _parentButton = parentButton// 保存触发按钮
+        _dropEdgeTopPoint = panelEdgeTopPoint// 箭头指向点
+        _dropDownComponent = panelComponent// 要加载的面板组件
+        _calcPositions() // 计算位置
+        visible = true // 显示面板
+        _dropPanelCancel = dropPanelCancelComponent.createObject(toolStrip.parent)// 创建取消区域
     }
 
     function hide() {
         if (_dropPanelCancel) {
-            _dropPanelCancel.destroy()
-            _parentButton.checked = false
-            visible = false
-            _dropDownComponent = undefined
+            _dropPanelCancel.destroy()// 销毁取消区域
+            _parentButton.checked = false// 取消按钮选中状态
+            visible = false // 隐藏面板
+            _dropDownComponent = undefined// 清除组件引用
         }
     }
 
+    //计算位置和大小
+// 负责：
+//     计算面板大小（包含箭头）
+//     定位面板位置
+//     确保面板在视窗边界内
+//     计算箭头点的坐标
     function _calcPositions() {
         var panelComponentWidth  = panelLoader.item.width
         var panelComponentHeight = panelLoader.item.height
@@ -70,10 +79,12 @@ Item {
         dropDownItem.y = _dropEdgeTopPoint.y -(dropDownItem.height / 2) + radius
 
         // Validate that dropdown is within viewport
+      // 确保面板在视窗内
         dropDownItem.y = Math.min(dropDownItem.y + dropDownItem.height, _viewportMaxBottom) - dropDownItem.height
         dropDownItem.y = Math.max(dropDownItem.y, _viewportMaxTop)
 
         // Adjust height to not exceed viewport bounds
+        // 调整高度不超出视窗边界
         dropDownItem.height = Math.min(dropDownItem.height, _viewportMaxHeight - dropDownItem.y)
 
         // Arrow points
@@ -88,14 +99,16 @@ Item {
 
     QGCPalette { id: qgcPal }
 
+    //取消点击区域
     Component {
         // Overlay which is used to cancel the panel when the user clicks away
         id: dropPanelCancelComponent
 
+         // 在工具条下层
         MouseArea {
             anchors.fill:   parent
             z:              toolStrip.z - 1
-            onClicked:      dropPanel.hide()
+            onClicked:      dropPanel.hide() // 点击外部关闭面板
         }
     }
 
@@ -103,6 +116,7 @@ Item {
     Item {
         id: dropDownItem
 
+        // 阻止鼠标事件穿透
         DeadMouseArea {
             anchors.fill: parent
         }
@@ -115,6 +129,8 @@ Item {
             property point arrowBase1: Qt.point(0, 0)
             property point arrowBase2: Qt.point(0, 0)
 
+            // 绘制带箭头的面板背景
+            // 使用调色板颜色
             onPaint: {
                 var panelX = _arrowPointWidth
                 var panelY = 0
@@ -135,11 +151,12 @@ Item {
                 context.lineTo(panelX, panelY)                              // top left
 
                 context.closePath()
-                context.fillStyle = qgcPal.windowShade
+                context.fillStyle ="Qt.rgba(0, 0, 0, 0.6)"/* qgcPal.windowShade*/
                 context.fill()
             }
         } // Canvas - arrowCanvas
 
+        //可滚动内容区域
         QGCFlickable {
             id:                 panelItemFlickable
             anchors.margins:    _dropMargin
@@ -149,13 +166,14 @@ Item {
             contentWidth:       panelLoader.width
             contentHeight:      panelLoader.height
 
+            //// 动态加载实际内容
             Loader {
                 id: panelLoader
 
                 onHeightChanged:    _calcPositions()
                 onWidthChanged:     _calcPositions()
 
-                property var dropPanel: _root
+                property var dropPanel: _root// 向子组件暴露面板引用
             }
         }
     } // Item - dropDownItem

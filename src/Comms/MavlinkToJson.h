@@ -6,13 +6,15 @@
 #include <QJsonObject>
 #include <QDateTime>
 #include <QtMath>
+#include<QTimer>
+#include"Vehicle.h"
 
-
+class Vehicle;  // 前向声明
 
 class LinkInterface;
-extern "C" {
-#include <mavlink.h>
-}
+// extern "C" {
+// #include <mavlink.h>
+// }
 
 class MavlinkToJson : public QObject {
     Q_OBJECT
@@ -22,23 +24,34 @@ class MavlinkToJson : public QObject {
     void setContext(const QString& group, const QString& droneId,
                     const QString& from, const QString& ver);
 
+    //QString messageClassForMavlink(uint32_t msgid);//分发消息类型
+
    public slots:
     void handleMessage(LinkInterface* link, const mavlink_message_t& msg);
-
+    void publishStatusFlight();//发送status/flight
+    void publishStatusPayload();//发送status/Payload
    private:
     // 统一头
     QJsonObject makeHeader(const QString& msgName);
 
-            // 主题：uav/<group>/<drone_id>/<msg_name>
-    QString topicFor(/*const QString& msgName*/) const
-    {
-        if (_group.isEmpty())
-            return QString("uav/%1").arg(_droneId/*, msgName*/);
-        return QString("uav/%1/%2").arg(_group, _droneId/*, msgName*/);
-    }
+    void initRcMapping(Vehicle* vehicle);//rc映射
+    //void handleRcChannels(Vehicle* vehicle);//处理通道
 
-            // 工具：读小端 u16
-    static inline quint16 u16le(const uint8_t* d, int i) {
+    // 主题：uav/<group>/<drone_id>/<msg_name>
+    // QString topicFor(/*const QString& msgName*/) const
+    // {
+    //     if (_group.isEmpty())
+    //         return QString("uav/%1").arg(_droneId/*, msgName*/);
+    //     return QString("uav/%1/%2").arg(_group, _droneId/*, msgName*/);
+    // }
+    QString topicFor(const QString& messageClass,
+                     const QString& group ,
+                     const QString& droneId)const;
+
+
+    //工具：读小端 u16
+    static inline quint16 u16le(const uint8_t* d, int i)
+    {
         return quint16(d[i]) | (quint16(d[i+1]) << 8);
     }
     void publishGeoPositionJson(const mavlink_message_t& msg);//方位等
@@ -57,6 +70,10 @@ class MavlinkToJson : public QObject {
     QString chargeStateName(uint8_t state);//电池充电状态
 
    private:
+
+    QTimer* _timer;
+
+
     //全球坐标位置
     struct GeoPositionCache {
         double lat = 0;
@@ -76,21 +93,140 @@ class MavlinkToJson : public QObject {
         bool globalUpdated = false;//标志位，是否收到全球经纬度信号
     } _geoCache;
 
+
+
     //云台角度
     struct GimbalCache {
         double roll = 0;
         double pitch = 0;
         double yaw = 0;
-        QString mode = "LOCK";
-        bool recording = false;
+        QString mode;
+        bool recording;
     } _gimbalCache;
+
+
+
+    //统一大json
+    struct StateCache {
+        QJsonObject heartbeat;//心跳包
+        QJsonObject position;//gps位置信息
+        // QJsonObject hydrogen;//氢电池信息
+        // QJsonObject battery;//标准电池信息
+        QMap<int, QJsonObject> batteries;   // battery_id -> 电池信息
+        QMap<int, QJsonObject> hydrogens;   // hydrogen_id -> 氢电池信息
+        QJsonObject attitude;//roll
+
+        QJsonObject telemetry; // 信号、RSSI、SNR、TX/RX 速率
+
+        QJsonObject velocity;//坐标
+
+        QJsonObject rc;//遥控器
+         QJsonObject gimble;//云台
+    }_state;
+
+
+
+    //rc映射
+    struct RcMapping {
+        int roll   ;
+        int pitch ;
+        int yaw  ;
+        int throttle ;
+        int mode    ;
+        int gimbal  ;
+    } _rcMapping;
+
+
+    //信号
+    struct TelemetryCache {
+        bool signalUpdated = false;
+        int signal = 0;
+        int rssi = 0;
+        float snr = 0;
+        float txRate = 0;
+        float rxRate = 0;
+    }_telemetryCache;
+
+
+
+    //处理数据
+    struct FlightReport {
+        struct State {
+            QString mode;
+            bool armed = false;
+            QString status;
+            int flightTime = 0;
+        } state;
+
+        struct Position {
+            double lat = 0;
+            double lon = 0;
+            double alt = 0;
+            double relAlt = 0;
+            double hdop = 0;
+            double vdop = 0;
+            int sat = 0;
+        } position;
+
+        struct Attitude {
+            double roll = 0;
+            double pitch = 0;
+            double yaw = 0;
+        } attitude;
+
+        struct Velocity {
+            double vx = 0;
+            double vy = 0;
+            double vz = 0;
+        } velocity;
+
+        struct Telemetry {
+            int signal = 0;
+            int rssi = 0;
+            double snr = 0;
+            double txRate = 0;
+            double rxRate = 0;
+        } telemetry;
+
+        struct RC {
+            int roll = 0;
+            int pitch = 0;
+            int yaw = 0;
+            int throttle = 0;
+            int mode = 0;
+            int gimbal = 0;
+        } rc;
+
+        struct Battery {
+            double soc = 0;
+            double voltage = 0;
+            double current = 0;
+            int remainingMah = 0;
+            QVector<double> cells;
+        } battery;
+
+        struct Hydrogen {
+            QString hydrogen_id;
+            double battery_voltage = 0;
+            double servo_current = 0;
+            double stack_voltage = 0;
+            double bat_refuel_current = 0;
+            double gas_tank_presure = 0;
+            double pipe_pressure = 0;
+            double pcb_temperature = 0;
+            double stack_temperature = 0;
+            QString work_status;
+            QString falt_status;
+        } hydrogen;
+    };
+
 
     QMap<QString, quint64> _seqMap; // 每种消息独立序列号
     // quint64 _seq = 0;
-    QString _group = "factory-01";
+    QString _group = "h15-01";
     QString _droneId = "uav-1001";
     QString _from = "station";
-    QString _ver  = "1.0.1";
+    QString _ver  = "1.0.2";
 
 
 };

@@ -34,6 +34,7 @@
         <file alias="AnalyzeView.qml">src/AnalyzeView/AnalyzeView.qml</file>
         <file alias="AppSettings.qml">src/UI/AppSettings.qml</file>
         <file alias="ToolMenu.qml">src/UI/ToolMenu.qml</file>
+        <file alias="Login.qml">src/UI/Login.qml</file>
         <file alias="BluetoothSettings.qml">src/UI/preferences/BluetoothSettings.qml</file>
         <file alias="CorridorScanEditor.qml">src/PlanView/CorridorScanEditor.qml</file>
         <file alias="RemoteIDSettings.qml">src/UI/preferences/RemoteIDSettings.qml</file>
@@ -82,7 +83,7 @@
         <file alias="QGroundControl/Controls/AltModeDialog.qml">src/QmlControls/AltModeDialog.qml</file>
         <file alias="QGroundControl/Controls/AxisMonitor.qml">src/QmlControls/AxisMonitor.qml</file>
         <file alias="QGroundControl/Controls/BatteryIndicator.qml">src/UI/toolbar/BatteryIndicator.qml</file>
-         <file alias="QGroundControl/Controls/Batterysettingshow.qml">src/UI/toolbar/Batterysettingshow.qml</file>
+        <file alias="QGroundControl/Controls/Batterysettingshow.qml">src/UI/toolbar/Batterysettingshow.qml</file>
         <file alias="QGroundControl/Controls/CameraCalcCamera.qml">src/PlanView/CameraCalcCamera.qml</file>
         <file alias="QGroundControl/Controls/CameraCalcGrid.qml">src/PlanView/CameraCalcGrid.qml</file>
         <file alias="QGroundControl/Controls/CameraSection.qml">src/PlanView/CameraSection.qml</file>
@@ -358,7 +359,7 @@
         <file alias="QGroundControl/FlightDisplay/FlyViewTopRightPanel.qml">src/FlightDisplay/FlyViewTopRightPanel.qml</file>
         <file alias="QGroundControl/Controls/HyBattery.qml">src/UI/toolbar/HyBattery.qml</file>
         <file>src/QmlControls/Leftbutton.qml</file>
-
+        <file>src/UI/Login.qml</file>
     </qresource>
     <qresource prefix="/FirstRunPromptDialogs">
         <file alias="UnitsFirstRunPrompt.qml">src/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml</file>

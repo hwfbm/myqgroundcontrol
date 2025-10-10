@@ -26,6 +26,7 @@ class QPostEventList;
 class QMetaMethod;
 class QMetaObject;
 class Mqttlink;
+class LoginManager;
 
 #if defined(qApp)
 #undef qApp
@@ -129,7 +130,8 @@ private slots:
     void _showDelayedAppMessages();
 
 private:
-      Mqttlink* _mqtt = nullptr;//mqtt接口
+    Mqttlink* _mqtt = nullptr;//mqtt接口
+    LoginManager* _login = nullptr;//登录接口
     bool compressEvent(QEvent *event, QObject *receiver, QPostEventList *postedEvents) final;
 
     /// Initialize the application for normal application boot. Or in other words we are not going to run unit tests.

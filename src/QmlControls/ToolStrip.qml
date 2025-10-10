@@ -15,11 +15,15 @@ import QGroundControl.ScreenTools
 import QGroundControl.Palette
 import QGroundControl.Controls
 
+
+//implicitHeight 是“推荐值”，父组件如果没给你强制的 height，才会用它
 Rectangle {
     id:         _root
     color:      Qt.rgba(0, 0, 0, 0.65)//"transparent"//qgcPal.toolbarBackground
     width:      ScreenTools.defaultFontPixelWidth * 8
-    height:     Math.min(maxHeight, toolStripColumn.height + (flickable.anchors.margins * 2))
+   // height:     Math.min(maxHeight, toolStripColumn.height + (flickable.anchors.margins * 2))
+    //height: Math.min(maxHeight, toolStripColumn.implicitHeight + (flickable.anchors.margins * 2))//新增
+     implicitHeight:Math.min(maxHeight, flickable.contentHeight + (flickable.anchors.margins * 2))//新增2
     radius:     ScreenTools.defaultFontPixelWidth / 2
 
     property alias  model:              repeater.model //数据源（绑定到Repeater）
@@ -50,8 +54,10 @@ Rectangle {
         anchors.top:        parent.top
         anchors.left:       parent.left
         anchors.right:      parent.right
-        height:             parent.height - anchors.margins * 2
-        contentHeight:      toolStripColumn.height
+         anchors.bottom: parent.bottom //新增
+        //height:             parent.height - anchors.margins * 2
+          contentHeight: toolStripColumn.implicitHeight//新增
+        //contentHeight:      toolStripColumn.height
         flickableDirection: Flickable.VerticalFlick
         clip:               true
 

@@ -544,6 +544,10 @@
 cmake_minimum_required(VERSION 3.25)
 set(QGC_LANGUAGES en zh_CN)
 
+set(JWT_CPP_BUILD_EXAMPLES OFF CACHE INTERNAL "")
+set(JWT_CPP_BUILD_TESTS OFF CACHE INTERNAL "")
+
+
 
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_SOURCE_DIR}/cmake
@@ -808,6 +812,7 @@ find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core)
 endif()
 
 # Set extra standard project setup options for Qt 6.7.0 and above
@@ -909,6 +914,8 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
     ${QGC_RESOURCES}
     src/MAVLink/LibEvents/mavlink_custom.h
     hydrogenbatteryhandler.h hydrogenbatteryhandler.cpp
+    android/AndroidManifest.xml
+
 
 
     #src/Vehicle/FactGroups/vehiclehydrogenbatteryfactgroup.h src/Vehicle/FactGroups/vehiclehydrogenbatteryfactgroup.cpp
@@ -917,6 +924,7 @@ qt_add_executable(${CMAKE_PROJECT_NAME}
 
 target_link_libraries(QGroundControl PRIVATE Qt6::Core)
 target_link_libraries(QGroundControl PRIVATE Qt6::Mqtt)
+target_link_libraries(QGroundControl PRIVATE Qt6::Core)
 target_link_libraries(QGroundControl PRIVATE Qt6::Core)
 
 # target_link_libraries(QGroundControl PRIVATE Qt6::Core)
@@ -1093,8 +1101,46 @@ elseif(ANDROID)
     )
 endif()
 
-add_subdirectory(src)
 
+# my使用 CPM 拉取 OpenSSL
+
+# CPMAddPackage(
+# NAME OpenSSL
+# GITHUB_REPOSITORY openssl/openssl
+# GIT_TAG OpenSSL_1_1_1l
+# )
+
+# # 设置 OpenSSL 根目录，确保 CMake 能找到 OpenSSL 库
+# set(OPENSSL_ROOT_DIR "${CMAKE_BINARY_DIR}/cpm_modules/openssl")
+# find_package(OpenSSL REQUIRED)
+
+# # 添加 OpenSSL 头文件路径
+# target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${OPENSSL_INCLUDE_DIR})
+
+# # 链接 OpenSSL 库
+# target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+
+
+
+#set(nlohmann_json_SOURCE_DIR "")  # 禁用拉取
+
+# # 检查 nlohmann_json 是否已经存在
+# if (NOT TARGET nlohmann_json)
+#     CPMAddPackage(
+#         NAME nlohmann_json
+#         GITHUB_REPOSITORY nlohmann/json
+#         GIT_TAG v3.12.0
+#     )
+# target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${nlohmann_json_SOURCE_DIR}/single_include)
+# endif()
+
+# # 添加 nlohmann_json 头文件路径
+
+
+# 如果 nlohmann_json 是一个 header-only 库，通常无需链接库目标，只需要确保头文件路径正确
+
+
+add_subdirectory(src)
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
 endif()

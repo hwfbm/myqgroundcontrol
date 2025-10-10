@@ -21,6 +21,7 @@
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 
+
 QGC_LOGGING_CATEGORY(MockLinkLog, "qgc.comms.mocklink.mocklink")
 QGC_LOGGING_CATEGORY(MockLinkVerboseLog, "qgc.comms.mocklink.mocklink:verbose")
 
@@ -341,47 +342,26 @@ void MockLink::_sendHeartBeat()
 }
 
 void MockLink::_sendGimbalStatus()
-{
-    mavlink_message_t msg{};
+{mavlink_message_t msg;
 
-            // 模拟 Gimbal Device Attitude Status
-    mavlink_gimbal_device_attitude_status_t gimbal{};
-    gimbal.time_boot_ms = static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch() % 0xFFFFFFFF);
-    gimbal.q[0] = 1.0f; // w
-    gimbal.q[1] = 0.0f; // x
-    gimbal.q[2] = 0.0f; // y
-    gimbal.q[3] = 0.0f; // z
-    gimbal.angular_velocity_x = 0.0f;
-    gimbal.angular_velocity_y = 0.0f;
-    gimbal.angular_velocity_z = 0.0f;
-    gimbal.flags = GIMBAL_MANAGER_FLAGS_NEUTRAL;
-    gimbal.target_system = _vehicleSystemId;
-    gimbal.target_component = 1; // 云台组件ID
-    gimbal.gimbal_device_id = 1;
+    uint32_t flags = GIMBAL_MANAGER_FLAGS_YAW_LOCK | GIMBAL_MANAGER_FLAGS_NEUTRAL;
 
-            // 打包消息
-    mavlink_msg_gimbal_device_attitude_status_pack_chan(
-        _vehicleSystemId,       // system_id
-        _vehicleComponentId,    // component_id
-        mavlinkChannel(),       // chan
-        &msg,                   // mavlink_message_t*
-        gimbal.target_system,
-        gimbal.target_component,
-        gimbal.time_boot_ms,
-        gimbal.flags,
-        gimbal.q,               // 注意这里直接传 float[4] 数组
-        gimbal.angular_velocity_x,
-        gimbal.angular_velocity_y,
-        gimbal.angular_velocity_z,
-        0,                      // failure_flags
-        0.0f,                   // delta_yaw
-        0.0f,                   // delta_yaw_velocity
-        gimbal.gimbal_device_id
+    mavlink_msg_gimbal_manager_status_pack(
+        _vehicleSystemId,            // 系统 ID
+        MAV_COMP_ID_GIMBAL,          // 云台组件 ID
+        &msg,
+        0,                           // time_boot_ms
+        flags,                       // flags (决定 mode)
+        0,                           // gimbal_device_id
+        0,                           // primary_control_sysid
+        0,                           // primary_control_compid
+        0,                           // secondary_control_sysid
+        0                            // secondary_control_compid
         );
 
-            // 发送到 QGC
     respondWithMavlinkMessage(msg);
 }
+
 
 
 void MockLink::_sendHighLatency2()
@@ -514,7 +494,7 @@ void MockLink::_sendBatteryStatus()
         _vehicleComponentId,
         static_cast<uint8_t>(mavlinkChannel()),
         &msg,
-        1,                          // battery id
+        0,                          // battery id
         MAV_BATTERY_FUNCTION_ALL,
         MAV_BATTERY_TYPE_LIPO,
         2100,                       // temp cdegC
@@ -540,7 +520,7 @@ void MockLink::_sendBatteryStatus()
         _vehicleComponentId,
         static_cast<uint8_t>(mavlinkChannel()),
         &msg,
-        2,                          // battery id
+        1,                          // battery id
         MAV_BATTERY_FUNCTION_ALL,
         MAV_BATTERY_TYPE_LIPO,
         INT16_MAX,                  // temp cdegC
@@ -559,6 +539,28 @@ void MockLink::_sendBatteryStatus()
     respondWithMavlinkMessage(msg);
 
 
+    (void) mavlink_msg_battery_status_pack_chan(
+        _vehicleSystemId,
+        _vehicleComponentId,
+        static_cast<uint8_t>(mavlinkChannel()),
+        &msg,
+        2,                          // battery id
+        MAV_BATTERY_FUNCTION_ALL,
+        MAV_BATTERY_TYPE_LIPO,
+        INT16_MAX,                  // temp cdegC
+        rgVoltagesNone,
+        700,                        // battery cA
+        100,                        // current consumed mAh
+        -1,                         // energy consumed not supported
+        _battery2PctRemaining,
+        _battery2TimeRemaining,
+        _battery2ChargeState,
+        rgVoltagesExtNone,
+        0, // MAV_BATTERY_MODE
+        0  // MAV_BATTERY_FAULT
+        );
+
+    respondWithMavlinkMessage(msg);
 }
 
 
@@ -713,7 +715,7 @@ void MockLink::_sendMockMessages()
     if (now - lastData32Send < 2000) return;
     lastData32Send = now;
 
-    for (int batteryIndex = 0; batteryIndex < 2; ++batteryIndex) {
+    for (int batteryIndex = -1; batteryIndex < 3; ++batteryIndex) {
         mavlink_message_t msg;
         mavlink_data32_t data32 = {};
         data32.type = 100;
@@ -1927,6 +1929,7 @@ void MockLink::_sendRCChannels()
         &msg,
         0,                     // time_boot_ms
         16,                    // chancount
+        //1500通常代表摇杆在中间位置
         1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500,   // channel 1-8
         1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500,   // channel 9-16
         UINT16_MAX, UINT16_MAX,

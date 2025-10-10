@@ -6,6 +6,7 @@ import QGroundControl.Palette 1.0
 import QGroundControl.Controls 1.0
 import QGroundControl.ScreenTools 1.0
 
+
 Item {
     id: toolMenuid
     //z:      QGroundControl.zOrderTopMost
@@ -21,6 +22,7 @@ Item {
       readonly property real _verticalMargin:     _defaultTextHeight
     readonly property real itemheight:     toolMenuid .height
     property bool _first: true
+    property bool menuvisible:toolPanel.visible
 
    // 遮罩层
     Rectangle {
@@ -59,9 +61,22 @@ Item {
         anchors.top: parent.top
         //anchors.right: parent.right
          anchors.bottom: parent.bottom
-        color: Qt.rgba(0, 0, 0, 0.65)//qgcPal.windowShade
+        color: Qt.rgba(0, 0, 0 )//qgcPal.windowShade
+         // gradient: Gradient {
+         //        GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.9) } // 中心更深
+         //        GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.6) }  // 边缘过渡
+         //    }
         z: 99
+
+
+           // Image {
+           //     anchors.fill: parent
+           //     source: "/qmlimages/blur.png"   // 一张小的噪点图
+           //     fillMode: Image.Tile
+           //     opacity: 0.25                    // 不要太明显
+           // }
         layer.enabled: true
+
 
         property bool panelShown: false
         property bool internalVisible: false
@@ -348,15 +363,15 @@ Item {
                             text:              ""
                             imageResource:     "/qmlimages/hd.svg"
                             imageColor:         "transparent"
-                            // checked: toolSelectDialog.currentPage === "/toolbar/GimbalSetting.qml" // 当 currentPage 是当前页面时，checked 为 true
-                            // onClicked: {
-                            //     if (mainWindow.allowViewSwitch()) {
-                            //         if (toolSelectDialog.currentPage !== "/toolbar/GimbalSetting.qml") {
-                            //             rightPanel.source = "/toolbar/GimbalSetting.qml"
-                            //             toolSelectDialog.currentPage = "/toolbar/GimbalSetting.qml" // 更新 currentPage
-                            //         }
-                            //     }
-                            // }
+                            checked: toolSelectDialog.currentPage === "/qml/Login.qml" // 当 currentPage 是当前页面时，checked 为 true
+                            onClicked: {
+                                if (mainWindow.allowViewSwitch()) {
+                                    if (toolSelectDialog.currentPage !== "/qml/Login.qml") {
+                                        rightPanel.source = "/qml/Login.qml"
+                                        toolSelectDialog.currentPage = "/qml/Login.qml" // 更新 currentPage
+                                    }
+                                }
+                            }
                         }
                        //电池
                         SubMenuButton {
@@ -561,7 +576,7 @@ Item {
             id:                     rightPanel
             anchors.leftMargin:     _horizontalMargin
             anchors.rightMargin:    _horizontalMargin
-            anchors.topMargin:      /*_verticalMargin//*/ScreenTools.toolbarHeight//露出toolbar
+            anchors.topMargin:      _verticalMargin//ScreenTools.toolbarHeight//露出toolbar
             anchors.bottomMargin:   _verticalMargin
             anchors.left:           divider.right
             anchors.right:          parent.right

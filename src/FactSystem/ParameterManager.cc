@@ -569,16 +569,24 @@ bool ParameterManager::parameterExists(int componentId, const QString &paramName
     return ret;
 }
 
+//据组件ID和参数名称来查找并返回对应的参数对象
 Fact *ParameterManager::getParameter(int componentId, const QString &paramName)
 {
-    componentId = _actualComponentId(componentId);
+    componentId = _actualComponentId(componentId);//传入的组件ID转换为实际的组件ID
+    //些组件可能有别名或需要特殊映射。比如传入 -1（默认组件）会被映射到飞控主单元的真正ID（通常是1）
 
+
+    //根据参数协议版本重映射参数名称。 不同版本的飞控固件可能对同一个参数使用不同的名称。这个方法确保无论用户使用什么版本的固件，代码都能找到正确的参数
     const QString mappedParamName = _remapParamNameToVersion(paramName);
+
+    // 检查是否存在该组件和参数
+    //检查内存中是否已经加载了这个组件ID的参数列表，检查该组件下是否存在这个特定的参数
     if (!_mapCompId2FactMap.contains(componentId) || !_mapCompId2FactMap[componentId].contains(mappedParamName)) {
         qgcApp()->reportMissingParameter(componentId, mappedParamName);
         return &_defaultFact;
     }
 
+    //返回找到的参数对象
     return _mapCompId2FactMap[componentId][mappedParamName];
 }
 

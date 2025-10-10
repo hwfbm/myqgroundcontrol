@@ -29,6 +29,7 @@ QtMultimediaReceiver::QtMultimediaReceiver(QObject *parent)
     , _captureSession(new QMediaCaptureSession(this))
     , _mediaRecorder(new QMediaRecorder(this))
 {
+    qDebug() << "真正的是VideoReceiver created:" << metaObject()->className();
     // qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO << this;
 
     _captureSession->setRecorder(_mediaRecorder);

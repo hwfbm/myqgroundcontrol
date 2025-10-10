@@ -20,6 +20,8 @@
 #ifndef QGC_NO_SERIAL_LINK
     #include "QGCSerialPortInfo.h"
 #endif
+#include "Mqttlink.h"
+#include"loginmanager.h"
 
 Q_DECLARE_LOGGING_CATEGORY(LinkManagerLog)
 Q_DECLARE_LOGGING_CATEGORY(LinkManagerVerboseLog)
@@ -32,6 +34,8 @@ class QTimer;
 class SerialLink;
 class UDPConfiguration;
 class UdpIODevice;
+// class LoginManager; //登录
+// class Mqttlink;//mqtt
 
 /// @brief Manage communication links
 ///        The Link Manager organizes the physical Links. It can manage arbitrary
@@ -41,11 +45,17 @@ class LinkManager : public QObject
 {
     Q_OBJECT
     Q_MOC_INCLUDE("QmlObjectListModel.h")
+    Q_MOC_INCLUDE("loginmanager.h")
+    Q_MOC_INCLUDE("mqttlink.h")
+
     Q_PROPERTY(bool isBluetoothAvailable READ isBluetoothAvailable NOTIFY isBluetoothAvailableChanged)
     Q_PROPERTY(QmlObjectListModel *linkConfigurations READ _qmlLinkConfigurations CONSTANT)
     Q_PROPERTY(QStringList linkTypeStrings READ linkTypeStrings CONSTANT)
     Q_PROPERTY(bool mavlinkSupportForwardingEnabled READ mavlinkSupportForwardingEnabled NOTIFY mavlinkSupportForwardingEnabledChanged)
 
+    //登录、mqtt
+    Q_PROPERTY(LoginManager* loginManager READ loginManager CONSTANT)
+    Q_PROPERTY(Mqttlink* mqttLink READ mqttLink CONSTANT)
 public:
     explicit LinkManager(QObject *parent = nullptr);
     ~LinkManager();
@@ -138,6 +148,11 @@ private:
     void _addZeroConfAutoConnectLink();
 #endif
 
+
+    LoginManager* loginManager() { return LoginManager::instance(); }
+    Mqttlink* mqttLink() { return Mqttlink::instance(); }
+
+
     QTimer *_portListTimer = nullptr;
     QmlObjectListModel *_qmlConfigurations = nullptr;
     AutoConnectSettings *_autoConnectSettings = nullptr;
@@ -180,6 +195,10 @@ signals:
     void commPortsChanged();
 
 private:
+    //LoginManager* _loginManager = nullptr;//登录
+    // Mqttlink* _mqttLink = nullptr;//mqtt
+
+
     bool _isSerialPortConnected() const;
     void _updateSerialPorts();
     bool _allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardType) const;
